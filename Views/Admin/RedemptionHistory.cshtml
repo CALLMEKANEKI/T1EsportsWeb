@@ -1,0 +1,72 @@
+﻿@model IEnumerable<T1EsportsWeb.Models.UserVoucher>
+
+@{
+    ViewData["Title"] = "Lịch sử đổi điểm";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold mb-1 text-info"><i class="fas fa-history me-2"></i>Lịch Sử Đổi Điểm</h2>
+        <p class="text-muted">Theo dõi danh sách người dùng đã dùng điểm (Points) để đổi lấy Voucher.</p>
+    </div>
+</div>
+
+<div class="card p-0 overflow-hidden">
+    <div class="table-responsive">
+        <table class="table table-dark table-hover align-middle mb-0">
+            <thead style="background-color: #2b2b40;">
+                <tr>
+                    <th class="ps-4 py-3 text-muted small text-uppercase">ID Giao dịch</th>
+                    <th class="py-3 text-muted small text-uppercase">Tài Khoản (User)</th>
+                    <th class="py-3 text-muted small text-uppercase">Mã Voucher Đã Đổi</th>
+                    <th class="py-3 text-muted small text-uppercase text-warning">% Giảm Giá</th>
+                    <th class="pe-4 py-3 text-muted small text-uppercase text-end">Tình Trạng Sử Dụng</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="5" class="text-center py-5 text-muted">
+                            <i class="fas fa-ghost fs-1 mb-3"></i>
+                            <p>Chưa có ai đổi điểm lấy voucher cả.</p>
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var item in Model)
+                    {
+                        <tr>
+                            <td class="ps-4 py-3 text-muted">#TXN-@item.Id</td>
+                            <td class="py-3 fw-bold text-white">
+                                <i class="fas fa-user-circle text-secondary me-2"></i>@item.Username
+                            </td>
+                            <td class="py-3">
+                                <span class="bg-dark text-danger fw-bold border border-secondary border-opacity-25 px-3 py-1 rounded" style="letter-spacing: 1px;">
+                                    @item.VoucherCode
+                                </span>
+                            </td>
+                            <td class="py-3 fw-bold text-warning fs-5">@item.DiscountPercent%</td>
+                            <td class="pe-4 py-3 text-end">
+                                @if (item.IsUsed)
+                                {
+                                    <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-2 py-1">
+                                        <i class="fas fa-check-double me-1"></i> Đã thanh toán
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2 py-1">
+                                        <i class="fas fa-box me-1"></i> Đang cất trong kho
+                                    </span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -1,0 +1,121 @@
+﻿@model List<T1EsportsWeb.Models.CartItem>
+
+@{
+    ViewData["Title"] = "Giỏ Hàng Của Bạn";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    body {
+        background-color: #0f0f1a;
+        color: white;
+    }
+
+    .cart-box {
+        background: #1e1e2d;
+        border-radius: 12px;
+        border: 1px solid #2b2b40;
+        padding: 20px;
+    }
+
+    .table-dark {
+        background-color: transparent;
+    }
+
+        .table-dark th {
+            border-bottom: 2px solid #e3002b;
+            color: #aaa;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .table-dark td {
+            border-bottom: 1px solid #2b2b40;
+            vertical-align: middle;
+        }
+</style>
+
+<div class="container mt-4 mb-5">
+    <h2 class="fw-bold mb-4"><i class="fas fa-shopping-cart text-danger me-2"></i>GIỎ HÀNG</h2>
+
+    @if (Model == null || Model.Count == 0)
+    {
+        <div class="cart-box text-center py-5">
+            <i class="fas fa-box-open text-muted mb-3" style="font-size: 4rem;"></i>
+            <h4 class="text-white">Giỏ hàng của bạn đang trống!</h4>
+            <p class="text-muted mb-4">Bạn chưa chọn món đồ nào để ủng hộ T1 cả.</p>
+            <a href="/Shop" class="btn btn-danger fw-bold px-4 rounded-pill">Tiếp tục mua sắm</a>
+        </div>
+    }
+    else
+    {
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="cart-box">
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Sản Phẩm</th>
+                                    <th class="text-center">Kích Cỡ</th>
+                                    <th class="text-center">Đơn Giá</th>
+                                    <th class="text-center">Số Lượng</th>
+                                    <th class="text-end">Thành Tiền</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model)
+                                {
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <img src="@item.ImageUrl" alt="@item.ProductName" class="rounded border border-secondary" style="width: 60px; height: 60px; object-fit: cover;" />
+                                                <div class="ms-3">
+                                                    <a href="/Shop/Details/@item.ProductId" class="text-white text-decoration-none fw-bold d-block">@item.ProductName</a>
+                                                    <small class="text-muted">T1 Official</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="text-center fw-bold text-warning">@(string.IsNullOrEmpty(item.Size) ? "Freesize" : item.Size)</td>
+                                        <td class="text-center text-muted">@item.Price.ToString("N0")₫</td>
+                                        <td class="text-center fw-bold">@item.Quantity</td>
+                                        <td class="text-end fw-bold text-danger">@item.Total.ToString("N0")₫</td>
+                                        <td class="text-end">
+                                            <a href="/Cart/Remove?productId=@item.ProductId&size=@item.Size" class="btn btn-sm btn-outline-danger rounded-circle" title="Xóa">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="cart-box position-sticky" style="top: 20px;">
+                    <h5 class="fw-bold border-bottom border-secondary pb-3 mb-3">TÓM TẮT ĐƠN HÀNG</h5>
+
+                    <div class="d-flex justify-content-between mb-2 text-muted">
+                        <span>Tạm tính (@Model.Sum(x => x.Quantity) sản phẩm)</span>
+                        <span>@Model.Sum(x => x.Total).ToString("N0")₫</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-3 text-muted">
+                        <span>Phí vận chuyển</span>
+                        <span class="text-success small">Tính tại bước kế tiếp</span>
+                    </div>
+
+                    <div class="d-flex justify-content-between border-top border-secondary pt-3 mb-4">
+                        <span class="fw-bold fs-5">TỔNG CỘNG</span>
+                        <span class="fw-bold fs-4 text-danger">@Model.Sum(x => x.Total).ToString("N0")₫</span>
+                    </div>
+
+                    <a href="/Checkout" class="btn btn-danger w-100 fw-bold py-2 mb-2 shadow">TIẾN HÀNH THANH TOÁN</a>
+                    <a href="/Shop" class="btn btn-outline-light w-100 fw-bold py-2">MUA THÊM SẢN PHẨM</a>
+                </div>
+            </div>
+        </div>
+    }
+</div>

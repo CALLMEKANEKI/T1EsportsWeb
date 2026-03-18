@@ -1,0 +1,146 @@
+﻿@model T1EsportsWeb.Models.Order
+@{
+    ViewData["Title"] = "Chi Tiết Đơn Hàng #" + Model.OrderId;
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var orderDetails = ViewBag.OrderDetails as List<T1EsportsWeb.Models.OrderDetail>;
+}
+
+<style>
+    body {
+        background-color: #0f0f1a;
+        color: white;
+    }
+
+    .order-box {
+        background: #1e1e2d;
+        border-radius: 12px;
+        border: 1px solid #2b2b40;
+        padding: 25px;
+    }
+
+    /* ========================================== */
+    /* CSS MÀU SẮC ĐỘNG CHO TRẠNG THÁI            */
+    /* ========================================== */
+    .status-badge {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-weight: bold;
+        font-size: 0.85rem;
+        display: inline-block;
+    }
+
+    .status-yellow {
+        background-color: rgba(255, 193, 7, 0.2);
+        color: #ffc107;
+        border: 1px solid #ffc107;
+    }
+
+    .status-blue {
+        background-color: rgba(13, 202, 240, 0.2);
+        color: #0dcaf0;
+        border: 1px solid #0dcaf0;
+    }
+
+    .status-green {
+        background-color: rgba(0, 230, 118, 0.2);
+        color: #00e676;
+        border: 1px solid #00e676;
+    }
+
+    .status-red {
+        background-color: rgba(227, 0, 43, 0.2);
+        color: #e3002b;
+        border: 1px solid #e3002b;
+    }
+</style>
+
+<div class="container mt-4 mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold mb-0">
+            <i class="fas fa-file-invoice text-danger me-2"></i>CHI TIẾT ĐƠN HÀNG: <span class="text-warning">#T1-@Model.OrderId</span>
+        </h2>
+        <a href="/Order" class="btn btn-outline-light rounded-pill px-4"><i class="fas fa-undo me-2"></i>Quay lại</a>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-4">
+            <div class="order-box h-100">
+                <h5 class="fw-bold border-bottom border-secondary pb-2 mb-3">Thông Tin Người Nhận</h5>
+                <p class="mb-2"><strong class="text-muted">Họ Tên:</strong> @Model.FullName</p>
+                <p class="mb-2"><strong class="text-muted">SĐT:</strong> @Model.Phone</p>
+                <p class="mb-2"><strong class="text-muted">Địa chỉ:</strong> @Model.Address</p>
+                <p class="mb-2"><strong class="text-muted">Ngày đặt:</strong> @Model.OrderDate.ToString("dd/MM/yyyy HH:mm")</p>
+
+                <p class="mb-0 mt-3 d-flex align-items-center">
+                    <strong class="text-muted me-2">Trạng thái:</strong>
+                    @{
+                        string badgeClass = "status-yellow";
+                        string iconClass = "fa-clock";
+
+                        if (Model.Status == "Đã xác nhận")
+                        {
+                            badgeClass = "status-yellow";
+                            iconClass = "fa-clipboard-check";
+                        }
+                        else if (Model.Status == "Đang giao hàng")
+                        {
+                            badgeClass = "status-blue";
+                            iconClass = "fa-shipping-fast";
+                        }
+                        else if (Model.Status == "Hoàn thành" || Model.Status == "Đã giao hàng")
+                        {
+                            badgeClass = "status-green";
+                            iconClass = "fa-box-open";
+                        }
+                        else if (Model.Status == "Đã hủy")
+                        {
+                            badgeClass = "status-red";
+                            iconClass = "fa-times-circle";
+                        }
+                    }
+                    <span class="status-badge @badgeClass py-2 px-3 fs-6 ms-1">
+                        <i class="fas @iconClass me-1"></i> @Model.Status
+                    </span>
+                </p>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <div class="order-box">
+                <h5 class="fw-bold border-bottom border-secondary pb-2 mb-3">Sản Phẩm Đã Đặt</h5>
+
+                <div class="table-responsive">
+                    <table class="table table-dark table-borderless align-middle mb-0">
+                        <thead class="border-bottom border-secondary text-muted">
+                            <tr>
+                                <th>Tên Sản Phẩm</th>
+                                <th class="text-center">Kích Cỡ</th>
+                                <th class="text-center">SL</th>
+                                <th class="text-end">Đơn Giá</th>
+                                <th class="text-end">Thành Tiền</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in orderDetails)
+                            {
+                                <tr>
+                                    <td class="fw-bold text-light">@item.ProductName</td>
+                                    <td class="text-center text-warning">@(string.IsNullOrEmpty(item.Size) ? "Freesize" : item.Size)</td>
+                                    <td class="text-center">@item.Quantity</td>
+                                    <td class="text-end text-muted">@item.Price.ToString("N0")₫</td>
+                                    <td class="text-end fw-bold text-danger">@((item.Price * item.Quantity).ToString("N0"))₫</td>
+                                </tr>
+                            }
+                        </tbody>
+                        <tfoot class="border-top border-secondary">
+                            <tr>
+                                <td colspan="4" class="text-end fw-bold fs-5 pt-3">TỔNG CỘNG:</td>
+                                <td class="text-end fw-bold fs-4 text-danger pt-3">@Model.TotalAmount.ToString("N0")₫</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

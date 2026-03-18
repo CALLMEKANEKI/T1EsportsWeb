@@ -1,0 +1,214 @@
+﻿@model IEnumerable<T1EsportsWeb.Models.Voucher>
+
+@{
+    ViewData["Title"] = "Quản lý Voucher";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<style>
+    .t1-toast {
+        position: fixed;
+        bottom: 40px;
+        right: 40px;
+        background-color: #1e1e2d;
+        border: 1px solid #2b2b40;
+        border-left: 4px solid #00e676;
+        padding: 15px 25px;
+        border-radius: 12px;
+        box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        z-index: 9999;
+        transform: translateX(calc(100% + 50px));
+        transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+        .t1-toast.show {
+            transform: translateX(0);
+        }
+
+    .toast-icon {
+        color: #00e676;
+        font-size: 2.2rem;
+        display: flex;
+        align-items: center;
+    }
+
+    .t1-toast.show .toast-icon {
+        animation: scaleIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+    }
+
+    @@keyframes scaleIn {
+        0% {
+            transform: scale(0);
+        }
+
+        100% {
+            transform: scale(1);
+        }
+    }
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold mb-1 text-warning"><i class="fas fa-ticket-alt me-2"></i>Quản Lý Voucher</h2>
+        <p class="text-muted">Tạo các thẻ quà tặng để hiển thị bên Trạm Đổi Thưởng của người chơi.</p>
+    </div>
+    <button type="button" class="btn btn-danger fw-bold rounded-pill px-4 shadow" data-bs-toggle="modal" data-bs-target="#addVoucherModal">
+        <i class="fas fa-plus me-2"></i>Tạo Thẻ Quà Mới
+    </button>
+</div>
+
+<div class="card p-0 overflow-hidden">
+    <div class="table-responsive">
+        <table class="table table-dark table-hover align-middle mb-0">
+            <thead style="background-color: #2b2b40;">
+                <tr>
+                    <th class="ps-4 py-3 text-muted small text-uppercase">Voucher</th>
+                    <th class="py-3 text-muted small text-uppercase">Mã Code</th>
+                    <th class="py-3 text-muted small text-uppercase text-warning">% Giảm</th>
+                    <th class="py-3 text-muted small text-uppercase">Giá Điểm</th>
+                    <th class="py-3 text-muted small text-uppercase">Số Lượng</th>
+                    <th class="pe-4 py-3 text-muted small text-uppercase text-end">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="6" class="text-center py-5 text-muted">
+                            <i class="fas fa-gift fs-1 mb-3"></i>
+                            <p>Kho thẻ quà đang trống.</p>
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var item in Model)
+                    {
+                        <tr>
+                            <td class="ps-4 py-3">
+                                <span class="fw-bold text-white d-block">@(string.IsNullOrEmpty(item.Title) ? "Thẻ Quà Tặng" : item.Title)</span>
+                            </td>
+                            <td class="py-3 fw-bold text-info" style="letter-spacing: 1px;">@item.EventCode</td>
+                            <td class="py-3 fw-bold text-warning fs-5">@item.DiscountPercent%</td>
+                            <td class="py-3">
+                                <span class="badge bg-secondary bg-opacity-25 text-warning border border-warning border-opacity-25 px-2 py-1">
+                                    <i class="fas fa-coins me-1"></i> @item.CostPoints
+                                </span>
+                            </td>
+                            <td class="py-3">
+                                @if (item.Quantity == -1)
+                                {
+                                    <span class="text-success"><i class="fas fa-infinity me-1"></i>Vô hạn</span>
+                                }
+                                else if (item.Quantity == 0)
+                                {
+                                    <span class="text-danger fw-bold">Đã hết</span>
+                                }
+                                else
+                                {
+                                    <span>Còn @item.Quantity</span>
+                                }
+                            </td>
+                            <td class="pe-4 py-3 text-end">
+                                <a href="/Admin/DeleteVoucher/@item.Id" class="btn btn-sm btn-outline-danger rounded-circle" title="Xóa thẻ quà này" onclick="return confirm('Bạn có chắc chắn muốn xóa mã voucher này?');">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal fade" id="addVoucherModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content" style="background-color: #1e1e2d; border: 1px solid #2b2b40;">
+            <div class="modal-header border-bottom border-secondary border-opacity-25">
+                <h5 class="modal-title fw-bold text-white"><i class="fas fa-gift text-danger me-2"></i>Tạo Thẻ Quà Trạm Đổi Thưởng</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-controller="Admin" asp-action="AddVoucher" method="post">
+                <div class="modal-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small text-uppercase fw-bold">Tên thẻ quà (Title)</label>
+                            <input type="text" name="Title" class="form-control bg-dark text-white border-secondary fw-bold"/>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small text-uppercase fw-bold">Mã Code (Khách dùng lúc thanh toán)</label>
+                            <input type="text" name="EventCode" class="form-control bg-dark text-info border-secondary fw-bold text-uppercase"/>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-muted small text-uppercase fw-bold">Mô tả công dụng (Description)</label>
+                        <textarea name="Description" class="form-control bg-dark text-white border-secondary" rows="2"></textarea>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-4">
+                            <label class="form-label text-muted small text-uppercase fw-bold">% Giảm Giá</label>
+                            <input type="number" name="DiscountPercent" class="form-control bg-dark text-warning border-secondary fw-bold"required />
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label text-muted small text-uppercase fw-bold">Điểm Cần Đổi (CostPoints)</label>
+                            <input type="number" name="CostPoints" class="form-control bg-dark text-white border-secondary"required />
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label text-muted small text-uppercase fw-bold">Số Lượng</label>
+                            <input type="number" name="Quantity" class="form-control bg-dark text-white border-secondary"required />
+                            <small class="text-info" style="font-size: 0.75rem;">Nhập <strong>-1</strong> nếu Vô hạn</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-top border-secondary border-opacity-25">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-danger fw-bold"><i class="fas fa-save me-2"></i>Lưu Thẻ Quà</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div id="t1Toast" class="t1-toast">
+    <div id="toastIconContainer" class="toast-icon">
+        <i id="toastIcon" class="fas fa-check-circle"></i>
+    </div>
+    <div class="pe-3">
+        <strong id="toastTitle" class="d-block text-white" style="font-size: 1.15rem; letter-spacing: 0.5px;">Hệ Thống T1 Shop</strong>
+        <span id="toastMessage" class="text-muted" style="font-size: 0.95rem;"></span>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var successMsg = "@Html.Raw(TempData["SuccessMsg"])";
+            var errorMsg = "@Html.Raw(TempData["ErrorMsg"])";
+
+            if (successMsg || errorMsg) {
+                var toast = document.getElementById('t1Toast');
+                var msgSpan = document.getElementById('toastMessage');
+                var icon = document.getElementById('toastIcon');
+                var iconContainer = document.querySelector('.toast-icon');
+
+                if(successMsg) {
+                    msgSpan.innerText = successMsg;
+                } else if(errorMsg) {
+                    msgSpan.innerText = errorMsg;
+                    toast.style.borderLeftColor = "#e3002b";
+                    iconContainer.style.color = "#e3002b";
+                    icon.className = "fas fa-times-circle";
+                }
+
+                setTimeout(() => { toast.classList.add('show'); }, 100);
+                setTimeout(function() { toast.classList.remove('show'); }, 2000);
+            }
+        });
+    </script>
+}

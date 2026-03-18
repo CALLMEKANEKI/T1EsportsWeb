@@ -1,0 +1,298 @@
+﻿@model IEnumerable<T1EsportsWeb.Models.Order>
+@{
+    ViewData["Title"] = "Đơn Hàng Của Tôi";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    body {
+        background-color: #0f0f1a;
+        color: white;
+    }
+
+    .order-box {
+        background: #1e1e2d;
+        border-radius: 12px;
+        border: 1px solid #2b2b40;
+        padding: 25px;
+    }
+
+    .table-dark {
+        background-color: transparent;
+    }
+
+        .table-dark th {
+            border-bottom: 2px solid #e3002b;
+            color: #aaa;
+            text-transform: uppercase;
+        }
+
+        .table-dark td {
+            border-bottom: 1px solid #2b2b40;
+            vertical-align: middle;
+        }
+
+    /* ========================================== */
+    /* CSS MÀU SẮC ĐỘNG CHO TRẠNG THÁI            */
+    /* ========================================== */
+    .status-badge {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-weight: bold;
+        font-size: 0.85rem;
+        display: inline-block;
+        min-width: 140px; /* Cố định độ rộng để bảng không bị xộc xệch */
+    }
+
+    .status-yellow {
+        background-color: rgba(255, 193, 7, 0.2);
+        color: #ffc107;
+        border: 1px solid #ffc107;
+    }
+
+    .status-blue {
+        background-color: rgba(13, 202, 240, 0.2);
+        color: #0dcaf0;
+        border: 1px solid #0dcaf0;
+    }
+
+    .status-green {
+        background-color: rgba(0, 230, 118, 0.2);
+        color: #00e676;
+        border: 1px solid #00e676;
+    }
+
+    .status-red {
+        background-color: rgba(227, 0, 43, 0.2);
+        color: #e3002b;
+        border: 1px solid #e3002b;
+    }
+
+    /* ========================================== */
+    /* CSS THÔNG BÁO TOAST TRƯỢT SIÊU MƯỢT        */
+    /* ========================================== */
+    .t1-toast {
+        position: fixed;
+        bottom: 40px;
+        right: 40px;
+        background-color: #1e1e2d;
+        border: 1px solid #2b2b40;
+        border-left: 4px solid #00e676;
+        padding: 15px 25px;
+        border-radius: 12px;
+        box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        z-index: 9999;
+        transform: translateX(calc(100% + 50px));
+        transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+        .t1-toast.show {
+            transform: translateX(0);
+        }
+
+    .toast-icon {
+        color: #00e676;
+        font-size: 2.2rem;
+        display: flex;
+        align-items: center;
+    }
+
+    .t1-toast.show .toast-icon {
+        animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+    }
+
+    @@keyframes popIn {
+        0% {
+            transform: scale(0);
+        }
+
+        100% {
+            transform: scale(1);
+        }
+    }
+</style>
+
+<div class="container mt-4 mb-5">
+    <h2 class="fw-bold mb-4"><i class="fas fa-box-open text-warning me-2"></i>LỊCH SỬ ĐƠN HÀNG</h2>
+
+    <div class="order-box">
+        @if (!Model.Any())
+        {
+            <div class="text-center py-5">
+                <i class="fas fa-receipt text-muted mb-3" style="font-size: 4rem;"></i>
+                <h5 class="text-white">Bạn chưa có đơn hàng nào!</h5>
+                <p class="text-muted">Hãy sắm cho mình một món đồ T1 thật ngầu nhé.</p>
+                <a href="/Shop" class="btn btn-danger mt-2 rounded-pill fw-bold px-4">Đến Shop Ngay</a>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-dark table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Mã Đơn</th>
+                            <th>Ngày Đặt</th>
+                            <th>Người Nhận</th>
+                            <th class="text-end">Tổng Tiền</th>
+                            <th class="text-center">Trạng Thái</th>
+                            <th class="text-end">Thao Tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td class="fw-bold text-danger">#T1-@item.OrderId</td>
+                                <td>@item.OrderDate.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td>@item.FullName</td>
+                                <td class="text-end fw-bold text-warning">@item.TotalAmount.ToString("N0")₫</td>
+
+                                <td class="text-center">
+                                    @{
+                                        string badgeClass = "status-yellow";
+                                        string iconClass = "fa-clock";
+
+                                        if (item.Status == "Đã xác nhận")
+                                        {
+                                            badgeClass = "status-yellow";
+                                            iconClass = "fa-clipboard-check";
+                                        }
+                                        else if (item.Status == "Đang giao hàng")
+                                        {
+                                            badgeClass = "status-blue";
+                                            iconClass = "fa-shipping-fast";
+                                        }
+                                        else if (item.Status == "Hoàn thành" || item.Status == "Đã giao hàng")
+                                        {
+                                            badgeClass = "status-green";
+                                            iconClass = "fa-box-open";
+                                        }
+                                        else if (item.Status == "Đã hủy")
+                                        {
+                                            badgeClass = "status-red";
+                                            iconClass = "fa-times-circle";
+                                        }
+                                    }
+                                    <span class="status-badge @badgeClass">
+                                        <i class="fas @iconClass me-1"></i> @item.Status
+                                    </span>
+                                </td>
+
+                                <td class="text-end">
+                                    <div class="d-flex justify-content-end gap-2">
+                                        <a href="/Order/Details/@item.OrderId" class="btn btn-sm btn-outline-light rounded-pill px-3">
+                                            Xem <i class="fas fa-arrow-right ms-1"></i>
+                                        </a>
+
+                                        @if (item.Status == "Chờ xử lý")
+                                        {
+                                            <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3" title="Hủy đơn hàng" onclick="openCancelModal(@item.OrderId)">
+                                                <i class="fas fa-times"></i> Hủy
+                                            </button>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+<div class="modal fade" id="cancelOrderModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 450px;">
+        <div class="modal-content text-center shadow-lg" style="background-color: #1e1e2d; border: 1px solid #2b2b40; border-top: 4px solid #e3002b; border-radius: 12px; display: flex; flex-direction: column; justify-content: center;">
+            <div class="modal-body p-4 d-flex flex-column justify-content-center align-items-center">
+
+                <i class="fas fa-exclamation-triangle mb-3" style="font-size: 4rem; color: #e3002b; text-shadow: 0 0 20px rgba(227, 0, 43, 0.4);"></i>
+                <h4 class="fw-bold text-white mb-2">YÊU CẦU HỦY ĐƠN</h4>
+
+                <p class="text-light px-2 mt-2 mb-2" style="font-size: 1rem; line-height: 1.5;">
+                    Bạn đang yêu cầu hủy đơn hàng <strong class="text-danger fs-5" id="displayOrderId"></strong>.
+                </p>
+
+                <p class="text-muted small px-2 mb-4">
+                    *Lưu ý: Hành động này không thể hoàn tác. Voucher đã sử dụng sẽ mất!
+                </p>
+
+                <div class="d-flex justify-content-center w-100 gap-2 px-2 flex-nowrap">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill fw-bold py-2 w-50" data-bs-dismiss="modal" style="font-size: 0.95rem;">
+                        Quay lại
+                    </button>
+
+                    <form asp-controller="Order" asp-action="CancelOrder" method="post" class="w-50 m-0 p-0">
+                        <input type="hidden" name="orderId" id="cancelOrderIdInput" value="" />
+                        <button type="submit" class="btn btn-danger rounded-pill fw-bold py-2 w-100 shadow" style="font-size: 0.95rem;">
+                            Đồng ý hủy
+                        </button>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="customerToast" class="t1-toast">
+    <div id="toastIconContainer" class="toast-icon">
+        <i id="toastIcon" class="fas fa-check-circle"></i>
+    </div>
+    <div class="pe-3">
+        <strong id="toastTitle" class="d-block text-white" style="font-size: 1.15rem; letter-spacing: 0.5px;">Thông báo</strong>
+        <span id="toastMessage" class="text-muted" style="font-size: 0.95rem;"></span>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // HÀM MỞ MODAL HỦY ĐƠN
+        function openCancelModal(orderId) {
+            document.getElementById('cancelOrderIdInput').value = orderId;
+            document.getElementById('displayOrderId').innerText = '#T1-' + orderId;
+            var myModal = new bootstrap.Modal(document.getElementById('cancelOrderModal'));
+            myModal.show();
+        }
+
+        // XỬ LÝ TOAST THÔNG BÁO
+        document.addEventListener('DOMContentLoaded', function () {
+            var successMsg = "@Html.Raw(TempData["SuccessMsg"])";
+            var errorMsg = "@Html.Raw(TempData["ErrorMsg"])";
+
+            if (successMsg || errorMsg) {
+                var toast = document.getElementById('customerToast');
+                var title = document.getElementById('toastTitle');
+                var msgSpan = document.getElementById('toastMessage');
+                var icon = document.getElementById('toastIcon');
+                var iconContainer = document.getElementById('toastIconContainer');
+
+                if (errorMsg) {
+                    title.innerText = "Không thành công";
+                    msgSpan.innerText = errorMsg;
+                    icon.className = "fas fa-times-circle";
+                    iconContainer.style.color = "#e3002b";
+                    toast.style.borderLeftColor = "#e3002b";
+                } else {
+                    title.innerText = "Thành công!";
+                    msgSpan.innerText = successMsg;
+                    icon.className = "fas fa-check-circle";
+                    iconContainer.style.color = "#00e676";
+                    toast.style.borderLeftColor = "#00e676";
+                }
+
+                setTimeout(() => {
+                    toast.classList.add('show');
+                }, 100);
+
+                setTimeout(function() {
+                    toast.classList.remove('show');
+                }, 3500);
+            }
+        });
+    </script>
+}

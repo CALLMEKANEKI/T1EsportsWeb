@@ -1,0 +1,96 @@
+﻿html {
+    font-size: 14px;
+}
+
+@media (min-width: 768px) {
+    html {
+        font-size: 16px;
+    }
+}
+
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
+    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+}
+
+html {
+    position: relative;
+    min-height: 100%;
+}
+
+body {
+    margin-bottom: 60px;
+    /* Thêm nền đen đậm chất T1 */
+    background-color: #0a0a0a;
+    color: #f8f9fa;
+}
+
+/* Hiệu ứng cho thẻ tuyển thủ */
+.t1-player-card {
+    background-color: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 8px;
+    transition: all 0.3s ease-in-out;
+    overflow: hidden;
+}
+
+    /* Khi người dùng rê chuột vào thẻ */
+    .t1-player-card:hover {
+        transform: translateY(-10px);
+        border-color: #e3002b;
+        box-shadow: 0 10px 20px rgba(227, 0, 43, 0.4);
+    }
+
+    .t1-player-card img {
+        transition: transform 0.5s ease;
+    }
+
+    .t1-player-card:hover img {
+        transform: scale(1.05);
+    }
+/* CSS cho Banner Trang chủ */
+.hero-banner {
+    background: linear-gradient(rgba(10, 10, 10, 0.2), rgba(10, 10, 10, 0.4)), url('/images/t1-banner.jpg') no-repeat top center;
+    background-size: cover;
+    height: 85vh;
+    border-bottom: 3px solid #e3002b;
+    border-radius: 10px;
+    margin-top: -15px;
+}
+
+        .hero-banner .btn-danger:hover {
+            background-color: #fff !important;
+            color: #e3002b !important;
+            transform: scale(1.05);
+            box-shadow: 0 0 15px #e3002b;
+        }
+/* Custom Tabs cho trang Chi tiết tuyển thủ */
+.custom-t1-tabs {
+    border-bottom: 2px solid #333;
+}
+
+    .custom-t1-tabs .nav-link {
+        color: #aaa;
+        font-weight: bold;
+        border: none;
+        border-bottom: 3px solid transparent;
+    }
+
+        .custom-t1-tabs .nav-link:hover {
+            color: #fff;
+            border-color: transparent;
+        }
+
+        .custom-t1-tabs .nav-link.active {
+            background-color: transparent !important;
+            color: #e3002b !important;
+            border-bottom: 3px solid #e3002b;
+        }
+/* Hiệu ứng rê chuột cho thanh Navbar */
+.custom-menu-link {
+    transition: color 0.3s ease-in-out;
+    letter-spacing: 1px;
+}
+
+    .custom-menu-link:hover {
+        color: #e3002b !important; /* Chữ sẽ chuyển sang đỏ T1 khi hover */
+    }

@@ -1,0 +1,226 @@
+﻿@model IEnumerable<T1EsportsWeb.Models.Product>
+@using System.Linq
+@using T1EsportsWeb.Models
+@inject T1DbContext _context
+
+@{
+    int shopCartCount = 0;
+    if (User.Identity.IsAuthenticated)
+    {
+        // Đếm tổng số lượng sản phẩm trong giỏ hàng của User này từ Database
+        shopCartCount = _context.CartItems
+                                 .Where(c => c.Username == User.Identity.Name)
+                                 .Sum(c => (int?)c.Quantity) ?? 0;
+    }
+}
+<style>
+    .shop-banner {
+        background: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.8)), url('/images/T1 Faker.jpg') no-repeat center top;
+        background-size: cover;
+        height: 500px;
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        padding-bottom: 40px;
+        border-bottom: 2px solid #e3002b;
+        margin-top: -16px;
+    }
+
+    /* THẺ SẢN PHẨM CỐ ĐỊNH CHIỀU CAO */
+    .product-card {
+        background-color: #111;
+        border: 1px solid #333;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+        overflow: hidden;
+        height: 100%; /* Giúp các thẻ trong cùng hàng có chiều cao bằng nhau */
+        display: flex;
+        flex-direction: column;
+    }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            border-color: #e3002b;
+            box-shadow: 0 10px 20px rgba(227, 0, 43, 0.2);
+        }
+
+    /* Khu vực chứa ảnh sản phẩm */
+    .product-img-wrapper {
+        height: 250px;
+        background-color: #222;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        position: relative;
+        flex-shrink: 0;
+    }
+
+        .product-img-wrapper img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            transition: 0.4s;
+        }
+
+    .product-card:hover .product-img-wrapper img {
+        transform: scale(1.1);
+    }
+
+    /* Tên sản phẩm cố định chiều cao (2 dòng) */
+    .product-name-heading {
+        color: white;
+        font-weight: bold;
+        margin-bottom: 5px;
+        height: 48px; /* Giữ chỗ đúng cho 2 dòng chữ */
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: 2; /* Hiện tối đa 2 dòng, dư hiện dấu ... */
+        -webkit-box-orient: vertical;
+        line-height: 1.5;
+        font-size: 1.1rem;
+    }
+
+    /* Giá tiền & Nút bấm */
+    .product-price {
+        color: #e3002b;
+        font-size: 1.3rem;
+        font-weight: 900;
+    }
+
+    /* Đẩy phần thông tin giá và nút xuống đáy thẻ */
+    .product-info-footer {
+        margin-top: auto;
+    }
+
+    .btn-add-cart {
+        background-color: transparent;
+        color: #fff;
+        border: 2px solid #e3002b;
+        border-radius: 5px;
+        padding: 10px 15px;
+        font-weight: bold;
+        transition: 0.3s;
+        width: 100%;
+        text-transform: uppercase;
+    }
+
+        .btn-add-cart:hover {
+            background-color: #e3002b;
+            color: white;
+        }
+
+    .cart-float-btn {
+        position: fixed;
+        bottom: 100px;
+        right: 30px;
+        background-color: #e3002b;
+        color: white;
+        width: 65px;
+        height: 65px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        box-shadow: 0 4px 15px rgba(227, 0, 43, 0.5);
+        cursor: pointer;
+        transition: 0.3s;
+        z-index: 1000;
+        text-decoration: none;
+    }
+
+        .cart-float-btn:hover {
+            transform: scale(1.1);
+            background-color: #ff1a40;
+            color: white;
+        }
+
+    .shop-float-badge {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        background-color: white;
+        color: #e3002b;
+        font-size: 0.9rem;
+        font-weight: 900;
+        width: 25px;
+        height: 25px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid #e3002b;
+    }
+</style>
+
+<div class="shop-banner mb-5">
+    <div class="text-center">
+        <h1 class="fw-bold text-uppercase" style="color: #e6d083; letter-spacing: 4px; font-size: 3.5rem; text-shadow: 0 0 10px rgba(230, 208, 131, 0.6), 0 0 20px rgba(230, 208, 131, 0.4), 0 0 30px rgba(230, 208, 131, 0.2), 3px 3px 6px rgba(0,0,0,0.9);">
+            T1 OFFICIAL SHOP
+        </h1>
+        <div class="my-2" style="color: #e6d083; font-size: 1.3rem; text-shadow: 0 0 10px rgba(230, 208, 131, 0.6), 0 0 20px rgba(230, 208, 131, 0.4), 0 0 30px rgba(230, 208, 131, 0.2), 3px 3px 6px rgba(0,0,0,0.9);">
+            <i class="fas fa-star mx-1"></i><i class="fas fa-star mx-1"></i><i class="fas fa-star mx-1"></i><i class="fas fa-star mx-1"></i><i class="fas fa-star mx-1"></i><i class="fas fa-star mx-1"></i>
+        </div>
+    </div>
+</div>
+
+<div class="container mb-5 pb-5">
+    <div class="row mb-4 align-items-center">
+        <div class="col-md-6">
+            <h3 class="text-white fw-bold mb-0 border-start border-4 border-danger ps-3">Sản Phẩm</h3>
+        </div>
+        <div class="col-md-6 text-md-end mt-3 mt-md-0">
+            <form asp-controller="Shop" asp-action="Index" method="get" id="sortForm">
+                <select name="sortOrder" class="form-select bg-dark text-light border-secondary d-inline-block w-auto fw-bold" onchange="this.form.submit();">
+                    <option value="newest" selected="@(ViewBag.CurrentSort == "newest" ? "selected" : null)">Sắp xếp: Mới nhất</option>
+                    <option value="price_asc" selected="@(ViewBag.CurrentSort == "price_asc" ? "selected" : null)">Giá: Thấp đến Cao</option>
+                    <option value="price_desc" selected="@(ViewBag.CurrentSort == "price_desc" ? "selected" : null)">Giá: Cao xuống Thấp</option>
+                </select>
+            </form>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        @if (Model == null || !Model.Any())
+        {
+            <div class="col-12 text-center py-5">
+                <h5 class="text-muted">Shop hiện tại đang cập nhật sản phẩm...</h5>
+            </div>
+        }
+        else
+        {
+            @foreach (var item in Model)
+            {
+                var firstImage = string.IsNullOrEmpty(item.ImageUrl) ? "https://via.placeholder.com/250x250/333/fff?text=T1+Shop" : item.ImageUrl.Split(';')[0];
+
+                <div class="col-12 col-sm-6 col-lg-3">
+                    <div class="product-card p-3 shadow-sm">
+                        <div class="product-img-wrapper mb-3 rounded">
+                            <a href="/Shop/Details/@item.ProductId">
+                                <img src="@firstImage" alt="@item.ProductName">
+                            </a>
+                        </div>
+                        <a href="/Shop/Details/@item.ProductId" class="text-decoration-none">
+                            <h5 class="product-name-heading">@item.ProductName</h5>
+                        </a>
+                        <p class="text-muted small mb-2">T1 Official</p>
+
+                        <div class="product-info-footer">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <span class="product-price">@item.Price.ToString("N0")₫</span>
+                            </div>
+                            <a href="/Shop/Details/@item.ProductId" class="btn btn-add-cart d-block text-center text-decoration-none">Chi tiết sản phẩm</a>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+</div>
+
+@* NÚT GIỎ HÀNG NỔI *@
+<a href="/Cart" class="cart-float-btn shadow-lg">
+    <i class="fas fa-shopping-cart"></i>
+    <span class="badge shop-float-badge cart-badge-count" style="@(shopCartCount > 0 ? "" : "display:none")">@shopCartCount</span>
+</a>

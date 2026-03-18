@@ -1,0 +1,440 @@
+﻿@using T1EsportsWeb.Models
+@inject T1DbContext _context
+
+@{
+    ViewData["Title"] = "Trung Tâm Đổi Thưởng T1";
+    int currentPoints = ViewBag.CurrentPoints ?? 0;
+    var shopVouchers = ViewBag.ShopVouchers as List<T1EsportsWeb.Models.Voucher>;
+    var allMyVouchers = ViewBag.MyVouchers as List<T1EsportsWeb.Models.UserVoucher> ?? new List<T1EsportsWeb.Models.UserVoucher>();
+    var activeVouchers = allMyVouchers.Where(v => v.ExpirationDate >= DateTime.Now).ToList();
+    var expiredVouchers = allMyVouchers.Where(v => v.ExpirationDate < DateTime.Now && v.ExpirationDate.Year > 2000).ToList();
+}
+
+<style>
+    .reward-header {
+        background: linear-gradient(90deg, #111 0%, #3a000a 100%);
+        border-bottom: 2px solid #e3002b;
+    }
+
+    .voucher-card {
+        background-color: #1a1a1a;
+        border: 1px solid #333;
+        border-radius: 12px;
+        transition: 0.3s;
+        position: relative;
+        overflow: hidden;
+    }
+
+        .voucher-card:hover {
+            transform: translateY(-5px);
+            border-color: #e3002b;
+            box-shadow: 0 10px 20px rgba(227, 0, 43, 0.2);
+        }
+
+    .discount-badge {
+        background-color: #e3002b;
+        color: white;
+        font-size: 2rem;
+        font-weight: bold;
+        padding: 20px 0;
+        text-align: center;
+        border-bottom: 2px dashed #111;
+    }
+
+    .cost-badge {
+        background-color: #222;
+        color: #f3c623;
+        font-weight: bold;
+        padding: 5px 15px;
+        border-radius: 20px;
+        display: inline-block;
+        border: 1px solid #f3c623;
+    }
+
+    /* KHO VOUCHER CỦA BẠN - CỐ ĐỊNH KÍCH THƯỚC */
+    .my-voucher-card {
+        background-color: #1a1a1b;
+        border: 1px solid #f3c623;
+        border-radius: 8px;
+        padding: 20px 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: transform 0.2s;
+        height: 100%; /* Giúp các thẻ trong cùng 1 hàng bằng nhau */
+    }
+
+        .my-voucher-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(243, 198, 35, 0.15);
+        }
+
+    .my-voucher-info {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+        width: calc(100% - 60px); /* Đảm bảo không đẩy nút copy văng ra ngoài */
+    }
+
+    .my-voucher-discount {
+        color: #f3c623;
+        font-size: 1.4rem;
+        font-weight: 900;
+        letter-spacing: 0.5px;
+    }
+
+    .my-voucher-code-pill {
+        background: #111;
+        border: 2px dashed #f3c623;
+        border-radius: 6px;
+        padding: 6px 12px;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+        max-width: 100%; /* Tránh tràn ngang */
+    }
+
+    .code-label {
+        background: #f3c623;
+        color: #000;
+        font-weight: 900;
+        font-size: 0.8rem;
+        padding: 3px 6px;
+        border-radius: 4px;
+        letter-spacing: 1px;
+        flex-shrink: 0;
+    }
+
+    .code-text {
+        color: #fff;
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 1.25rem;
+        font-weight: bold;
+        letter-spacing: 2px;
+        word-break: break-all; /* Bắt buộc xuống dòng nếu mã quá dài */
+    }
+
+    .my-voucher-expiry {
+        color: #e3002b;
+        font-size: 0.95rem;
+        font-weight: 800;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .my-voucher-copy-btn {
+        background-color: transparent;
+        border: 1px solid #fff;
+        color: #fff;
+        border-radius: 50%;
+        width: 48px;
+        height: 48px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 1.15rem;
+        flex-shrink: 0; /* Giữ cho nút luôn tròn */
+    }
+
+        .my-voucher-copy-btn:hover {
+            background-color: rgba(255, 255, 255, 0.15);
+            transform: scale(1.05);
+            color: #f3c623;
+            border-color: #f3c623;
+        }
+
+    .my-voucher-card.expired {
+        border-color: #333;
+        opacity: 0.5;
+    }
+
+        .my-voucher-card.expired .my-voucher-discount {
+            color: #777;
+        }
+
+        .my-voucher-card.expired .my-voucher-code-pill {
+            border-color: #444;
+        }
+
+        .my-voucher-card.expired .code-label {
+            background: #444;
+            color: #999;
+        }
+
+        .my-voucher-card.expired .code-text {
+            color: #555;
+            text-decoration: line-through;
+        }
+
+        .my-voucher-card.expired .my-voucher-expiry {
+            color: #777;
+        }
+
+        .my-voucher-card.expired .my-voucher-copy-btn {
+            border-color: #444;
+            color: #444;
+            cursor: not-allowed;
+        }
+
+    .t1-toast {
+        position: fixed;
+        bottom: 40px;
+        right: -600px;
+        background-color: #1e1e2d;
+        border-radius: 12px;
+        padding: 20px 25px;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        transition: right 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+        z-index: 9999;
+    }
+
+        .t1-toast.show {
+            right: 40px;
+        }
+
+    .t1-toast-success {
+        border: 1px solid #f3c623;
+        box-shadow: 0 0 25px rgba(243, 198, 35, 0.5);
+    }
+
+    .toast-code-box {
+        background-color: #111;
+        border: 1px solid #ff2a5f;
+        color: #ff2a5f;
+        font-weight: bold;
+        padding: 6px 15px;
+        border-radius: 8px;
+        font-family: 'Courier New', Courier, monospace;
+        letter-spacing: 1px;
+    }
+
+    .t1-toast-error {
+        border-left: 4px solid #e3002b;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+    }
+</style>
+
+@if (TempData["SuccessMsg"] != null)
+{
+    string successStr = TempData["SuccessMsg"].ToString();
+    string[] parts = successStr.Split(':');
+    string voucherCode = parts.Length > 1 ? parts[1].Trim() : "";
+
+    <div id="rewardToast" class="t1-toast t1-toast-success">
+        <div style="color: #f3c623; font-size: 3.5rem;"><i class="fas fa-gift"></i></div>
+        <div>
+            <strong class="d-block text-warning text-uppercase mb-1" style="font-size: 1.3rem; letter-spacing: 1px;">CHÚC MỪNG! ĐỔI QUÀ THÀNH CÔNG</strong>
+            <span class="text-white" style="font-size: 0.95rem;">Voucher của bạn đã được lưu vào kho an toàn.</span>
+            @if (!string.IsNullOrEmpty(voucherCode))
+            {
+                <div class="mt-3 d-flex align-items-center gap-3">
+                    <span class="text-light" style="font-size: 0.95rem;">Mã giảm giá là:</span>
+                    <div class="toast-code-box">@voucherCode <i class="fas fa-copy ms-2"></i></div>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+<div id="copyToast" class="t1-toast t1-toast-success" style="z-index: 10000;">
+    <div style="color: #f3c623; font-size: 2.5rem;"><i class="fas fa-clipboard-check"></i></div>
+    <div>
+        <strong class="d-block text-warning text-uppercase mb-1" style="font-size: 1.15rem;">Đã sao chép mã!</strong>
+        <span class="text-white" style="font-size: 0.9rem;">Dán mã này ở bước thanh toán nhé.</span>
+        <div class="mt-2"><code id="copiedCodeDisplay" class="toast-code-box d-inline-block mt-1"></code></div>
+    </div>
+</div>
+
+@if (TempData["ErrorMsg"] != null)
+{
+    <div id="errorToast" class="t1-toast t1-toast-error border border-secondary border-start-0">
+        <div style="color: #e3002b; font-size: 2.5rem;"><i class="fas fa-exclamation-triangle"></i></div>
+        <div>
+            <strong class="d-block text-white" style="font-size: 1.15rem;">Thông báo!</strong>
+            <span class="text-muted" style="font-size: 0.95rem;">@TempData["ErrorMsg"]</span>
+        </div>
+    </div>
+}
+
+<div class="reward-header py-5 mb-5 mt-n3">
+    <div class="container text-center">
+        <h1 class="text-white fw-bold text-uppercase" style="letter-spacing: 2px;">
+            <i class="fas fa-store me-3 text-danger"></i>Trạm Đổi Thưởng
+        </h1>
+        <p class="text-muted fs-5">Dùng T1 Points cày được từ mini-game để đổi lấy mã giảm giá mua sắm!</p>
+        <div class="mt-4 d-inline-block p-3 rounded-pill" style="background-color: rgba(0,0,0,0.6); border: 1px solid #f3c623;">
+            <h4 class="mb-0 text-white">Số dư của bạn: <span class="text-warning fw-bold fs-2 ms-2">@currentPoints <i class="fas fa-coins"></i></span></h4>
+        </div>
+    </div>
+</div>
+
+<div class="container mb-5">
+    <div class="row justify-content-center g-4 mt-1">
+        @if (shopVouchers != null && shopVouchers.Any())
+        {
+            foreach (var v in shopVouchers)
+            {
+                string badgeStyle = "background-color: #e3002b;";
+                if (v.DiscountPercent >= 5) badgeStyle = "background: linear-gradient(45deg, #e3002b, #f3c623); color: #000;";
+                else if (v.DiscountPercent >= 3) badgeStyle = "background-color: #c90026;";
+
+                <div class="col-md-4">
+                    <div class="voucher-card h-100 d-flex flex-column" style="@(v.DiscountPercent >= 5 ? "border-color: #f3c623;" : "")">
+                        <div class="discount-badge" style="@badgeStyle">GIẢM @v.DiscountPercent%</div>
+                        <div class="p-4 text-center flex-grow-1 d-flex flex-column justify-content-between">
+                            <div>
+                                <h4 class="@(v.DiscountPercent >= 5 ? "text-warning" : "text-white") fw-bold mb-3">
+                                    @(v.DiscountPercent >= 5 ? Html.Raw("<i class='fas fa-crown me-2'></i>") : "") @v.Title
+                                </h4>
+                                <p class="text-muted small">@v.Description</p>
+                                <div class="cost-badge mb-2"><i class="fas fa-coins me-1"></i> @v.CostPoints Points</div>
+                                <div class="text-light small mb-4">
+                                    <i class="fas fa-box-open text-secondary me-1"></i> Còn lại:
+                                    @if (v.Quantity == -1)
+                                    {
+                                        <strong class="text-success">Không giới hạn</strong>
+                                    }
+                                    else
+                                    {
+
+                                        <strong class="text-danger">@v.Quantity</strong>
+                                        <span class="text-muted">lượt</span>
+         }
+                                </div>
+                            </div>
+                            <form asp-controller="Arcade" asp-action="Redeem" method="post">
+                                <input type="hidden" name="voucherId" value="@v.Id" />
+                                <button type="submit" class="btn @(v.DiscountPercent >= 5 ? "btn-warning text-dark" : "btn-danger") w-100 fw-bold @(currentPoints < v.CostPoints ? "disabled" : "")">
+                                    @(currentPoints < v.CostPoints ? "CHƯA ĐỦ ĐIỂM" : "ĐỔI NGAY")
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="col-12 text-center py-5">
+                <h4 class="text-muted"><i class="fas fa-box-open fs-1 mb-3 d-block"></i>Trạm đổi thưởng hiện đang hết mã.</h4>
+            </div>
+        }
+    </div>
+
+    @if (activeVouchers.Any())
+    {
+        <div class="mt-5 pt-4 border-top border-secondary">
+            <h3 class="text-white fw-bold mb-4"><i class="fas fa-ticket-alt text-warning me-2"></i>Kho Voucher Của Bạn</h3>
+            <div class="row g-3">
+                @foreach (var v in activeVouchers)
+                {
+                    <div class="col-md-6 col-lg-4">
+                        <div class="my-voucher-card">
+                            <div class="my-voucher-info">
+                                <div class="my-voucher-discount">Mức Giảm: @v.DiscountPercent%</div>
+
+                                @{
+                                    string displayCode = string.IsNullOrEmpty(v.VoucherCode) ? "LỖI-THẺ-CŨ" : v.VoucherCode;
+                                }
+                                <div class="my-voucher-code-pill">
+                                    <span class="code-label">CODE</span>
+                                    <span class="code-text">@displayCode</span>
+                                </div>
+
+                                @{
+                                    int daysLeft = (int)(v.ExpirationDate - DateTime.Now).TotalDays;
+                                }
+                                <div class="my-voucher-expiry">
+                                    <i class="far fa-clock"></i>
+                                    Hết hạn: @v.ExpirationDate.ToString("dd/MM/yyyy") (Còn @daysLeft ngày)
+                                </div>
+                            </div>
+                            <button class="my-voucher-copy-btn" title="Copy mã" onclick="copyVoucherCode('@displayCode')">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+    @if (expiredVouchers.Any())
+    {
+        <div class="mt-5 pt-4 border-top border-secondary">
+            <h4 class="text-muted fw-bold mb-4"><i class="fas fa-history me-2"></i>Voucher Đã Hết Hạn</h4>
+            <div class="row g-3">
+                @foreach (var v in expiredVouchers)
+                {
+                    <div class="col-md-6 col-lg-4">
+                        <div class="my-voucher-card expired">
+                            <div class="my-voucher-info">
+                                <div class="my-voucher-discount">Mức Giảm: @v.DiscountPercent%</div>
+
+                                @{
+                                    string displayCode = string.IsNullOrEmpty(v.VoucherCode) ? "LỖI-THẺ-CŨ" : v.VoucherCode;
+                                }
+                                <div class="my-voucher-code-pill">
+                                    <span class="code-label">CODE</span>
+                                    <span class="code-text">@displayCode</span>
+                                </div>
+
+                                <div class="my-voucher-expiry">
+                                    <i class="fas fa-times-circle"></i> Đã hết hạn vào @v.ExpirationDate.ToString("dd/MM/yyyy")
+                                </div>
+                            </div>
+                            <button class="my-voucher-copy-btn disabled" disabled>
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+    <div class="text-center mt-5">
+        <a asp-controller="Arcade" asp-action="Index" class="btn btn-outline-light fw-bold px-4 py-2 rounded-pill">
+            <i class="fas fa-gamepad me-2"></i> Tiếp tục cày game
+        </a>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let copyTimeout;
+        function copyVoucherCode(code) {
+            navigator.clipboard.writeText(code);
+            var copyToast = document.getElementById('copyToast');
+            var codeDisplay = document.getElementById('copiedCodeDisplay');
+            if (copyToast && codeDisplay) {
+                codeDisplay.innerHTML = code + ' <i class="fas fa-copy ms-2"></i>';
+                copyToast.classList.add('show');
+                if (copyTimeout) clearTimeout(copyTimeout);
+                copyTimeout = setTimeout(function () {
+                    copyToast.classList.remove('show');
+                }, 3000);
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            var successToast = document.getElementById('rewardToast');
+            if (successToast) {
+                setTimeout(function () { successToast.classList.add('show'); }, 100);
+                setTimeout(function () { successToast.classList.remove('show'); }, 4000);
+            }
+            var errorToast = document.getElementById('errorToast');
+            if (errorToast) {
+                setTimeout(function () { errorToast.classList.add('show'); }, 100);
+                setTimeout(function () { errorToast.classList.remove('show'); }, 3500);
+            }
+        });
+    </script>
+}

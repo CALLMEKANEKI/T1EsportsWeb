@@ -1,0 +1,325 @@
+﻿@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Đăng ký tài khoản - T1 ESPORTS</title>
+
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+
+    <style>
+        /* =========================================
+                   1. FORM INPUT STYLES
+                ========================================= */
+        .vng-dark-input {
+            background-color: #111 !important;
+            border: 2px solid #444;
+            border-radius: 8px;
+            padding: 16px 20px;
+            color: #ffffff !important;
+            font-weight: bold;
+            font-size: 1.1rem;
+            transition: 0.3s;
+        }
+
+            .vng-dark-input:focus {
+                border-color: #e3002b !important;
+                background-color: #111 !important;
+                color: #ffffff !important;
+                box-shadow: none !important;
+                outline: none !important;
+            }
+
+            .vng-dark-input:-webkit-autofill,
+            .vng-dark-input:-webkit-autofill:hover,
+            .vng-dark-input:-webkit-autofill:focus,
+            .vng-dark-input:-webkit-autofill:active {
+                -webkit-box-shadow: 0 0 0 30px #111 inset !important;
+                -webkit-text-fill-color: #ffffff !important;
+                transition: background-color 5000s ease-in-out 0s;
+            }
+
+            .vng-dark-input::placeholder {
+                color: #777 !important;
+                font-weight: 800;
+                text-transform: uppercase;
+                font-size: 0.9rem;
+            }
+
+        /* =========================================
+                   2. PASSWORD FIELD, EYE ICON & RULES
+                ========================================= */
+        .password-container {
+            position: relative;
+        }
+
+        .password-input-field {
+            padding-right: 50px !important;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #777;
+            font-size: 1.2rem;
+            transition: 0.3s;
+        }
+
+            .toggle-password:hover {
+                color: #e3002b;
+            }
+
+        /* Bảng hiển thị điều kiện mật khẩu */
+        .password-rules {
+            font-size: 0.85rem;
+            margin-top: 10px;
+            padding-left: 5px;
+            display: none;
+            transition: 0.3s;
+        }
+
+            .password-rules ul {
+                list-style-type: none;
+                padding-left: 0;
+                margin-bottom: 0;
+            }
+
+            .password-rules li {
+                margin-bottom: 8px;
+                font-weight: bold;
+                transition: color 0.3s;
+                line-height: 1.4;
+            }
+
+        .rule-valid {
+            color: #28a745 !important;
+        }
+
+        .rule-invalid {
+            color: #888 !important;
+        }
+
+        /* =========================================
+                   3. BUTTONS & LINKS
+                ========================================= */
+        .btn-google-full {
+            width: 100%;
+            height: 60px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #fff;
+            color: #000;
+            font-size: 1.1rem;
+            font-weight: 800;
+            text-decoration: none;
+            transition: 0.2s;
+        }
+
+            .btn-google-full:hover {
+                opacity: 0.9;
+                transform: translateY(-3px);
+                color: #000;
+            }
+
+        .arrow-submit-btn {
+            background-color: #e3002b;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            width: 80px;
+            height: 80px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.2rem;
+            transition: 0.3s;
+        }
+
+            .arrow-submit-btn:hover {
+                background-color: #ff1a40;
+                transform: scale(1.05);
+                box-shadow: 0 0 25px rgba(227, 0, 43, 0.6);
+            }
+
+        .forgot-password-link {
+            color: #aaa;
+            font-size: 1rem;
+            font-weight: bold;
+            text-decoration: none;
+            transition: 0.3s;
+        }
+
+            .forgot-password-link:hover {
+                color: #e3002b;
+                text-decoration: underline;
+            }
+    </style>
+</head>
+<body style="background-color: #000; overflow-x: hidden;">
+
+    <div class="row g-0" style="height: 100vh;">
+
+        <div class="col-md-8 d-none d-md-block" style="background: url('/images/T1 Skin CTKG.jpg') no-repeat center center; background-size: cover;">
+            <div style="background-color: rgba(0, 0, 0, 0.2); width: 100%; height: 100%;"></div>
+        </div>
+
+        <div class="col-md-4 d-flex flex-column align-items-center py-4" style="background-color: #111; border-left: 1px solid #333; position: relative; overflow-y: auto;">
+
+            <div class="w-100 d-flex justify-content-between align-items-center px-4">
+                <img src="~/images/t1-logo.png" alt="T1 Logo" style="height: 130px;">
+                <a asp-controller="Home" asp-action="Index" class="text-muted" style="text-decoration: none; font-weight: bold; font-size: 1.2rem;">
+                    ✕ Đóng
+                </a>
+            </div>
+
+            <div class="w-100 px-4 px-xl-5 mt-4" style="max-width: 550px;">
+
+                <div class="text-center mb-4">
+                    <h2 style="color: #fff; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; font-size: 2.2rem;">Đăng Ký</h2>
+                </div>
+
+                @if (ViewBag.Error != null)
+                {
+                    <div class="alert alert-danger text-center fw-bold py-2" style="font-size: 1rem;" role="alert">
+                        @ViewBag.Error
+                    </div>
+                }
+
+                <form asp-controller="Account" asp-action="Register" method="post" class="text-start">
+
+                    <div class="mb-4">
+                        <input type="text" name="username" class="form-control w-100 vng-dark-input" required placeholder="USERNAME">
+                    </div>
+
+                    <div class="mb-4">
+                        <input type="email" name="email" class="form-control w-100 vng-dark-input" required placeholder="EMAIL">
+                    </div>
+
+                    <div class="mb-4">
+                        <div class="password-container">
+                            <input type="password" name="password" id="passwordInput" class="form-control w-100 vng-dark-input password-input-field" required placeholder="PASSWORD">
+                            <i class="fas fa-eye toggle-password" id="togglePasswordIcon"></i>
+                        </div>
+
+                        <div class="password-rules text-start" id="passwordRules">
+                            <ul>
+                                <li id="rule-length" class="rule-invalid">
+                                    <i class="fas fa-times me-2"></i>Mật khẩu phải dài ít nhất 8 kí tự.
+                                </li>
+                                <li id="rule-types" class="rule-invalid">
+                                    <i class="fas fa-times me-2"></i>Mật khẩu phải chứa hai trong số các ký tự sau: chữ cái, số hoặc ký hiệu.
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <div class="password-container">
+                            <input type="password" name="confirmPassword" id="confirmPasswordInput" class="form-control w-100 vng-dark-input password-input-field" required placeholder="CONFIRM PASSWORD">
+                            <i class="fas fa-eye toggle-password" id="toggleConfirmPasswordIcon"></i>
+                        </div>
+                    </div>
+
+                    <div class="mb-4 mt-2">
+                        <a asp-controller="Account" asp-action="GoogleLogin" class="btn-google-full shadow-sm">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" style="width:30px; margin-right: 12px;" alt="Google" />
+                            Tiếp tục với Google
+                        </a>
+                    </div>
+
+                    <div class="text-center mt-3 mb-4">
+                        <a asp-controller="Account" asp-action="Login" class="forgot-password-link">
+                            Đã có tài khoản? Đăng nhập ngay
+                        </a>
+                    </div>
+
+                    <div class="text-center mt-4 mb-5">
+                        <button type="submit" class="arrow-submit-btn">
+                            <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // Ẩn/Hiện mật khẩu
+        function setupPasswordToggle(iconId, inputId) {
+            document.getElementById(iconId).addEventListener('click', function () {
+                const input = document.getElementById(inputId);
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    this.classList.remove('fa-eye');
+                    this.classList.add('fa-eye-slash');
+                } else {
+                    input.type = 'password';
+                    this.classList.remove('fa-eye-slash');
+                    this.classList.add('fa-eye');
+                }
+            });
+        }
+
+        setupPasswordToggle('togglePasswordIcon', 'passwordInput');
+        setupPasswordToggle('toggleConfirmPasswordIcon', 'confirmPasswordInput');
+
+        // Logic check điều kiện mật khẩu mới
+        const passwordInput = document.getElementById('passwordInput');
+        const passwordRules = document.getElementById('passwordRules');
+
+        passwordInput.addEventListener('focus', function() {
+            passwordRules.style.display = 'block';
+        });
+
+        passwordInput.addEventListener('keyup', function() {
+            const val = passwordInput.value;
+
+            // 1. Check độ dài >= 8
+            validateRule('rule-length', val.length >= 8);
+
+            // 2. Check xem có chứa ít nhất 2 trong 3 loại: chữ cái, số, ký hiệu không
+            const hasLetter = /[a-zA-Z]/.test(val);
+            const hasNumber = /[0-9]/.test(val);
+            const hasSymbol = /[^a-zA-Z0-9\s]/.test(val);
+
+            let typesCount = 0;
+            if (hasLetter) typesCount++;
+            if (hasNumber) typesCount++;
+            if (hasSymbol) typesCount++;
+
+            validateRule('rule-types', typesCount >= 2);
+        });
+
+        // Hàm đổi màu Xanh/Xám cho giao diện
+        function validateRule(elementId, isValid) {
+            const el = document.getElementById(elementId);
+            const icon = el.querySelector('i');
+
+            if (isValid) {
+                el.classList.remove('rule-invalid');
+                el.classList.add('rule-valid');
+                icon.classList.remove('fa-times');
+                icon.classList.add('fa-check');
+            } else {
+                el.classList.remove('rule-valid');
+                el.classList.add('rule-invalid');
+                icon.classList.remove('fa-check');
+                icon.classList.add('fa-times');
+            }
+        }
+    </script>
+</body>
+</html>

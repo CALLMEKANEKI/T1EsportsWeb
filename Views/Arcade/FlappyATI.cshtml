@@ -1,0 +1,363 @@
+﻿@{
+    ViewData["Title"] = "Flappy Faker - Vượt Chướng Ngại Vật";
+}
+
+<style>
+    .game-wrapper {
+        background-color: #111;
+        border: 2px solid #333;
+        border-radius: 15px;
+        padding: 20px;
+        max-width: 940px; /* Khung game gọn gàng */
+        margin: 0 auto;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+        position: relative;
+    }
+
+    #gameCanvas {
+        background-color: #222;
+        border-radius: 10px;
+        display: block;
+        margin: 0 auto;
+        cursor: pointer;
+        border: 2px solid #e3002b;
+    }
+
+    .game-ui-layer {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        width: 85%;
+        max-width: 500px;
+        background: rgba(0, 0, 0, 0.85);
+        padding: 30px 20px;
+        border-radius: 15px;
+        border: 1px solid #f3c623;
+        box-shadow: 0 0 20px rgba(243, 198, 35, 0.3);
+    }
+
+    .hidden {
+        display: none !important;
+    }
+
+    .btn-t1-return {
+        background-color: #e3002b;
+        color: white;
+        font-weight: bold;
+        text-transform: uppercase;
+        border: 2px solid #e3002b;
+        border-radius: 8px;
+        padding: 8px 20px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 10px rgba(227, 0, 43, 0.5);
+        display: inline-block;
+        text-decoration: none;
+    }
+
+        .btn-t1-return:hover {
+            background-color: transparent;
+            color: #e3002b;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(227, 0, 43, 0.7);
+        }
+</style>
+
+<div class="container mt-4 pt-3 mb-5">
+
+    <div class="d-flex justify-content-end mb-2">
+        <a asp-controller="Arcade" asp-action="Index" class="btn-t1-return">
+            <i class="fas fa-sign-out-alt me-2"></i> Trở về Sảnh
+        </a>
+    </div>
+
+    <div class="text-center mb-4">
+        <h1 class="fw-bold text-uppercase" style="color: #e3002b; letter-spacing: 3px; text-shadow: 2px 2px 4px rgba(0,0,0,0.9);">
+            <i class="fas fa-dove me-3"></i>FLAPPY ATI
+        </h1>
+        <p class="text-light fs-5">Click chuột hoặc bấm phím SPACE để bay. Điểm càng cao Voucher càng khủng</p>
+    </div>
+
+    <div class="game-wrapper">
+        <canvas id="gameCanvas" width="900" height="550"></canvas>
+
+        <div id="startScreen" class="game-ui-layer">
+            <h2 class="text-white fw-bold mb-3">Sẵn Sàng Chưa?</h2>
+            <p class="text-muted mb-4">Nhấn nút bên dưới hoặc Click vào màn hình để bắt đầu bay!</p>
+            <button id="startBtn" class="btn btn-danger fw-bold px-4 py-2">BẮT ĐẦU</button>
+        </div>
+
+        <div id="gameOverScreen" class="game-ui-layer hidden">
+            <h2 class="text-danger fw-bold mb-2">GAME OVER</h2>
+            <h4 class="text-white mb-3">Điểm của bạn: <span id="finalScore" class="text-warning fs-2">0</span></h4>
+
+            <div id="rewardMsg" class="alert alert-success fw-bold hidden mb-3 p-2" style="font-size: 0.9rem;">
+                <i class="fas fa-gift"></i> Nhận Voucher: T1FLAPPY
+            </div>
+
+            <button id="restartBtn" class="btn btn-outline-light fw-bold px-4 py-2 mt-2">CHƠI LẠI</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
+    const startScreen = document.getElementById("startScreen");
+    const gameOverScreen = document.getElementById("gameOverScreen");
+    const startBtn = document.getElementById("startBtn");
+    const restartBtn = document.getElementById("restartBtn");
+    const finalScore = document.getElementById("finalScore");
+    const rewardMsg = document.getElementById("rewardMsg");
+
+    let frames = 0;
+    let score = 0;
+    let gameState = "START";
+
+    // Khởi đầu êm ái hơn với tốc độ 2.5
+    let currentSpeed = 2.5;
+    let currentGap = 220;
+    const birdImg = new Image();
+    birdImg.src = '/images/T1-Ati.png';
+
+    const bird = {
+        x: 200,
+        y: 300,
+        width: 55,
+        height: 55,
+        gravity: 0.22,   // Trọng lực rơi từ từ, dễ thở hơn
+        velocity: 0,
+        jump: -5.5,      // Lực nhảy vừa phải
+
+        draw: function() {
+            ctx.drawImage(birdImg, this.x, this.y, this.width, this.height);
+        },
+
+        update: function() {
+            this.velocity += this.gravity;
+            this.y += this.velocity;
+
+            if (this.y + this.height >= canvas.height) {
+                this.y = canvas.height - this.height;
+                gameState = "GAMEOVER";
+                showGameOver();
+            }
+            if (this.y <= 0) {
+                this.y = 0;
+                this.velocity = 0;
+            }
+        },
+        flap: function() { this.velocity = this.jump; }
+    };
+
+    const pipes = {
+        position: [],
+        width: 70,
+
+        draw: function() {
+            for (let i = 0; i < this.position.length; i++) {
+                let p = this.position[i];
+                let topY = p.y;
+                let bottomY = p.y + p.gap;
+
+                let gradient = ctx.createLinearGradient(p.x, 0, p.x + this.width, 0);
+                gradient.addColorStop(0, "#5ba316");
+                gradient.addColorStop(1, "#a4e344");
+
+                ctx.fillStyle = gradient;
+                ctx.fillRect(p.x, 0, this.width, topY);
+                ctx.fillRect(p.x, bottomY, this.width, canvas.height - bottomY);
+
+                ctx.strokeStyle = "#38660b";
+                ctx.lineWidth = 3;
+                ctx.strokeRect(p.x, 0, this.width, topY);
+                ctx.strokeRect(p.x, bottomY, this.width, canvas.height - bottomY);
+            }
+        },
+
+        update: function() {
+            if (this.position.length === 0) {
+                this.position.push({
+                    x: 600,
+                    y: Math.random() * (canvas.height - currentGap - 100) + 50,
+                    gap: currentGap
+                });
+            } else {
+                let lastPipe = this.position[this.position.length - 1];
+                if (lastPipe.x <= canvas.width - 350) {
+                    this.position.push({
+                        x: lastPipe.x + 350,
+                        y: Math.random() * (canvas.height - currentGap - 100) + 50,
+                        gap: currentGap
+                    });
+                }
+            }
+
+            for (let i = 0; i < this.position.length; i++) {
+                let p = this.position[i];
+                p.x -= currentSpeed; // Ống di chuyển theo tốc độ hiện tại
+
+                if (p.x + this.width <= 0) {
+                    this.position.shift();
+                    score++;
+                    i--;
+                }
+
+                let bottomY = p.y + p.gap;
+                if (
+                    bird.x + bird.width - 12 > p.x && bird.x + 12 < p.x + this.width &&
+                    (bird.y + 12 < p.y || bird.y + bird.height - 12 > bottomY)
+                ) {
+                    gameState = "GAMEOVER";
+                    showGameOver();
+                }
+            }
+        },
+        reset: function() {
+            this.position = [];
+        }
+    };
+
+    // THUẬT TOÁN TĂNG ĐỘ KHÓ MƯỢT MÀ VÀ VỪA PHẢI
+    function updateDifficulty() {
+        // Tốc độ max là 6.0, mỗi điểm tăng 0.08
+        currentSpeed = Math.min(6.0, 2.5 + score * 0.08);
+        // Khe hở hẹp nhất là 140px để lách qua thoải mái hơn
+        currentGap = Math.max(140, 220 - score * 2);
+    }
+
+    // GIAO DIỆN HIỂN THỊ ĐIỂM CHUẨN ESPORTS
+    function drawScore() {
+        ctx.save();
+        ctx.shadowColor = "rgba(0, 0, 0, 0.8)";
+        ctx.shadowBlur = 8;
+        ctx.shadowOffsetX = 3;
+        ctx.shadowOffsetY = 3;
+
+        ctx.font = "900 20px 'Montserrat', sans-serif";
+        ctx.fillStyle = "#f3c623";
+        ctx.textAlign = "center";
+        ctx.fillText("SCORE", canvas.width / 2, 45);
+
+        ctx.font = "900 60px 'Montserrat', sans-serif";
+        ctx.fillStyle = "#fff";
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = "#e3002b";
+
+        ctx.strokeText(score, canvas.width / 2, 105);
+        ctx.fillText(score, canvas.width / 2, 105);
+
+        ctx.restore();
+    }
+
+    function loop() {
+        if (gameState !== "PLAYING") return;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        updateDifficulty();
+
+        pipes.draw();
+        pipes.update();
+        bird.draw();
+        bird.update();
+        drawScore();
+        frames++;
+        requestAnimationFrame(loop);
+    }
+
+    function controlGame() {
+        if (gameState === "START") {
+            gameState = "PLAYING";
+            startScreen.classList.add("hidden");
+            loop();
+            bird.flap();
+        } else if (gameState === "PLAYING") {
+            bird.flap();
+        }
+    }
+
+    function restartGame() {
+        gameState = "PLAYING";
+        score = 0;
+        currentSpeed = 2.5; // Trả về tốc độ 2.5
+        currentGap = 220;
+        bird.y = 300;
+        bird.velocity = 0;
+        pipes.reset();
+        gameOverScreen.classList.add("hidden");
+        loop();
+    }
+
+    // Sự kiện chuột cho tất cả
+    canvas.addEventListener("click", controlGame);
+    startBtn.addEventListener("click", controlGame);
+    restartBtn.addEventListener("click", restartGame);
+
+    // Sự kiện phím SPACE
+    document.addEventListener("keydown", function(e) {
+        if (e.code === "Space") {
+            e.preventDefault();
+            if(gameState === "START" || gameState === "PLAYING") {
+                controlGame();
+            }
+        }
+    });
+
+    function showGameOver() {
+        gameOverScreen.classList.remove("hidden");
+        finalScore.innerText = score;
+
+        // CƠ CHẾ ĐIỂM: 15đ -> 10 Points | 30đ -> 15 Points | 50đ -> 25 Points
+        let earnedPoints = 0;
+        if (score >= 50) {
+            earnedPoints = 25;
+        } else if (score >= 30) {
+            earnedPoints = 15;
+        } else if (score >= 15) {
+            earnedPoints = 10;
+        }
+
+        if(earnedPoints > 0) {
+            // GỌI AJAX LƯU ĐIỂM
+            fetch('/Arcade/SavePoints', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'points=' + earnedPoints
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) {
+                    let navPoints = document.querySelector('.point-btn');
+                    if(navPoints) navPoints.innerHTML = '<i class="fas fa-star me-1"></i> ' + data.totalPoints;
+                }
+            });
+
+            // GIAO DIỆN ĐỦ ĐIỂM
+            rewardMsg.className = "alert border border-warning mb-3 p-3";
+            rewardMsg.style.background = "linear-gradient(135deg, #2b1b04, #111)";
+            rewardMsg.style.boxShadow = "0 0 15px rgba(243, 198, 35, 0.3)";
+            rewardMsg.innerHTML = `
+                <div class="text-warning mb-2"><i class="fas fa-coins fa-2x"></i></div>
+                <div class="text-white fw-bold" style="font-size: 1.15rem;">Tuyệt vời! Bạn kiếm được <span class="text-warning fs-3">${earnedPoints}</span> T1 Points</div>
+                <div class="mt-3">
+                    <a href="/Arcade/RewardCenter" class="btn btn-warning fw-bold text-dark px-4 py-2 rounded-pill">
+                        Đổi Voucher Ngay <i class="fas fa-arrow-right ms-1"></i>
+                    </a>
+                </div>
+            `;
+        } else {
+            // GIAO DIỆN CHƯA ĐỦ ĐIỂM
+            rewardMsg.className = "alert border border-secondary mb-3 p-3";
+            rewardMsg.style.background = "linear-gradient(135deg, #2a2a35, #111)";
+            rewardMsg.innerHTML = `
+                <div class="text-danger mb-2"><i class="fas fa-sad-tear fa-2x"></i></div>
+                <div class="text-white fw-bold" style="font-size: 1.15rem;">Chưa đủ điểm nhận thưởng!</div>
+                <div class="text-light mt-1" style="font-size: 0.95rem;">Đạt tối thiểu <strong class="text-warning">15 điểm</strong> để nhận T1 Points nhé.</div>
+            `;
+        }
+
+        rewardMsg.classList.remove("hidden");
+    }
+</script>

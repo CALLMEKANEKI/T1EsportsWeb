@@ -1,0 +1,507 @@
+﻿@using T1EsportsWeb.Models
+@inject T1DbContext _context
+
+@{
+    ViewData["Title"] = "Đố Vui T1 - Thử Thách Cương Giả";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    /* ==================================================== */
+    /* CSS NÂNG CẤP GIAO DIỆN "NỊNH MẮT" CHUẨN T1 ESPORTS */
+    /* ==================================================== */
+
+    body {
+        background-color: #0a0a0c;
+        color: #eee;
+        font-family: 'Montserrat', sans-serif;
+    }
+
+    /* KHUNG TRIVIA - HIỆU ỨNG KÍNH MỜ (GLASSMORPHISM) */
+    .trivia-container {
+        background: rgba(30, 30, 45, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        padding: 50px;
+        max-width: 850px;
+        margin: 0 auto;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.7);
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        position: relative;
+        overflow: hidden;
+    }
+
+        .trivia-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, #e3002b, #ff1a40, #e3002b);
+        }
+
+    .eSport-header {
+        font-weight: 900 !important;
+        text-transform: uppercase;
+        letter-spacing: 5px;
+        color: #ff1a40;
+        text-shadow: 0 0 15px rgba(255, 26, 64, 0.6), 2px 2px 4px rgba(0,0,0,0.9);
+    }
+
+    .answer-btn {
+        background-color: rgba(40, 40, 60, 0.4);
+        color: #ccc;
+        border: 2px solid rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        padding: 18px 25px;
+        font-size: 1.15rem;
+        font-weight: 700;
+        text-align: left;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        width: 100%;
+        margin-bottom: 18px;
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+        .answer-btn:hover {
+            background-color: rgba(60, 60, 80, 0.6);
+            border-color: #ff1a40;
+            color: #fff;
+            transform: scale(1.02) translateX(10px);
+            box-shadow: 0 0 15px rgba(255, 26, 64, 0.4);
+        }
+
+    .answer-prefix {
+        color: #aaa;
+        font-weight: 900;
+        font-size: 1.2rem;
+        transition: color 0.3s ease;
+    }
+
+    .answer-btn:hover .answer-prefix {
+        color: #ff1a40;
+    }
+
+    .answer-correct {
+        background-color: #28a745 !important;
+        border-color: #28a745 !important;
+        color: white !important;
+        box-shadow: 0 0 20px rgba(40, 167, 69, 0.6);
+    }
+
+        .answer-correct .answer-prefix {
+            color: #fff !important;
+        }
+
+    .answer-wrong {
+        background-color: #e3002b !important;
+        border-color: #e3002b !important;
+        color: white !important;
+        box-shadow: 0 0 20px rgba(227, 0, 43, 0.6);
+    }
+
+        .answer-wrong .answer-prefix {
+            color: #fff !important;
+        }
+
+    .score-board {
+        font-size: 1.7rem;
+        color: #f3c623;
+        font-weight: 900;
+        text-shadow: 0 0 10px rgba(243, 198, 35, 0.5);
+    }
+
+    .question-badge {
+        background-color: rgba(255, 26, 64, 0.15);
+        color: #ff1a40;
+        border: 1px solid #ff1a40;
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-weight: 700;
+    }
+
+    #end-screen .fa-trophy {
+        color: #f3c623;
+        text-shadow: 0 0 30px rgba(243, 198, 35, 0.8), 2px 2px 5px rgba(0,0,0,0.5);
+    }
+
+    .reward-box-gold {
+        background: linear-gradient(135deg, #1a1a27, #2c2c40);
+        border: 2px solid #f3c623;
+        color: #f3c623 !important;
+        border-radius: 15px;
+        padding: 20px;
+        font-weight: 900;
+        font-size: 1.2rem;
+        box-shadow: 0 0 20px rgba(243, 198, 35, 0.5);
+        display: inline-flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    /* LỚP PHỦ OVERLAY CHO POPUP */
+    .completion-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.85);
+        backdrop-filter: blur(8px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.4s ease;
+    }
+
+        .completion-overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+    .completion-modal {
+        background: linear-gradient(135deg, #1e1e2d, #111118);
+        border: 2px solid #e3002b;
+        padding: 50px 70px;
+        border-radius: 20px;
+        text-align: center;
+        transform: scale(0.5);
+        transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        box-shadow: 0 0 40px rgba(227, 0, 43, 0.5);
+    }
+
+    .completion-overlay.show .completion-modal {
+        transform: scale(1);
+    }
+
+    /* ĐÃ COPY Y HỆT CSS NÚT TRỞ VỀ SẢNH BÊN FLAPPY SANG ĐÂY NÈ */
+    .btn-t1-return {
+        background-color: #e3002b;
+        color: white;
+        font-weight: bold;
+        text-transform: uppercase;
+        border: 2px solid #e3002b;
+        border-radius: 8px;
+        padding: 8px 20px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 10px rgba(227, 0, 43, 0.5);
+        display: inline-block;
+        text-decoration: none;
+    }
+
+        .btn-t1-return:hover {
+            background-color: transparent;
+            color: #e3002b;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(227, 0, 43, 0.7);
+        }
+</style>
+
+<div class="container mt-5 pt-3 mb-5">
+
+    <div class="mb-4 d-flex justify-content-end align-items-center" style="max-width: 850px; margin: 0 auto;">
+        <a asp-controller="Arcade" asp-action="Index" class="btn-t1-return">
+            <i class="fas fa-sign-out-alt me-2"></i> Trở về Sảnh
+        </a>
+    </div>
+
+    <div class="text-center mb-5">
+        <h1 class="fw-bold eSport-header" style="font-size: 3.8rem;">
+            <i class="fas fa-brain me-3 align-middle"></i>T1 Fan Challenge
+        </h1>
+        <p class="text-light fs-5 mt-2" style="font-weight: 300; letter-spacing: 1px;">Chứng minh kiến thức của bạn - Nhận T1 Points và Voucher Hoàng Kim</p>
+    </div>
+
+    <div class="trivia-container">
+
+        <div id="start-screen" class="text-center">
+            <h2 class="text-white mb-4 fw-bold">Bạn là Fan Cứng T1 từ bao giờ?</h2>
+            <p class="text-muted mb-5 fs-5 px-5">Hệ thống sẽ bốc ngẫu nhiên <strong>10 câu hỏi</strong> trong ngân hàng 50 câu. Trả lời đúng từ <strong class="text-warning">8/10 câu</strong> trở lên để chứng minh kiến thức và nhận Voucher.</p>
+            <button onclick="startGame()" class="btn btn-danger btn-lg fw-bold px-5 py-3 rounded-pill" style="font-size: 1.6rem; letter-spacing: 1px; box-shadow: 0 0 20px rgba(227, 0, 43, 0.5);">
+                <i class="fas fa-play me-3"></i> BẮT ĐẦU NGAY
+            </button>
+        </div>
+
+        <div id="quiz-screen" class="d-none">
+            <div class="d-flex justify-content-between align-items-center mb-5 border-bottom border-secondary pb-3">
+                <span class="question-badge" id="question-counter">Câu hỏi: 1/10</span>
+                <span class="score-board">Điểm: <span id="score-display">0</span></span>
+            </div>
+
+            <h3 class="text-white fw-bold mb-5 lh-base" id="question-text" style="font-size: 1.7rem; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);">Đang tải câu hỏi...</h3>
+
+            <div id="answer-buttons">
+            </div>
+
+            <div class="text-end mt-5 pt-3">
+                <button id="next-btn" onclick="nextQuestion()" class="btn btn-outline-light fw-bold px-4 py-2 d-none rounded-pill" style="letter-spacing: 1px;">
+                    Câu Tiếp Theo <i class="fas fa-arrow-right ms-2"></i>
+                </button>
+            </div>
+        </div>
+
+        <div id="end-screen" class="text-center d-none py-4">
+            <i class="fas fa-trophy text-warning mb-4" style="font-size: 7rem;"></i>
+            <h1 class="fw-bold text-white mb-3" id="final-title">Hoàn Thành!</h1>
+            <p class="text-light fs-4 mb-5">Bạn trả lời đúng <strong id="final-score" class="text-danger fs-2" style="font-weight: 900;">0</strong>/10 câu.</p>
+
+            <div id="reward-section" class="reward-box-gold d-none">
+                <i class="fas fa-gift fs-1"></i>
+                <div>
+                    <div>Chúc mừng Fan Cứng! Bạn nhận được Voucher Giảm 10% tại Cửa Hàng.</div>
+                    <div class="mt-1" style="font-size: 1.4rem;">Mã: <strong class="text-white bg-dark px-3 py-1 rounded">T1LEGEND10</strong></div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-center gap-4 mt-5 pt-3">
+                <button onclick="startGame()" class="btn btn-outline-light fw-bold px-4 py-2 rounded-pill">
+                    <i class="fas fa-redo me-2"></i> Chơi Lại 
+                </button>
+                <a asp-controller="Shop" asp-action="Index" class="btn btn-danger fw-bold px-5 py-2 rounded-pill" style="box-shadow: 0 0 15px rgba(227, 0, 43, 0.4);">
+                    Vào Cửa Hàng <i class="fas fa-shopping-cart ms-2"></i>
+                </a>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div id="completion-overlay" class="completion-overlay">
+    <div class="completion-modal">
+        <i class="fas fa-check-circle text-success mb-3" style="font-size: 5rem; text-shadow: 0 0 20px rgba(40, 167, 69, 0.8);"></i>
+        <h2 class="text-white fw-bold mb-2">Đã Hoàn Thành!</h2>
+        <p class="text-muted fs-5 mb-0">Hệ thống đang tính điểm, chờ chút nha...</p>
+
+        <div class="spinner-border text-danger mt-4" role="status" style="width: 3rem; height: 3rem;">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // NGÂN HÀNG CÂU HỎI SIÊU KHỔNG LỒ (50 Câu) - ĐÃ CẬP NHẬT DOFPK
+        const allQuestions = [
+            // Nhóm: CKTG & Lịch sử SKT/T1
+            { question: "Tổ chức T1 (bao gồm cả SKT T1) đã giành được bao nhiêu chức Vô địch Thế giới (tính đến 2024)?", answers: ["3 lần", "4 lần", "5 lần", "6 lần"], correct: 2 },
+            { question: "Năm nào SKT T1 giành chức vô địch CKTG đầu tiên?", answers: ["2012", "2013", "2014", "2015"], correct: 1 },
+            { question: "Đội tuyển nào là bại tướng của T1 trong trận chung kết CKTG 2023?", answers: ["JD Gaming", "Weibo Gaming", "Bilibili Gaming", "LNG Esports"], correct: 1 },
+            { question: "Đội tuyển nào là bại tướng của T1 trong trận chung kết CKTG 2024?", answers: ["Gen.G", "Weibo Gaming", "Bilibili Gaming", "TES"], correct: 2 },
+            { question: "SKT T1 là đội duy nhất bảo vệ thành công ngôi vô địch CKTG vào những năm nào?", answers: ["2013 - 2014", "2015 - 2016", "2016 - 2017", "2023 - 2024"], correct: 1 },
+            { question: "T1 (đội hình ZOFGK) đã bảo vệ thành công ngôi vô địch CKTG vào những năm nào?", answers: ["2021 - 2022", "2022 - 2023", "2023 - 2024", "Họ chưa từng bảo vệ thành công"], correct: 2 },
+            { question: "Ai là HLV huyền thoại đã dìu dắt SKT T1 giành 3 cúp CKTG (2013, 2015, 2016)?", answers: ["Bengi", "KkOma", "Tom", "Polt"], correct: 1 },
+            { question: "T1 đã vô địch LCK mùa Xuân 2022 với thành tích bất bại là bao nhiêu trận?", answers: ["14-0", "16-0", "18-0", "20-0"], correct: 2 },
+            { question: "Tại CKTG 2017, SKT T1 đã để thua đội tuyển nào trong trận Chung kết?", answers: ["Samsung Galaxy", "ROX Tigers", "Invictus Gaming", "Damwon Gaming"], correct: 0 },
+            { question: "T1 đã giành được bao nhiêu chức vô địch MSI (Mid-Season Invitational)?", answers: ["1", "2", "3", "4"], correct: 1 },
+
+            // Nhóm: Quỷ Vương Faker
+            { question: "Faker (Lee Sang-hyeok) ra mắt đấu trường chuyên nghiệp vào năm nào?", answers: ["2011", "2012", "2013", "2014"], correct: 2 },
+            { question: "Vị tướng nào đã làm nên tên tuổi Faker trong pha outplay Ryu huyền thoại?", answers: ["LeBlanc", "Ahri", "Zed", "Ryze"], correct: 2 },
+            { question: "Faker đã sử dụng vị tướng nào trong trận đấu ra mắt chuyên nghiệp của mình?", answers: ["Syndra", "Nidalee", "Gragas", "Orianna"], correct: 1 },
+            { question: "Biệt danh 'Quỷ vương bất tử' (Unkillable Demon King) do ai đặt cho Faker?", answers: ["Fan Hàn Quốc", "Bình luận viên LCK", "Cool (Tuyển thủ OMG)", "Riot Games"], correct: 2 },
+            { question: "Câu nói nổi tiếng nào sau đây gắn liền với Faker tại CKTG 2023?", answers: ["All roads lead to me", "I am the meta", "SKT is back", "Next time, I will win"], correct: 0 },
+            { question: "Trang phục vinh danh CKTG 2013 của Faker là vị tướng nào?", answers: ["Ahri", "Zed", "Syndra", "Ryze"], correct: 1 },
+            { question: "Trang phục vinh danh CKTG 2015 của Faker là vị tướng nào?", answers: ["Ryze", "Azir", "Kassadin", "Lissandra"], correct: 0 },
+            { question: "Trang phục vinh danh CKTG 2016 của Faker là vị tướng nào?", answers: ["Syndra", "Orianna", "Cassiopeia", "Viktor"], correct: 0 },
+            { question: "Trang phục vinh danh CKTG 2023 của Faker là vị tướng nào?", answers: ["Azir", "Ahri", "Orianna", "Sylas"], correct: 2 },
+            { question: "Faker là tuyển thủ đầu tiên đạt được cộc mốc bao nhiêu điểm hạ gục tại LCK?", answers: ["2000", "2500", "3000", "3500"], correct: 2 },
+
+            // Nhóm: Tuyển thủ hiện tại (DOFPK) & Di sản ZOFGK
+            { question: "Đội hình thi đấu chính thức của T1 hiện tại (DOFPK) bao gồm những tuyển thủ nào?", answers: ["Doran, Oner, Faker, Peyz, Keria", "Zeus, Oner, Faker, Gumayusi, Keria", "Doran, Oner, Faker, Viper, Keria", "Kingen, Oner, Faker, Peyz, Keria"], correct: 0 },
+            { question: "Tuyển thủ nào đã gia nhập T1 đảm nhận vị trí Đường trên (Top) thay cho Zeus?", answers: ["Kingen", "Kiin", "Doran", "Morgan"], correct: 2 },
+            { question: "Tuyển thủ nào đã gia nhập T1 đảm nhận vị trí Xạ thủ (ADC) thay cho Gumayusi?", answers: ["Viper", "Peyz", "Ruler", "Aiming"], correct: 1 },
+            { question: "Tên thật của tuyển thủ Doran là gì?", answers: ["Choi Hyeon-joon", "Moon Hyeon-joon", "Kim Su-hwan", "Ryu Min-seok"], correct: 0 },
+            { question: "Tên thật của siêu xạ thủ Peyz là gì?", answers: ["Choi Hyeon-joon", "Kim Su-hwan", "Ryu Min-seok", "Lee Min-hyeong"], correct: 1 },
+            { question: "Trước khi gia nhập T1, Peyz đã từng thi đấu và vô địch LCK cùng đội tuyển nào?", answers: ["Dplus KIA", "Hanwha Life Esports", "KT Rolster", "Gen.G"], correct: 3 },
+            { question: "Đội hình huyền thoại ZOFGK (Zeus, Oner, Faker, Gumayusi, Keria) đã gắn bó cùng nhau trong bao nhiêu năm?", answers: ["1 năm", "2 năm", "3 năm", "4 năm"], correct: 2 },
+            { question: "Tên thật của tuyển thủ Oner là gì?", answers: ["Choi Woo-je", "Moon Hyeon-joon", "Lee Min-hyeong", "Ryu Min-seok"], correct: 1 },
+            { question: "Tên thật của tuyển thủ Keria là gì?", answers: ["Choi Woo-je", "Moon Hyeon-joon", "Lee Min-hyeong", "Ryu Min-seok"], correct: 3 },
+            { question: "Trước khi gia nhập T1, Keria từng thi đấu cho đội tuyển nào?", answers: ["Gen.G", "Hanwha Life Esports", "DRX", "Damwon Gaming"], correct: 2 },
+
+            // Nhóm: Tuyển thủ huyền thoại trong quá khứ
+            { question: "Tuyển thủ nào được mệnh danh là 'Cánh tay phải của Chúa' khi thi đấu cùng Faker?", answers: ["Bang", "Wolf", "Bengi", "MaRin"], correct: 2 },
+            { question: "Bộ đôi Xạ thủ - Hỗ trợ nào đã cùng SKT T1 vô địch CKTG 2015 và 2016?", answers: ["Piglet & PoohManDu", "Bang & Wolf", "Teddy & Effort", "Gumayusi & Keria"], correct: 1 },
+            { question: "Ai là người giành danh hiệu MVP của CKTG 2015?", answers: ["Faker", "Bang", "Bengi", "MaRin"], correct: 3 },
+            { question: "Tuyển thủ đi rừng nào nổi tiếng với nụ cười tỏa nắng thi đấu cho SKT T1 năm 2017?", answers: ["Blank", "Peanut", "Clid", "Cuzz"], correct: 1 },
+            { question: "Tuyển thủ Đường trên nào đã cùng SKT vô địch CKTG 2013?", answers: ["Impact", "MaRin", "Duke", "Huni"], correct: 0 },
+            { question: "Tuyển thủ Đường trên nào đã cùng SKT vô địch CKTG 2016?", answers: ["Impact", "MaRin", "Duke", "Huni"], correct: 2 },
+            { question: "Tuyển thủ nào từng được SKT T1 sử dụng để thay thế Faker ở Đường giữa trong năm 2015?", answers: ["Scout", "Easyhoon", "Pirean", "Gori"], correct: 1 },
+            { question: "Xạ thủ Piglet đã chọn trang phục vô địch CKTG 2013 cho vị tướng nào?", answers: ["Vayne", "Ezreal", "Caitlyn", "Lucian"], correct: 0 },
+            { question: "Tuyển thủ Hỗ trợ PoohManDu đã dùng vị tướng nào để lấy trang phục CKTG 2013?", answers: ["Thresh", "Nami", "Zyra", "Lulu"], correct: 2 },
+            { question: "Tuyển thủ Đường trên Huni gia nhập SKT T1 vào năm nào?", answers: ["2016", "2017", "2018", "2019"], correct: 1 },
+
+            // Nhóm: Trivia / Fun Facts
+            { question: "Trụ sở chính hiện tại của T1 nằm ở khu vực nào của Seoul?", answers: ["Gangnam", "Hongdae", "Itaewon", "Myeongdong"], correct: 0 },
+            { question: "Thương hiệu xe hơi nào là đối tác và nhà tài trợ lớn của T1?", answers: ["Hyundai", "Kia", "Mercedes-Benz", "BMW"], correct: 2 },
+            { question: "Kênh YouTube cá nhân của Faker có tên là gì?", answers: ["T1 Faker", "Hide on bush", "Faker Official", "Sang-hyeok Lee"], correct: 0 },
+            { question: "Tài khoản leo rank xếp hạng Hàn Quốc nổi tiếng nhất của Faker tên là gì?", answers: ["SKT T1 Faker", "Hide on bush", "Mid Fekar", "T1 SangHyeok"], correct: 1 },
+            { question: "HLV Tom (người góp công lớn trong chức vô địch 2023, 2024) từng thi đấu ở vị trí nào khi còn là tuyển thủ SKT?", answers: ["Đường trên", "Đi rừng", "Đường giữa", "Hỗ trợ"], correct: 1 },
+            { question: "Ai là đội trưởng của T1 ở thời điểm hiện tại?", answers: ["Zeus", "Oner", "Faker", "Gumayusi"], correct: 2 },
+            { question: "Trong bài hát chủ đề CKTG 2023 'GODS', tuyển thủ nào của T1 xuất hiện như một trùm cuối?", answers: ["Keria", "Zeus", "Faker", "Oner"], correct: 2 },
+            { question: "Trong bài hát chủ đề CKTG 2024 'Heavy Is The Crown', hình ảnh T1 được ví với vương quốc nào đang bảo vệ ngai vàng?", answers: ["Đế chế La Mã", "Vương quốc sụp đổ", "Vương quốc hoàng kim", "Tòa lâu đài gai"], correct: 2 },
+            { question: "Ngoài LMHT, T1 còn sở hữu đội tuyển rất mạnh ở bộ môn Esports nào?", answers: ["CS:GO", "Dota 2", "Valorant", "Rocket League"], correct: 2 },
+            { question: "T1 Entertainment & Sports là liên doanh giữa SK Telecom và công ty nào của Mỹ?", answers: ["Comcast Spectacor", "Riot Games", "Tencent", "Cloud9"], correct: 0 }
+        ];
+
+        let selectedQuestions = [];
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let acceptingAnswers = true;
+
+        const startScreen = document.getElementById('start-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const endScreen = document.getElementById('end-screen');
+        const questionText = document.getElementById('question-text');
+        const answerButtonsElement = document.getElementById('answer-buttons');
+        const nextBtn = document.getElementById('next-btn');
+        const scoreDisplay = document.getElementById('score-display');
+        const questionCounter = document.getElementById('question-counter');
+        const completionOverlay = document.getElementById('completion-overlay');
+
+        function startGame() {
+            startScreen.classList.add('d-none');
+            endScreen.classList.add('d-none');
+            quizScreen.classList.remove('d-none');
+
+            currentQuestionIndex = 0;
+            score = 0;
+            scoreDisplay.innerText = score;
+
+            // Bốc 10 câu ngẫu nhiên
+            selectedQuestions = [...allQuestions].sort(() => 0.5 - Math.random()).slice(0, 10);
+
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            resetState();
+
+            let currentQuestion = selectedQuestions[currentQuestionIndex];
+
+            questionCounter.innerText = `Câu hỏi: ${currentQuestionIndex + 1}/10`;
+            questionText.innerText = currentQuestion.question;
+
+            const prefixes = ['A', 'B', 'C', 'D'];
+
+            currentQuestion.answers.forEach((answer, index) => {
+                const button = document.createElement('button');
+                button.innerHTML = `<span class="answer-prefix">${prefixes[index]}.</span> ${answer}`;
+                button.classList.add('answer-btn');
+                button.dataset.index = index;
+                button.addEventListener('click', selectAnswer);
+                answerButtonsElement.appendChild(button);
+            });
+        }
+
+        function resetState() {
+            acceptingAnswers = true;
+            nextBtn.classList.add('d-none');
+            while (answerButtonsElement.firstChild) {
+                answerButtonsElement.removeChild(answerButtonsElement.firstChild);
+            }
+        }
+
+        function selectAnswer(e) {
+            if (!acceptingAnswers) return;
+            acceptingAnswers = false;
+
+            const selectedButton = e.target.closest('.answer-btn');
+            const selectedAnswerIndex = parseInt(selectedButton.dataset.index);
+            const correctIndex = selectedQuestions[currentQuestionIndex].correct;
+
+            if (selectedAnswerIndex === correctIndex) {
+                selectedButton.classList.add('answer-correct');
+                score += 10;
+                scoreDisplay.innerText = score;
+            } else {
+                selectedButton.classList.add('answer-wrong');
+                answerButtonsElement.children[correctIndex].classList.add('answer-correct');
+            }
+
+            nextBtn.classList.remove('d-none');
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < selectedQuestions.length) {
+                loadQuestion();
+            } else {
+                showEndScreen();
+            }
+        }
+
+        function showEndScreen() {
+            quizScreen.classList.add('d-none');
+            completionOverlay.classList.add('show');
+
+            // Đổi màu chữ của popup đang tính điểm cho sáng rõ lên luôn
+            let loadingText = document.querySelector('.completion-modal p');
+            if(loadingText) loadingText.className = "text-light fs-5 mb-0";
+
+            setTimeout(function() {
+                completionOverlay.classList.remove('show');
+                endScreen.classList.remove('d-none');
+
+                let correctAnswersCount = score / 10;
+                document.getElementById('final-score').innerText = correctAnswersCount;
+
+                let rewardSection = document.getElementById('reward-section');
+
+                if (score >= 80) {
+                    let earnedPoints = 10;
+
+                    // GỌI AJAX LƯU ĐIỂM
+                    fetch('/Arcade/SavePoints', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: 'points=' + earnedPoints
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if(data.success) {
+                            let navPoints = document.querySelector('.point-btn');
+                            if(navPoints) navPoints.innerHTML = '<i class="fas fa-star me-1"></i> ' + data.totalPoints;
+                        }
+                    });
+
+                    document.getElementById('final-title').innerText = "Tuyệt Vời! Đích Thực Là T1 Fan Cứng!";
+
+                    // Giao diện Vàng Hoàng kim siêu nét
+                    rewardSection.className = "reward-box-gold mt-4 p-4";
+                    rewardSection.innerHTML = `
+                        <i class="fas fa-coins text-warning" style="font-size: 3.5rem;"></i>
+                        <div class="text-start ms-3">
+                            <div class="text-white fw-bold" style="font-size: 1.2rem;">Chúc mừng! Bạn nhận được <span class="text-warning fs-2">${earnedPoints}</span> T1 Points!</div>
+                            <div class="mt-3"><a href="/Arcade/RewardCenter" class="btn btn-warning fw-bold text-dark px-4 py-2 rounded-pill">Vào Trạm Đổi Thưởng <i class="fas fa-arrow-right ms-1"></i></a></div>
+                        </div>
+                    `;
+                } else {
+                    document.getElementById('final-title').innerText = "Hơi Tiếc Nhỉ, Cố Lên Lần Sau!";
+
+                    // Đổi sang giao diện Xám tối rõ chữ, bỏ hẳn màu text-muted
+                    rewardSection.className = "p-4 border border-secondary rounded d-inline-flex align-items-center mt-4";
+                    rewardSection.style.background = "linear-gradient(135deg, #2a2a35, #111)";
+                    rewardSection.style.boxShadow = "0 5px 15px rgba(0,0,0,0.5)";
+                    rewardSection.innerHTML = `
+                        <i class="fas fa-times-circle text-danger" style="font-size: 3.5rem;"></i>
+                        <div class="text-start ms-3">
+                            <div class="text-white fw-bold" style="font-size: 1.2rem;">Chưa đủ 8/10 câu rồi!</div>
+                            <div class="text-light mt-1" style="font-size: 1rem;">Cố gắng thêm chút nữa để nhận T1 Points nha.</div>
+                        </div>
+                    `;
+                }
+
+                rewardSection.classList.remove('d-none');
+            }, 1000); 
+        }
+    </script>
+}

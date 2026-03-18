@@ -1,0 +1,232 @@
+﻿@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Đăng nhập hệ thống - T1 ESPORTS</title>
+
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+
+    <style>
+        /* =========================================
+                   1. FORM INPUT STYLES
+                ========================================= */
+        .vng-dark-input {
+            background-color: #111 !important;
+            border: 2px solid #444;
+            border-radius: 8px;
+            padding: 18px 20px;
+            color: #ffffff !important;
+            font-weight: bold;
+            font-size: 1.1rem;
+            transition: 0.3s;
+        }
+
+            .vng-dark-input:focus {
+                border-color: #e3002b !important;
+                background-color: #111 !important;
+                color: #ffffff !important;
+                box-shadow: none !important;
+                outline: none !important;
+            }
+
+            /* Fix trình duyệt tự đổi màu nền khi Autofill */
+            .vng-dark-input:-webkit-autofill,
+            .vng-dark-input:-webkit-autofill:hover,
+            .vng-dark-input:-webkit-autofill:focus,
+            .vng-dark-input:-webkit-autofill:active {
+                -webkit-box-shadow: 0 0 0 30px #111 inset !important;
+                -webkit-text-fill-color: #ffffff !important;
+                transition: background-color 5000s ease-in-out 0s;
+            }
+
+            .vng-dark-input::placeholder {
+                color: #777 !important;
+                font-weight: 800;
+                text-transform: uppercase;
+                font-size: 1rem;
+            }
+
+        /* =========================================
+                   2. PASSWORD FIELD & EYE ICON
+                ========================================= */
+        .password-container {
+            position: relative;
+        }
+
+        .password-input-field {
+            padding-right: 50px !important;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #777;
+            font-size: 1.2rem;
+            transition: 0.3s;
+        }
+
+            .toggle-password:hover {
+                color: #e3002b;
+            }
+
+        /* =========================================
+                   3. BUTTONS & LINKS
+                ========================================= */
+        .btn-google-full {
+            width: 100%;
+            height: 60px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #fff;
+            color: #000;
+            font-size: 1.1rem;
+            font-weight: 800;
+            text-decoration: none;
+            transition: 0.2s;
+        }
+
+            .btn-google-full:hover {
+                opacity: 0.9;
+                transform: translateY(-3px);
+                color: #000;
+            }
+
+        .arrow-submit-btn {
+            background-color: #e3002b;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            width: 90px;
+            height: 90px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            transition: 0.3s;
+        }
+
+            .arrow-submit-btn:hover {
+                background-color: #ff1a40;
+                transform: scale(1.05);
+                box-shadow: 0 0 25px rgba(227, 0, 43, 0.6);
+            }
+
+        .forgot-password-link {
+            color: #aaa;
+            font-size: 1.1rem;
+            font-weight: bold;
+            text-decoration: none;
+            transition: 0.3s;
+        }
+
+            .forgot-password-link:hover {
+                color: #e3002b;
+                text-decoration: underline;
+            }
+    </style>
+</head>
+<body style="background-color: #000; overflow-x: hidden;">
+
+    <div class="row g-0" style="height: 100vh;">
+
+        <div class="col-md-8 d-none d-md-block" style="background: url('/images/T1 Skin CTKG.jpg') no-repeat center center; background-size: cover;">
+            <div style="background-color: rgba(0, 0, 0, 0.2); width: 100%; height: 100%;"></div>
+        </div>
+
+        <div class="col-md-4 d-flex flex-column align-items-center py-4" style="background-color: #111; border-left: 1px solid #333; position: relative;">
+
+            <div class="w-100 d-flex justify-content-between align-items-center px-4">
+                <img src="~/images/t1-logo.png" alt="T1 Logo" style="height: 130px;">
+                <a asp-controller="Home" asp-action="Index" class="text-muted" style="text-decoration: none; font-weight: bold; font-size: 1.2rem;">
+                    ✕ Đóng
+                </a>
+            </div>
+
+            <div class="w-100 px-4 px-xl-5 mt-5" style="max-width: 550px;">
+
+                <div class="text-center mb-5">
+                    <h2 style="color: #fff; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; font-size: 2.5rem;">Đăng Nhập</h2>
+                </div>
+
+                @if (ViewBag.Error != null)
+                {
+                    <div class="alert alert-danger text-center fw-bold py-3" style="font-size: 1rem;" role="alert">
+                        @ViewBag.Error
+                    </div>
+                }
+
+                @if (TempData["SuccessMessage"] != null)
+                {
+                    <div class="alert alert-success text-center fw-bold py-3" style="font-size: 1rem;" role="alert">
+                        @TempData["SuccessMessage"]
+                    </div>
+                }
+
+                <form asp-controller="Account" asp-action="Login" method="post" class="text-start">
+
+                    <div class="mb-4">
+                        <input type="text" name="username" class="form-control w-100 vng-dark-input" required placeholder="USERNAME">
+                    </div>
+
+                    <div class="mb-5 password-container">
+                        <input type="password" name="password" id="passwordInput" class="form-control w-100 vng-dark-input password-input-field" required placeholder="PASSWORD">
+                        <i class="fas fa-eye toggle-password" id="togglePasswordIcon"></i>
+                    </div>
+
+                    <div class="mb-4">
+                        <a asp-controller="Account" asp-action="GoogleLogin" class="btn-google-full shadow-sm">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" style="width:30px; margin-right: 12px;" alt="Google" />
+                            Đăng nhập bằng Google 
+                        </a>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mb-5 mt-4">
+                        <a asp-controller="Account" asp-action="ForgotPassword" class="forgot-password-link">
+                            Quên mật khẩu?
+                        </a>
+                        <a asp-controller="Account" asp-action="Register" class="forgot-password-link">
+                            Chưa có tài khoản?
+                        </a>
+                    </div>
+
+                    <div class="text-center mt-5">
+                        <button type="submit" class="arrow-submit-btn">
+                            <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('togglePasswordIcon').addEventListener('click', function () {
+            const passwordInput = document.getElementById('passwordInput');
+
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                this.classList.remove('fa-eye');
+                this.classList.add('fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                this.classList.remove('fa-eye-slash');
+                this.classList.add('fa-eye');
+            }
+        });
+    </script>
+</body>
+</html>

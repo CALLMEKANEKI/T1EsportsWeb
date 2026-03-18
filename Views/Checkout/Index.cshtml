@@ -1,0 +1,281 @@
+﻿@model T1EsportsWeb.Models.User
+@{
+    ViewData["Title"] = "Thanh Toán";
+    var cart = ViewBag.Cart as List<T1EsportsWeb.Models.CartItem>;
+    decimal originalTotal = cart.Sum(c => c.Total);
+    decimal shippingFee = ViewBag.ShippingFee ?? 30000m;
+    decimal finalTotalWithShipping = originalTotal + shippingFee;
+}
+
+<style>
+    body {
+        background-color: #0f0f1a;
+        color: white;
+    }
+
+    .checkout-box {
+        background: #1e1e2d;
+        border-radius: 12px;
+        border: 1px solid #2b2b40;
+        padding: 25px;
+    }
+
+    /* Set cứng nền đen, chữ trắng cho tất cả các ô nhập liệu */
+    .form-control {
+        background-color: #111 !important;
+        color: white !important;
+        border: 1px solid #333 !important;
+    }
+
+        /* Màu mờ mờ cho chữ Placeholder gợi ý */
+        .form-control::placeholder {
+            color: #777 !important;
+        }
+
+        .form-control[readonly] {
+            color: #aaa !important;
+            opacity: 0.8;
+        }
+
+        /* Bỏ hoàn toàn hiệu ứng đổi màu, phát sáng (glow) khi click vào */
+        .form-control:focus {
+            background-color: #111 !important; /* Vẫn giữ nền đen */
+            color: white !important; /* Vẫn giữ chữ trắng */
+            border-color: #555 !important; /* Chỉ đổi màu viền sáng lên 1 xíu để biết đang gõ */
+            box-shadow: none !important; /* Tắt phát sáng */
+        }
+</style>
+
+<div class="container mt-4 mb-5">
+    <h2 class="fw-bold mb-4"><i class="fas fa-money-check-alt text-success me-2"></i>THANH TOÁN ĐƠN HÀNG</h2>
+
+    <form action="/Checkout/ProcessOrder" method="post" id="checkoutForm">
+        <input type="hidden" name="voucherCode" id="hiddenVoucherCode" value="" />
+
+        <div class="row g-4">
+            <div class="col-lg-7">
+                <div class="checkout-box">
+                    <h5 class="fw-bold border-bottom border-secondary pb-3 mb-4">Thông Tin Nhận Hàng</h5>
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Họ và tên người nhận</label>
+                        <input type="text" name="fullName" class="form-control py-2" value="@Model?.FullName" required placeholder="Nhập họ tên...">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Số điện thoại</label>
+                        <input type="tel" name="phone" class="form-control py-2" required placeholder="Nhập số điện thoại liên hệ...">
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label text-muted">Địa chỉ giao hàng chi tiết</label>
+                        <textarea name="address" class="form-control py-2" rows="3" required placeholder="Số nhà, tên đường, phường/xã, quận/huyện..."></textarea>
+                    </div>
+                    <div class="alert alert-dark border-secondary">
+                        <i class="fas fa-info-circle text-warning me-2"></i> Phương thức thanh toán: <strong>Thanh toán khi nhận hàng (COD)</strong>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-5">
+                <div class="checkout-box mb-4">
+                    <h5 class="fw-bold border-bottom border-secondary pb-3 mb-3"><i class="fas fa-ticket-alt text-warning me-2"></i>Mã Giảm Giá T1</h5>
+                    <div class="input-group mb-3">
+                        <input type="text" id="voucherInput" class="form-control" placeholder="Nhập mã giảm giá..." />
+                        <button class="btn btn-danger" type="button" id="btnApplyVoucher" onclick="applyVoucher()">Áp dụng</button>
+                        <button class="btn btn-outline-secondary d-none" type="button" id="btnCancelVoucher" onclick="cancelVoucher()">Hủy mã</button>
+                    </div>
+                    <div id="voucherMessage" class="mt-2" style="font-size: 0.9rem;"></div>
+                </div>
+
+                <div class="checkout-box position-sticky" style="top: 20px;">
+                    <h5 class="fw-bold border-bottom border-secondary pb-3 mb-3">Tóm Tắt Đơn Hàng</h5>
+                    <div class="order-items mb-4" style="max-height: 300px; overflow-y: auto;">
+                        @foreach (var item in cart)
+                        {
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div class="d-flex align-items-center">
+                                    <img src="@item.ImageUrl" class="rounded border border-secondary" style="width: 50px; height: 50px; object-fit: cover;">
+                                    <div class="ms-3">
+                                        <h6 class="mb-0 text-white" style="font-size: 0.95rem;">@item.ProductName</h6>
+                                        <small class="text-muted">Size: @(string.IsNullOrEmpty(item.Size) ? "Freesize" : item.Size) x @item.Quantity</small>
+                                    </div>
+                                </div>
+                                <span class="fw-bold">@item.Total.ToString("N0")₫</span>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="border-top border-secondary pt-3 mb-3">
+                        <div class="d-flex justify-content-between mb-2 text-muted">
+                            <span>Tạm tính (Tiền hàng)</span>
+                            <span>@originalTotal.ToString("N0")₫</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2 text-muted">
+                            <span>Phí vận chuyển</span>
+                            <span>@shippingFee.ToString("N0")₫</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2 text-success d-none" id="discountRow">
+                            <span>Giảm giá (<span id="discountPercentDisplay">0</span>%)</span>
+                            <span>-<span id="discountAmountDisplay">0</span>₫</span>
+                        </div>
+                        <div class="d-flex justify-content-between mt-3">
+                            <span class="fw-bold fs-5 text-white">TỔNG CỘNG</span>
+                            <span class="fw-bold fs-4 text-danger" id="finalTotalDisplay">@finalTotalWithShipping.ToString("N0")₫</span>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-danger w-100 fw-bold py-3 fs-5 rounded-pill shadow">
+                        <i class="fas fa-check-circle me-2"></i> XÁC NHẬN ĐẶT HÀNG
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<div class="modal fade" id="successModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 450px;">
+        <div class="modal-content text-center shadow-lg" style="background-color: #1e1e2d; border: 1px solid #2b2b40; border-top: 4px solid #00e676; border-radius: 12px; width: 100%; aspect-ratio: 1/1; display: flex; flex-direction: column; justify-content: center;">
+            <div class="modal-body p-4 d-flex flex-column justify-content-center align-items-center">
+
+                <i class="fas fa-check-circle mb-3" style="font-size: 4rem; color: #00e676; text-shadow: 0 0 20px rgba(0, 230, 118, 0.4);"></i>
+                <h4 class="fw-bold text-white mb-2">ĐẶT HÀNG THÀNH CÔNG!</h4>
+
+                <img src="/images/T1-Ati2.png" alt="Thành công"
+                     class="img-fluid my-2"
+                     style="max-width: 150px; max-height: 150px; object-fit: contain;" />
+
+                <p class="text-light px-2 mb-4" style="font-size: 1rem; line-height: 1.5;">
+                    Cảm ơn bạn đã đặt hàng, chúng tôi sẽ nhanh chóng gửi hàng đến bạn!
+                </p>
+
+                <div class="d-flex justify-content-center w-100 gap-2 px-2 flex-nowrap">
+                    <a href="/Shop" class="btn btn-danger rounded-pill fw-bold py-2 w-50 shadow" style="font-size: 0.9rem;">
+                        <i class="fas fa-shopping-bag me-1"></i>Tiếp Tục Mua Sắm
+                    </a>
+                    <a href="/Order" class="btn btn-outline-light rounded-pill fw-bold py-2 w-50" style="font-size: 0.9rem;">
+                        <i class="fas fa-box-open me-1"></i>Xem Đơn Hàng
+                    </a>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Xử lý tiền tệ
+        let originalTotal = @Html.Raw(originalTotal.ToString("0", System.Globalization.CultureInfo.InvariantCulture));
+        let shippingFee = @Html.Raw(shippingFee.ToString("0", System.Globalization.CultureInfo.InvariantCulture));
+
+        // 1. KỊCH BẢN ÁP DỤNG VOUCHER
+        document.getElementById('btnApplyVoucher').addEventListener('click', function(e) {
+            e.preventDefault();
+
+            let code = document.getElementById('voucherInput').value.trim();
+            let msgBox = document.getElementById('voucherMessage');
+            let discountRow = document.getElementById('discountRow');
+            let finalDisplay = document.getElementById('finalTotalDisplay');
+            let amountDisplay = document.getElementById('discountAmountDisplay');
+            let percentDisplay = document.getElementById('discountPercentDisplay');
+            let hiddenInput = document.getElementById('hiddenVoucherCode');
+
+            if(!code) {
+                msgBox.innerHTML = "<span class='text-danger'><i class='fas fa-exclamation-circle'></i> Vui lòng nhập mã giảm giá.</span>";
+                return;
+            }
+
+            let formData = new FormData();
+            formData.append('voucherCode', code);
+
+            fetch('/Checkout/ApplyVoucher', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) {
+                    msgBox.innerHTML = "<span class='text-success fw-bold'>" + data.message + "</span>";
+                    hiddenInput.value = code;
+
+                    let discountAmount = Math.round((originalTotal * data.discount) / 100);
+                    let finalTotal = originalTotal - discountAmount + shippingFee;
+
+                    discountRow.classList.remove('d-none');
+                    discountRow.classList.add('d-flex');
+                    percentDisplay.innerText = data.discount;
+                    amountDisplay.innerText = discountAmount.toLocaleString('vi-VN');
+                    finalDisplay.innerText = finalTotal.toLocaleString('vi-VN') + "₫";
+
+                    document.getElementById('voucherInput').readOnly = true;
+                    this.disabled = true;
+                } else {
+                    msgBox.innerHTML = "<span class='text-danger'><i class='fas fa-times-circle'></i> " + data.message + "</span>";
+                    hiddenInput.value = "";
+
+                    discountRow.classList.add('d-none');
+                    discountRow.classList.remove('d-flex');
+                    let resetTotal = originalTotal + shippingFee;
+                    finalDisplay.innerText = resetTotal.toLocaleString('vi-VN') + "₫";
+                }
+            })
+            .catch(err => {
+                msgBox.innerHTML = "<span class='text-danger'><i class='fas fa-wifi'></i> Lỗi kết nối, vui lòng thử lại!</span>";
+            });
+        });
+
+        // 2. KỊCH BẢN SUBMIT FORM ĐẶT HÀNG NGẦM -> MỞ POPUP
+        document.getElementById('checkoutForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            let submitBtn = this.querySelector('button[type="submit"]');
+            let originalText = submitBtn.innerHTML;
+
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> ĐANG XỬ LÝ...';
+            submitBtn.disabled = true;
+
+            fetch('/Checkout/ProcessOrder', {
+                method: 'POST',
+                body: new FormData(this)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) {
+                    var myModal = new bootstrap.Modal(document.getElementById('successModal'));
+                    myModal.show();
+
+                    var badges = document.querySelectorAll('.cart-badge-count');
+                    badges.forEach(badge => {
+                        badge.innerText = '0';
+                        badge.style.display = 'none';
+                    });
+                } else {
+                    alert(data.message || "Có lỗi xảy ra khi đặt hàng.");
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
+                }
+            })
+            .catch(err => {
+                alert("Lỗi kết nối, vui lòng thử lại!");
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            });
+        });
+
+        function cancelVoucher() {
+            // 1. Xóa trắng ô nhập và cho phép nhập lại
+            let input = document.getElementById('voucherInput');
+            input.value = '';
+            input.disabled = false;
+
+            // 2. Đổi lại hiển thị của 2 nút
+            document.getElementById('btnApplyVoucher').classList.remove('d-none');
+            document.getElementById('btnCancelVoucher').classList.add('d-none');
+
+            // 3. Xóa thông báo giảm giá hiện tại
+            document.getElementById('voucherMessage').innerHTML = '';
+
+            // 4. Reset lại tổng tiền về mức ban đầu (bạn gọi lại hàm tính tiền gốc ở đây)
+            // recalculateTotal(0);
+        }
+    </script>
+}

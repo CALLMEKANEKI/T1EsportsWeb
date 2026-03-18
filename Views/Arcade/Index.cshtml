@@ -1,0 +1,172 @@
+﻿@{
+    ViewData["Title"] = "T1 Arcade - Mini Games";
+}
+
+<style>
+    /* Bố cục trang cơ bản */
+    body {
+        background-color: #000;
+        color: white;
+    }
+
+    /* Banner siêu ngầu */
+    .arcade-banner {
+        background: linear-gradient(rgba(17, 17, 17, 0.5), rgba(17, 17, 17, 0.8)), url('/images/T1-Ahri.jpg') no-repeat center top;
+        background-size: cover;
+        height: 350px;
+        display: flex;
+        align-items: flex-end; /* Ép nội dung rớt xuống dưới đáy */
+        justify-content: center;
+        padding-bottom: 10px; /* Thêm khoảng cách 40px với mép dưới cho thoáng mắt */
+        text-align: center;
+        border-bottom: 2px solid #e3002b;
+        margin-top: -16px;
+    }
+
+    .banner-title {
+        font-size: 4rem;
+        font-weight: 900;
+        letter-spacing: 5px;
+        text-shadow: 0 0 15px rgba(227, 0, 43, 0.8), 3px 3px 6px rgba(0,0,0,0.9);
+    }
+
+    .banner-subtitle {
+        font-size: 1.5rem;
+        color: #ddd;
+        font-weight: bold;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.9);
+    }
+
+    /* Card Game (Bản nâng cấp) */
+    .arcade-card {
+        background-color: #1a1a1a;
+        border: 2px solid #333;
+        border-radius: 15px;
+        transition: 0.4s;
+        overflow: hidden;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+        .arcade-card:hover {
+            transform: translateY(-10px);
+            border-color: #f3c623;
+            box-shadow: 0 15px 30px rgba(243, 198, 35, 0.2);
+        }
+
+    .game-icon-wrapper {
+        height: 200px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 5rem;
+        background-color: #111;
+        border-bottom: 1px solid #333;
+        color: #e3002b;
+        transition: 0.4s;
+    }
+
+    .arcade-card:hover .game-icon-wrapper {
+        background-color: #e3002b;
+        color: white;
+    }
+
+    .card-title {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #fff;
+        margin-bottom: 15px;
+    }
+
+    .card-desc {
+        color: #888;
+        font-size: 0.95rem;
+        line-height: 1.6;
+        margin-bottom: 30px;
+        flex-grow: 1; /* Đẩy nút bấm xuống dưới cùng */
+    }
+
+    .btn-play-now {
+        background-color: #e3002b;
+        color: white;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        border-radius: 8px;
+        transition: 0.3s;
+        display: block; /* Ép nút trải dài */
+        text-align: center; /* Chữ ở giữa */
+        text-decoration: none; /* Bỏ gạch chân */
+    }
+
+        .btn-play-now:hover {
+            background-color: #f3c623;
+            color: #000;
+            text-decoration: none; /* Đảm bảo không hiện gạch chân khi hover */
+        }
+</style>
+
+<div class="arcade-banner mb-5">
+    <div>
+        <h1 class="banner-title text-white">T1 <span style="color: #e3002b;">ARCADE</span></h1>
+        <p class="banner-subtitle mt-3">Chơi game vui - Săn T1 Points - Đổi Voucher cực khét</p>
+    </div>
+</div>
+
+<div class="container mb-5 pb-5">
+    <div class="row g-4 justify-content-center">
+
+        <div class="col-12 col-md-6 col-lg-4">
+            <div class="arcade-card">
+                <div class="game-icon-wrapper">
+                    <i class="fas fa-brain"></i>
+                </div>
+                <div class="p-4 d-flex flex-column flex-grow-1 text-center">
+                    <h3 class="card-title">Quiz Game</h3>
+                    <p class="card-desc">
+                        Thử thách độ hiểu biết của bạn về lịch sử huy hoàng của T1. Trả lời nhanh, rinh điểm khủng!
+                    </p>
+                    <a asp-controller="Arcade" asp-action="Quizgame" class="btn btn-play-now py-2 w-100">
+                        <i class="fas fa-gamepad me-2"></i> CHIẾN NGAY
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-6 col-lg-4">
+            <div class="arcade-card">
+                <div class="game-icon-wrapper">
+                    <i class="fas fa-dove"></i>
+                </div>
+                <div class="p-4 d-flex flex-column flex-grow-1 text-center">
+                    <h3 class="card-title">Flappy Ati</h3>
+                    <p class="card-desc">
+                        Luồn lách qua các chướng ngại vật khó nhằn. Trò chơi đòi hỏi phản xạ thần thánh từ bạn.
+                    </p>
+                    <a asp-controller="Arcade" asp-action="FlappyATI" class="btn btn-play-now py-2 w-100">
+                        <i class="fas fa-gamepad me-2"></i> CHIẾN NGAY
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-6 col-lg-4">
+            <div class="arcade-card">
+                <div class="game-icon-wrapper">
+                    <i class="fas fa-check-to-slot"></i>
+                </div>
+                <div class="p-4 d-flex flex-column flex-grow-1 text-center">
+                    <h3 class="card-title">Dự Đoán Tỉ Số</h3>
+                    <p class="card-desc">
+                        Hóa thân thành nhà tiên tri, dự đoán tỉ số các trận đấu rực lửa của T1 tại LCK. Đoán đúng nhận quà to!
+                    </p>
+                    <a asp-controller="Arcade" asp-action="PickEm" class="btn btn-play-now py-2 w-100">
+                        <i class="fas fa-gamepad me-2"></i> CHIẾN NGAY
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>

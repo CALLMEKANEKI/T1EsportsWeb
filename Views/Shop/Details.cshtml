@@ -1,0 +1,249 @@
+﻿@model T1EsportsWeb.Models.Product
+
+@{
+    ViewData["Title"] = Model.ProductName;
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var images = string.IsNullOrEmpty(Model.ImageUrl) ? new List<string> { "https://via.placeholder.com/500x500/333/fff?text=T1+Shop" } : Model.ImageUrl.Split(';').ToList();
+    var mainImage = images.First();
+}
+
+<style>
+    body {
+        background-color: #0f0f1a;
+        color: white;
+    }
+
+    .product-gallery .main-img {
+        width: 100%;
+        aspect-ratio: 1/1;
+        object-fit: cover;
+        border-radius: 12px;
+        border: 1px solid #2b2b40;
+    }
+
+    .thumbnail {
+        width: 80px;
+        height: 80px;
+        object-fit: cover;
+        border-radius: 8px;
+        cursor: pointer;
+        border: 2px solid transparent;
+        transition: all 0.2s;
+    }
+
+        .thumbnail:hover, .thumbnail.active {
+            border-color: #e3002b;
+        }
+
+    .size-btn {
+        display: inline-block;
+        padding: 8px 16px;
+        margin-right: 8px;
+        margin-bottom: 8px;
+        border: 1px solid #2b2b40;
+        border-radius: 6px;
+        cursor: pointer;
+        background: #1e1e2d;
+        color: #fff;
+        transition: all 0.2s;
+    }
+
+        .size-btn input {
+            display: none;
+        }
+
+        .size-btn:has(input:checked) {
+            background: #e3002b;
+            border-color: #e3002b;
+            font-weight: bold;
+        }
+
+    .desc-box {
+        background: #1e1e2d;
+        border-radius: 12px;
+        padding: 20px;
+        border: 1px solid #2b2b40;
+        white-space: pre-line;
+    }
+
+    input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    input[type="number"] {
+        -moz-appearance: textfield;
+        text-align: center !important;
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    .t1-toast {
+        position: fixed;
+        bottom: 40px;
+        right: -400px;
+        background-color: #1e1e2d;
+        border: 1px solid #2b2b40;
+        border-left: 4px solid #e3002b;
+        padding: 15px 20px;
+        border-radius: 8px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        transition: right 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+        z-index: 9999;
+    }
+
+        .t1-toast.show {
+            right: 40px;
+        }
+
+    .toast-icon {
+        color: #00e676;
+        font-size: 2rem;
+    }
+</style>
+
+<div class="container mt-4 mb-5">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/Shop" class="text-danger text-decoration-none fw-bold">Shop</a></li>
+            <li class="breadcrumb-item active text-muted" aria-current="page">@Model.ProductName</li>
+        </ol>
+    </nav>
+
+    <div class="row g-5">
+        <div class="col-md-5 product-gallery">
+            <img src="@mainImage" id="main-product-image" class="main-img mb-3 shadow" alt="@Model.ProductName" />
+            @if (images.Count > 1)
+            {
+                <div class="d-flex flex-wrap gap-2">
+                    @foreach (var img in images)
+                    {
+                        <img src="@img" class="thumbnail @(img == mainImage ? "active" : "")" onclick="changeImage(this, '@img')" />
+                    }
+                </div>
+            }
+        </div>
+
+        <div class="col-md-7">
+            <h1 class="fw-bold mb-3">@Model.ProductName</h1>
+            <h2 class="text-danger fw-bold mb-4">@Model.Price.ToString("N0")₫</h2>
+
+            @if (Model.StockQuantity > 0)
+            {
+                <p class="text-success fw-bold"><i class="fas fa-check-circle me-2"></i>Còn hàng (@Model.StockQuantity sản phẩm)</p>
+
+                <form id="addToCartForm" action="/Cart/Add" method="post">
+                    <input type="hidden" name="productId" value="@Model.ProductId" />
+
+                    @if (!string.IsNullOrEmpty(Model.Sizes))
+                    {
+                        <div class="mb-4">
+                            <label class="fw-bold mb-2 d-block">Chọn Kích Cỡ:</label>
+                            @{
+                                var sizes = Model.Sizes.Split(',', StringSplitOptions.RemoveEmptyEntries);
+                                foreach (var size in sizes)
+                                {
+                                    <label class="size-btn">
+                                        <input type="radio" name="selectedSize" value="@size.Trim()" required />
+                                        @size.Trim()
+                                    </label>
+                                }
+                            }
+                        </div>
+                    }
+
+                    <div class="d-flex align-items-center gap-3 mb-4 mt-4">
+                        <div class="input-group" style="width: 130px;">
+                            <button class="btn btn-outline-secondary text-white border-secondary" type="button" onclick="decreaseQty()">-</button>
+                            <input type="number" name="quantity" id="qty-input" class="form-control text-center bg-dark text-white border-secondary fw-bold" value="1" min="1" max="@Model.StockQuantity" readonly>
+                            <button class="btn btn-outline-secondary text-white border-secondary" type="button" onclick="increaseQty()">+</button>
+                        </div>
+
+                        <button type="submit" class="btn btn-danger btn-lg flex-grow-1 fw-bold rounded-pill shadow">
+                            <i class="fas fa-cart-plus me-2"></i> Thêm Vào Giỏ
+                        </button>
+                    </div>
+                </form>
+            }
+            else
+            {
+                <div class="alert alert-dark border-secondary text-center mb-4 mt-4 py-3">
+                    <h5 class="text-danger fw-bold mb-0"><i class="fas fa-times-circle me-2"></i>SẢN PHẨM TẠM HẾT HÀNG</h5>
+                </div>
+            }
+
+            <div class="desc-box mt-5">
+                <h5 class="fw-bold border-bottom border-secondary pb-2 mb-3">Mô Tả Sản Phẩm</h5>
+                <p class="text-white mb-0" style="font-size: 1.05rem; line-height: 1.6;">@(string.IsNullOrEmpty(Model.Description) ? "Shop đang cập nhật mô tả cho sản phẩm này..." : Model.Description)</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="t1Toast" class="t1-toast">
+    <div class="toast-icon">
+        <i class="fas fa-check-circle"></i>
+    </div>
+    <div>
+        <strong class="d-block text-white" style="font-size: 1.1rem;">Thành công!</strong>
+        <span class="text-muted" style="font-size: 0.9rem;">Sản phẩm đã nằm gọn trong giỏ hàng.</span>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function changeImage(element, newSrc) {
+            document.getElementById('main-product-image').src = newSrc;
+            var thumbs = document.querySelectorAll('.thumbnail');
+            thumbs.forEach(t => t.classList.remove('active'));
+            element.classList.add('active');
+        }
+
+        function increaseQty() {
+            var input = document.getElementById('qty-input');
+            if (parseInt(input.value) < parseInt(input.max)) {
+                input.value = parseInt(input.value) + 1;
+            }
+        }
+
+        function decreaseQty() {
+            var input = document.getElementById('qty-input');
+            if (parseInt(input.value) > 1) {
+                input.value = parseInt(input.value) - 1;
+            }
+        }
+
+        /* KHÚC NÀY XỬ LÝ GỬI DỮ LIỆU NGẦM VÀ CẬP NHẬT TẤT CẢ BADGE */
+        document.getElementById('addToCartForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            fetch('/Cart/Add', {
+                method: 'POST',
+                body: new FormData(this)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.success) {
+                    // 1. Hiện thông báo Toast
+                    var toast = document.getElementById('t1Toast');
+                    toast.classList.add('show');
+
+                    setTimeout(function() {
+                        toast.classList.remove('show');
+                    }, 3000);
+
+                    // 2. Cập nhật tất cả badge có class 'cart-badge-count' (Menu và Nút đỏ cố định)
+                    var badges = document.querySelectorAll('.cart-badge-count');
+                    badges.forEach(badge => {
+                        badge.innerText = data.cartCount;
+                        badge.style.display = 'inline-block'; // Hiện badge lên nếu đang ẩn
+                    });
+                }
+            });
+        });
+    </script>
+}
