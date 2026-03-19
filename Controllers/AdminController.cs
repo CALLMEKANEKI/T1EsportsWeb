@@ -350,5 +350,50 @@ namespace T1EsportsWeb.Controllers
 
             return Json(msgs);
         }
+
+        // ==========================================
+        // 6. QUẢN LÝ NHÂN SỰ VÀ PHÂN QUYỀN (ROLE)
+        // ==========================================
+
+        // 1. Hiển thị danh sách toàn bộ User và Admin
+        public IActionResult UserList()
+        {
+            var users = _context.Users.OrderByDescending(u => u.Role == "Admin").ThenBy(u => u.UserId).ToList();
+            return View(users);
+        }
+
+        // 2. Thăng cấp lên Admin
+        [HttpPost]
+        public IActionResult PromoteToAdmin(int userId)
+        {
+            var targetUser = _context.Users.Find(userId);
+            if (targetUser != null && targetUser.Role != "Admin")
+            {
+                targetUser.Role = "Admin";
+                _context.SaveChanges();
+            }
+            return RedirectToAction("UserList");
+        }
+
+        // 3. Giáng chức / Thu hồi quyền Admin (Về lại User)
+        [HttpPost]
+        public IActionResult DemoteToUser(int userId)
+        {
+            // Bảo vệ an toàn: Không cho phép tự tước quyền của chính mình
+            var currentUser = _context.Users.SingleOrDefault(u => u.Username == User.Identity.Name);
+            if (currentUser != null && currentUser.UserId == userId)
+            {
+                TempData["Error"] = "Bạn không thể tự tước quyền Admin của chính mình!";
+                return RedirectToAction("UserList");
+            }
+
+            var targetUser = _context.Users.Find(userId);
+            if (targetUser != null && targetUser.Role == "Admin")
+            {
+                targetUser.Role = "User";
+                _context.SaveChanges();
+            }
+            return RedirectToAction("UserList");
+        }
     }
 }

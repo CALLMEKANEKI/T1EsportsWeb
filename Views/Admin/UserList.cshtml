@@ -1,0 +1,98 @@
+﻿@model IEnumerable<T1EsportsWeb.Models.User>
+
+@{
+    ViewData["Title"] = "Quản lý Nhân Sự";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="mb-4 d-flex justify-content-between align-items-center">
+    <div>
+        <h2 class="fw-bold mb-1 text-white"><i class="fas fa-users-cog me-2 text-danger"></i>Quản lý Nhân sự & Quyền</h2>
+        <p class="text-muted mb-0">Kiểm soát truy cập, thăng cấp hoặc thu hồi quyền quản trị viên.</p>
+    </div>
+    <div>
+        <span class="badge bg-danger bg-opacity-10 text-danger border border-danger px-3 py-2 fs-6 rounded-pill">
+            <i class="fas fa-shield-alt me-1"></i> Trung Tâm Bảo Mật
+        </span>
+    </div>
+</div>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger bg-danger bg-opacity-10 text-danger border-0 rounded-3 mb-4 fw-bold">
+        <i class="fas fa-exclamation-triangle me-2"></i> @TempData["Error"]
+    </div>
+}
+
+<div class="card p-0 border-0 shadow-sm mb-5" style="background-color: #1e1e2d;">
+    <div class="card-header bg-transparent border-bottom p-4 d-flex justify-content-between align-items-center" style="border-color: #2b2b40 !important;">
+        <h5 class="fw-bold mb-0 text-white"><i class="fas fa-list me-2 text-info"></i>Danh sách Tài khoản</h5>
+    </div>
+
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" style="color: #e4e6ef;">
+                <thead style="background-color: #2b2b40; color: #a1a5b7;">
+                    <tr>
+                        <th class="ps-4 py-3 border-0">ID</th>
+                        <th class="py-3 border-0">Tài khoản</th>
+                        <th class="py-3 border-0">Thông tin cá nhân</th>
+                        <th class="py-3 border-0 text-center">Vai trò hiện tại</th>
+                        <th class="pe-4 py-3 border-0 text-end">Hành động kiểm soát</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var u in Model)
+                    {
+                        var isAdmin = u.Role == "Admin";
+                        <tr style="border-bottom: 1px solid #2b2b40; @(isAdmin ? "background-color: rgba(227, 0, 43, 0.05);" : "")">
+
+                            <td class="ps-4 py-3 fw-bold text-muted">#@u.UserId</td>
+
+                            <td class="py-3">
+                                <div class="fw-bold text-white fs-5">@u.Username</div>
+                            </td>
+
+                            <td class="py-3">
+                                <div style="color: #a1a5b7;"><i class="fas fa-user-tag me-1 small"></i> @u.FullName</div>
+                                <div style="color: #a1a5b7; font-size: 0.85rem;"><i class="fas fa-envelope me-1 small"></i> @(string.IsNullOrEmpty(u.Email) ? "Chưa cập nhật" : u.Email)</div>
+                            </td>
+
+                            <td class="py-3 text-center">
+                                @if (isAdmin)
+                                {
+                                    <span class="badge bg-danger text-white px-3 py-2 rounded-pill fs-6 shadow-sm"><i class="fas fa-crown me-1 text-warning"></i> Quản Trị Viên</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary bg-opacity-25 text-light px-3 py-2 rounded-pill"><i class="fas fa-user me-1"></i> Khách Hàng</span>
+                                }
+                            </td>
+
+                            <td class="pe-4 py-3 text-end">
+                                @if (isAdmin)
+                                {
+                                    <form asp-action="DemoteToUser" method="post" class="d-inline" onsubmit="return confirm('CẢNH BÁO: Bạn có chắc chắn muốn tước quyền Quản Trị Viên của tài khoản này không?');">
+                                        <input type="hidden" name="userId" value="@u.UserId" />
+                                        <button type="submit" class="btn btn-sm btn-outline-warning rounded-pill px-3 fw-bold">
+                                            <i class="fas fa-arrow-down me-1"></i> Thu hồi quyền
+                                        </button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <form asp-action="PromoteToAdmin" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn cấp quyền Quản Trị Viên cao nhất cho tài khoản này không?');">
+                                        <input type="hidden" name="userId" value="@u.UserId" />
+                                        <button type="submit" class="btn btn-sm btn-outline-info rounded-pill px-3 fw-bold">
+                                            <i class="fas fa-arrow-up me-1"></i> Cấp quyền Admin
+                                        </button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

@@ -167,15 +167,21 @@
                                     @if (User.IsInRole("Admin"))
                                     {
                                         <li>
-                                            <a class="dropdown-item text-danger fw-bold" asp-area="" asp-controller="Admin" asp-action="Index">
+                                            <a class="dropdown-item text-danger fw-bold py-2" asp-area="" asp-controller="Admin" asp-action="Index">
                                                 <i class="fas fa-cogs me-2"></i>Quản Trị Hệ Thống
                                             </a>
                                         </li>
                                     }
 
                                     <li>
-                                        <a class="dropdown-item" asp-area="" asp-controller="Account" asp-action="Logout">
-                                            <i class="fas fa-sign-out-alt me-2"></i>Đăng Xuất
+                                        <a class="dropdown-item py-2" asp-area="" asp-controller="Account" asp-action="ChangePassword">
+                                            <i class="fas fa-key text-info me-2"></i>Đổi Mật Khẩu
+                                        </a>
+                                    </li>
+
+                                    <li>
+                                        <a class="dropdown-item py-2" asp-area="" asp-controller="Account" asp-action="Logout">
+                                            <i class="fas fa-sign-out-alt text-secondary me-2"></i>Đăng Xuất
                                         </a>
                                     </li>
                                 </ul>
