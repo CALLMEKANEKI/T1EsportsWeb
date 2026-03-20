@@ -11,7 +11,7 @@ using System.Linq;
 namespace T1EsportsWeb.Areas.Admin.Controllers
 {
     [Area("Admin")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,Staff")]
     public class TournamentsController : Controller
     {
         private readonly T1StatDbContext _context;
