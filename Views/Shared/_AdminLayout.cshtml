@@ -178,18 +178,27 @@
         <ul class="nav flex-column mt-3">
             <!-- Hệ Thống -->
             <li class="nav-section-title">Hệ Thống</li>
-            <li class="nav-item">
-                <a class="nav-link" asp-controller="Admin" asp-action="Index">
-                    <i class="fas fa-tachometer-alt me-2"></i> Tổng quan
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" asp-controller="Admin" asp-action="CustomerSupport">
-                    <i class="fas fa-headset me-2"></i> Chăm sóc KH
-                </a>
-            </li>
-
-            <!-- Cửa Hàng -->
+<ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link" asp-controller="Admin" asp-action="Index">
+                        <i class="fas fa-tachometer-alt me-2"></i> Tổng quan
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" asp-controller="Admin" asp-action="CustomerSupport">
+                        <i class="fas fa-headset me-2"></i> Chăm sóc KH
+                    </a>
+                </li>
+                @if (User.IsInRole("Admin"))
+                {
+                    <li class="nav-section-title mt-3">Bảo Mật</li>
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="Admin" asp-action="UserList">
+                            <i class="fas fa-users-cog me-2"></i> Quản lý Nhân Sự
+                        </a>
+                    </li>
+                }
+            </ul>
             <li class="nav-section-title mt-3">Cửa Hàng (Shop)</li>
             <li class="nav-item">
                 <a class="nav-link" asp-controller="Admin" asp-action="OrderList">

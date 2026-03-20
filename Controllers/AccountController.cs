@@ -13,7 +13,7 @@ namespace T1EsportsWeb.Controllers
     public class AccountController : Controller
     {
         private readonly T1DbContext _context;
-
+        
         public AccountController(T1DbContext context)
         {
             _context = context;
@@ -190,6 +190,56 @@ namespace T1EsportsWeb.Controllers
             }
 
             ViewBag.Error = "Tên đăng nhập hoặc Email không tồn tại";
+            return View();
+        }
+        // ==========================================
+        // CHỨC NĂNG ĐỔI MẬT KHẨU
+        // ==========================================
+
+        [HttpGet]
+        public IActionResult ChangePassword()
+        {
+            if (!User.Identity.IsAuthenticated)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+            return View();
+        }
+
+        [HttpPost]
+        public IActionResult ChangePassword(string oldPassword, string newPassword, string confirmPassword)
+        {
+            if (!User.Identity.IsAuthenticated)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            if (newPassword != confirmPassword)
+            {
+                ViewBag.Error = "Mật khẩu xác nhận không khớp với mật khẩu mới!";
+                return View();
+            }
+
+            string currentUsername = User.Identity.Name;
+            var user = _context.Users.SingleOrDefault(u => u.Username == currentUsername);
+
+            if (user == null)
+            {
+                ViewBag.Error = "Không tìm thấy tài khoản!";
+                return View();
+            }
+
+            // Đã sửa thành PasswordHash cho khớp với CSDL của bạn
+            if (user.PasswordHash != oldPassword)
+            {
+                ViewBag.Error = "Mật khẩu hiện tại không chính xác!";
+                return View();
+            }
+
+            user.PasswordHash = newPassword;
+            _context.SaveChanges();
+
+            ViewBag.Success = "Cập nhật mật khẩu thành công!";
             return View();
         }
     }

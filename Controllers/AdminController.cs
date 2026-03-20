@@ -11,7 +11,7 @@ using System.Collections.Generic;
 
 namespace T1EsportsWeb.Controllers
 {
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,Staff")]
     public class AdminController : Controller
     {
         private readonly T1DbContext _context;
@@ -349,6 +349,55 @@ namespace T1EsportsWeb.Controllers
                 .ToList();
 
             return Json(msgs);
+        }
+
+        // ==========================================
+        // 6. QUẢN LÝ NHÂN SỰ VÀ PHÂN QUYỀN (ROLE)
+        // ==========================================
+
+        // 1. Hiển thị danh sách toàn bộ User và Admin
+        // ==========================================
+        // 6. QUẢN LÝ NHÂN SỰ VÀ PHÂN QUYỀN (3 CẤP)
+        // ==========================================
+        [Authorize(Roles = "Admin")]
+        [HttpGet]
+        public IActionResult UserList()
+        {
+            // Chặn ngay lập tức nếu Staff (Nhân viên) cố tình gõ link /Admin/UserList để vào trộm
+            if (!User.IsInRole("Admin"))
+            {
+                return RedirectToAction("Index", "Home");
+            }
+
+            // Sắp xếp theo thứ bậc: Admin -> Staff -> User
+            var users = _context.Users
+                .OrderBy(u => u.Role == "Admin" ? 1 : (u.Role == "Staff" ? 2 : 3))
+                .ThenBy(u => u.UserId)
+                .ToList();
+            return View(users);
+        }
+
+        [HttpPost]
+        public IActionResult ChangeRole(int userId, string newRole)
+        {
+            // Chỉ Admin mới có quyền thực hiện đổi chức vụ
+            if (!User.IsInRole("Admin")) return RedirectToAction("Index", "Home");
+
+            var currentUser = _context.Users.SingleOrDefault(u => u.Username == User.Identity.Name);
+            if (currentUser != null && currentUser.UserId == userId)
+            {
+                TempData["Error"] = "Boss ơi, Boss không thể tự giáng chức chính mình được đâu!";
+                return RedirectToAction("UserList");
+            }
+
+            var targetUser = _context.Users.Find(userId);
+            if (targetUser != null && (newRole == "Admin" || newRole == "Staff" || newRole == "User"))
+            {
+                targetUser.Role = newRole;
+                _context.SaveChanges();
+                TempData["Success"] = $"Đã cập nhật chức vụ của {targetUser.Username} thành {newRole}!";
+            }
+            return RedirectToAction("UserList");
         }
     }
 }
