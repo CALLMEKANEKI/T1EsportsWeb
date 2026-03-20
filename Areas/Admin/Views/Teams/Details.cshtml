@@ -1,0 +1,34 @@
+﻿@model T1EsportsWeb.Models.T1Stat.Team
+
+@{
+    ViewData["Title"] = "Chi tiết đội tuyển";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<h1>Chi tiết đội tuyển</h1>
+
+<div class="card" style="max-width: 500px;">
+    <div class="card-body">
+        <h4 class="card-title">@Model.Name</h4>
+        <dl class="row">
+            <dt class="col-sm-4">Khu vực</dt>
+            <dd class="col-sm-8">@Model.Region</dd>
+
+            <dt class="col-sm-4">Logo</dt>
+            <dd class="col-sm-8">
+                @if (!string.IsNullOrEmpty(Model.LogoUrl))
+                {
+                    <img src="@Model.LogoUrl" alt="logo" style="max-height: 100px;" />
+                }
+                else
+                {
+                    <span class="text-muted">Chưa có</span>
+                }
+            </dd>
+        </dl>
+    </div>
+    <div class="card-footer">
+        <a asp-action="Edit" asp-route-id="@Model.IdTeam" class="btn btn-warning">Sửa</a>
+        <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
+    </div>
+</div>
