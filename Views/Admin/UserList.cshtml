@@ -30,38 +30,46 @@
     </div>
 
     <div class="card-body p-0">
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success bg-success bg-opacity-10 text-success border-0 rounded-0 px-4 py-3 fw-bold mb-0">
+                <i class="fas fa-check-circle me-2"></i> @TempData["Success"]
+            </div>
+        }
+
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0" style="color: #e4e6ef;">
                 <thead style="background-color: #2b2b40; color: #a1a5b7;">
                     <tr>
-                        <th class="ps-4 py-3 border-0">ID</th>
-                        <th class="py-3 border-0">Tài khoản</th>
+                        <th class="ps-4 py-3 border-0">Tài khoản</th>
                         <th class="py-3 border-0">Thông tin cá nhân</th>
                         <th class="py-3 border-0 text-center">Vai trò hiện tại</th>
-                        <th class="pe-4 py-3 border-0 text-end">Hành động kiểm soát</th>
+                        <th class="pe-4 py-3 border-0 text-end">Điều chỉnh chức vụ</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach (var u in Model)
                     {
-                        var isAdmin = u.Role == "Admin";
-                        <tr style="border-bottom: 1px solid #2b2b40; @(isAdmin ? "background-color: rgba(227, 0, 43, 0.05);" : "")">
+                        <tr style="border-bottom: 1px solid #2b2b40; @(u.Role == "Admin" ? "background-color: rgba(227, 0, 43, 0.05);" : (u.Role == "Staff" ? "background-color: rgba(33, 211, 117, 0.05);" : ""))">
 
-                            <td class="ps-4 py-3 fw-bold text-muted">#@u.UserId</td>
-
-                            <td class="py-3">
+                            <td class="ps-4 py-3">
                                 <div class="fw-bold text-white fs-5">@u.Username</div>
+                                <div class="text-muted small">ID: #@u.UserId</div>
                             </td>
 
                             <td class="py-3">
-                                <div style="color: #a1a5b7;"><i class="fas fa-user-tag me-1 small"></i> @u.FullName</div>
+                                <div style="color: #a1a5b7;"><i class="fas fa-id-card me-1 small"></i> @u.FullName</div>
                                 <div style="color: #a1a5b7; font-size: 0.85rem;"><i class="fas fa-envelope me-1 small"></i> @(string.IsNullOrEmpty(u.Email) ? "Chưa cập nhật" : u.Email)</div>
                             </td>
 
                             <td class="py-3 text-center">
-                                @if (isAdmin)
+                                @if (u.Role == "Admin")
                                 {
-                                    <span class="badge bg-danger text-white px-3 py-2 rounded-pill fs-6 shadow-sm"><i class="fas fa-crown me-1 text-warning"></i> Quản Trị Viên</span>
+                                    <span class="badge bg-danger text-white px-3 py-2 rounded-pill shadow-sm"><i class="fas fa-crown me-1 text-warning"></i> Giám Đốc (Admin)</span>
+                                }
+                                else if (u.Role == "Staff")
+                                {
+                                    <span class="badge bg-success text-white px-3 py-2 rounded-pill shadow-sm"><i class="fas fa-user-tie me-1"></i> Nhân Viên (Staff)</span>
                                 }
                                 else
                                 {
@@ -70,22 +78,38 @@
                             </td>
 
                             <td class="pe-4 py-3 text-end">
-                                @if (isAdmin)
+                                @if (u.Role == "Admin")
                                 {
-                                    <form asp-action="DemoteToUser" method="post" class="d-inline" onsubmit="return confirm('CẢNH BÁO: Bạn có chắc chắn muốn tước quyền Quản Trị Viên của tài khoản này không?');">
-                                        <input type="hidden" name="userId" value="@u.UserId" />
-                                        <button type="submit" class="btn btn-sm btn-outline-warning rounded-pill px-3 fw-bold">
-                                            <i class="fas fa-arrow-down me-1"></i> Thu hồi quyền
-                                        </button>
-                                    </form>
+                                    <span class="text-secondary fw-bold small"><i class="fas fa-lock me-1"></i> Quyền Tối Cao</span>
                                 }
                                 else
                                 {
-                                    <form asp-action="PromoteToAdmin" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn cấp quyền Quản Trị Viên cao nhất cho tài khoản này không?');">
+                                    <form asp-action="ChangeRole" method="post" id="form-role-@u.UserId" class="d-inline">
                                         <input type="hidden" name="userId" value="@u.UserId" />
-                                        <button type="submit" class="btn btn-sm btn-outline-info rounded-pill px-3 fw-bold">
-                                            <i class="fas fa-arrow-up me-1"></i> Cấp quyền Admin
-                                        </button>
+                                        <input type="hidden" name="newRole" id="newRole-@u.UserId" value="" />
+
+                                        @if (u.Role == "User")
+                                        {
+                                            <button type="button" class="btn btn-sm btn-outline-success rounded-pill px-3 fw-bold mb-1"
+                                                    onclick="confirmRoleChange(@u.UserId, 'Staff', 'Tuyển dụng tài khoản này làm Nhân Viên (Staff)?')">
+                                                <i class="fas fa-arrow-up me-1"></i> Lên Staff
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-bold mb-1"
+                                                    onclick="confirmRoleChange(@u.UserId, 'Admin', 'CẢNH BÁO: Cấp quyền Giám Đốc (Admin) cho tài khoản này?')">
+                                                <i class="fas fa-crown me-1"></i> Lên Admin
+                                            </button>
+                                        }
+                                        else if (u.Role == "Staff")
+                                        {
+                                            <button type="button" class="btn btn-sm btn-outline-warning rounded-pill px-3 fw-bold mb-1"
+                                                    onclick="confirmRoleChange(@u.UserId, 'User', 'Giáng chức Nhân viên này về làm Khách hàng bình thường?')">
+                                                <i class="fas fa-arrow-down me-1"></i> Xuống User
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-bold mb-1"
+                                                    onclick="confirmRoleChange(@u.UserId, 'Admin', 'CẢNH BÁO: Thăng chức nhân viên này lên Giám Đốc (Admin)?')">
+                                                <i class="fas fa-crown me-1"></i> Lên Admin
+                                            </button>
+                                        }
                                     </form>
                                 }
                             </td>
@@ -96,3 +120,33 @@
         </div>
     </div>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    function confirmRoleChange(userId, newRole, messageText) {
+        // Gán giá trị chức vụ mới vào input ẩn
+        document.getElementById('newRole-' + userId).value = newRole;
+
+        // Bật bảng thông báo SweetAlert2 xịn xò
+        Swal.fire({
+            title: '<h3 style="color: #fff; font-weight: bold;">XÁC NHẬN CHỨC VỤ</h3>',
+            html: `<p style="color: #a1a5b7; font-size: 1.1rem;">${messageText}</p>`,
+            icon: 'warning',
+            background: '#1e1e2d', // Nền Dark Mode
+            color: '#fff',
+            showCancelButton: true,
+            confirmButtonColor: '#e3002b', // Đỏ T1
+            cancelButtonColor: '#2b2b40',  // Xám T1
+            confirmButtonText: '<i class="fas fa-check me-1"></i> Đồng ý',
+            cancelButtonText: '<i class="fas fa-times me-1"></i> Hủy bỏ',
+            customClass: {
+                popup: 'border border-secondary rounded-4 shadow-lg'
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Nếu User bấm Đồng ý -> Submit Form đi
+                document.getElementById('form-role-' + userId).submit();
+            }
+        });
+    }
+</script>
