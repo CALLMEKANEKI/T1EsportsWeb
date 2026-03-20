@@ -62,6 +62,9 @@ app.UseSession();
 // Chú ý: Phải Authentication (Xác thực) trước rồi mới Authorization (Phân quyền)
 app.UseAuthentication();
 app.UseAuthorization();
+app.MapControllerRoute(
+    name: "areas",
+    pattern: "{area:exists}/{controller=Admin}/{action=Index}/{id?}");
 
 app.MapControllerRoute(
     name: "areas",

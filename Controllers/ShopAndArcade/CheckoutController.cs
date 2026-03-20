@@ -5,7 +5,7 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 
-namespace T1EsportsWeb.Controllers
+namespace T1EsportsWeb.Controllers.ShopAndArcade
 {
     [Authorize]
     public class CheckoutController : Controller

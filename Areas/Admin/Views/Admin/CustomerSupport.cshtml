@@ -1,7 +1,7 @@
 ﻿@model IEnumerable<T1EsportsWeb.Models.ChatMessage>
 @{
     ViewData["Title"] = "Chăm sóc khách hàng";
-    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    Layout = "_AdminLayout";
 }
 
 <div class="mb-4">
@@ -33,7 +33,8 @@
                         </td>
 
                         <td class="text-end pe-4 py-3">
-                            <a href="/Admin/ChatRoom?user=@chat.SenderUsername" class="btn btn-outline-danger btn-sm rounded-pill px-4 fw-bold">
+                            <a asp-area="Admin" asp-controller="Admin" asp-action="ChatRoom" asp-route-user="@chat.SenderUsername"
+                               class="btn btn-outline-danger btn-sm rounded-pill px-4 fw-bold">
                                 <i class="fas fa-comments me-1"></i> Mở phòng
                             </a>
                         </td>

@@ -4,7 +4,7 @@
 
 @{
     ViewData["Title"] = "Quản lý Đơn Hàng";
-    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+
 
     // Lấy phí ship từ hệ thống để tính toán tiền giảm giá
     var shippingSetting = _context.SystemSettings.FirstOrDefault(s => s.Key == "ShippingFee");

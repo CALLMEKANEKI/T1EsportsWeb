@@ -4,7 +4,7 @@ using T1EsportsWeb.Models;
 using System.Linq;
 using System;
 
-namespace T1EsportsWeb.Controllers
+namespace T1EsportsWeb.Controllers.ShopAndArcade
 {
     public class ArcadeController : Controller
     {
@@ -70,7 +70,7 @@ namespace T1EsportsWeb.Controllers
             var targetVoucher = _context.Vouchers.Find(voucherId);
 
             // 1. Kiểm tra kho hàng
-            if (targetVoucher == null || (targetVoucher.Quantity <= 0 && targetVoucher.Quantity != -1))
+            if (targetVoucher == null || targetVoucher.Quantity <= 0 && targetVoucher.Quantity != -1)
             {
                 TempData["ErrorMsg"] = "Rất tiếc! Gói Voucher này vừa bị người khác đổi hết lượt rồi.";
                 return RedirectToAction("RewardCenter");

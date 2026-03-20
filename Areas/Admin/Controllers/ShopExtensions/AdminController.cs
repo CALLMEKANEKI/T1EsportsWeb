@@ -9,8 +9,9 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 
-namespace T1EsportsWeb.Controllers
+namespace T1EsportsWeb.Areas.Admin.Controllers.ShopExtensions
 {
+    [Area("Admin")]
     [Authorize(Roles = "Admin,Staff")]
     public class AdminController : Controller
     {
@@ -316,8 +317,8 @@ namespace T1EsportsWeb.Controllers
         public IActionResult SendMessage(string messageContent, string receiver)
         {
             // Logic chuẩn: Nếu gửi tới "Admin" -> Người gửi là Khách. Ngược lại là "Admin".
-            string senderName = (receiver == "Admin")
-                ? (User.Identity.IsAuthenticated ? User.Identity.Name : "Khách ẩn danh")
+            string senderName = receiver == "Admin"
+                ? User.Identity.IsAuthenticated ? User.Identity.Name : "Khách ẩn danh"
                 : "Admin";
 
             var msg = new ChatMessage
@@ -338,13 +339,13 @@ namespace T1EsportsWeb.Controllers
         public IActionResult GetMessages(string withUser)
         {
             // Logic chuẩn: Lấy tin nhắn với "Admin" -> Người đang lấy là Khách. Ngược lại là "Admin".
-            string currentUser = (withUser == "Admin")
-                ? (User.Identity.IsAuthenticated ? User.Identity.Name : "Khách ẩn danh")
+            string currentUser = withUser == "Admin"
+                ? User.Identity.IsAuthenticated ? User.Identity.Name : "Khách ẩn danh"
                 : "Admin";
 
             var msgs = _context.ChatMessages
-                .Where(m => (m.SenderUsername == currentUser && m.ReceiverUsername == withUser) ||
-                            (m.SenderUsername == withUser && m.ReceiverUsername == currentUser))
+                .Where(m => m.SenderUsername == currentUser && m.ReceiverUsername == withUser ||
+                            m.SenderUsername == withUser && m.ReceiverUsername == currentUser)
                 .OrderBy(m => m.Timestamp)
                 .ToList();
 
@@ -371,7 +372,7 @@ namespace T1EsportsWeb.Controllers
 
             // Sắp xếp theo thứ bậc: Admin -> Staff -> User
             var users = _context.Users
-                .OrderBy(u => u.Role == "Admin" ? 1 : (u.Role == "Staff" ? 2 : 3))
+                .OrderBy(u => u.Role == "Admin" ? 1 : u.Role == "Staff" ? 2 : 3)
                 .ThenBy(u => u.UserId)
                 .ToList();
             return View(users);

@@ -2,7 +2,7 @@
 using T1EsportsWeb.Models;
 using System.Collections.Generic;
 
-namespace T1EsportsWeb.Controllers
+namespace T1EsportsWeb.Areas.Admin.Controllers.ShopExtensions
 {
     public class RosterController : Controller
     {

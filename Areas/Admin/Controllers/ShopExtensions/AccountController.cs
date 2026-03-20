@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Authentication.Google;
 
-namespace T1EsportsWeb.Controllers
+namespace T1EsportsWeb.Areas.Admin.Controllers.ShopExtensions
 {
     public class AccountController : Controller
     {
@@ -44,7 +44,7 @@ namespace T1EsportsWeb.Controllers
 
                 if (user.Role == "Admin")
                 {
-                    return RedirectToAction("Index", "Admin");
+                    return RedirectToAction("Index", "Admin", new { area = "Admin" } );
                 }
                 else
                 {
@@ -85,7 +85,7 @@ namespace T1EsportsWeb.Controllers
             }
 
             // ĐÃ CHỈNH SỬA KHỚP 100% VỚI BẢNG USER.CS (Bao gồm cả Email)
-            var newUser = new T1EsportsWeb.Models.User
+            var newUser = new User
             {
                 Username = username,
                 Email = email,           // Đã thêm lưu Email

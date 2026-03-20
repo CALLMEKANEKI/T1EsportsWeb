@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using T1EsportsWeb.Models;
 using System.Linq;
 
-namespace T1EsportsWeb.Controllers
+namespace T1EsportsWeb.Areas.Admin.Controllers.ShopExtensions
 {
     public class HomeController : Controller
     {

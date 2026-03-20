@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using T1EsportsWeb.Models;
 using System.Linq;
 
-namespace T1EsportsWeb.Controllers
+namespace T1EsportsWeb.Controllers.ShopAndArcade
 {
     [Authorize] // Phải đăng nhập mới được xem đơn hàng của mình
     public class OrderController : Controller

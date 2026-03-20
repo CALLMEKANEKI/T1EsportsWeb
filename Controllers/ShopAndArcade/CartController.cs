@@ -2,7 +2,7 @@
 using T1EsportsWeb.Models;
 using Microsoft.AspNetCore.Authorization;
 
-namespace T1EsportsWeb.Controllers
+namespace T1EsportsWeb.Controllers.ShopAndArcade
 {
     [Authorize] // Ép đăng nhập mới được dùng giỏ hàng
     public class CartController : Controller

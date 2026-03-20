@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Hosting;
 using System;
 using System.Linq;
 
-namespace T1EsportsWeb.Areas.Admin.Controllers
+namespace T1EsportsWeb.Areas.Admin.Controllers.StatsCore
 {
     [Area("Admin")]
     [Authorize(Roles = "Admin,Staff")]
