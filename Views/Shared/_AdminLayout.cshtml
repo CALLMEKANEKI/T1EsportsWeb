@@ -139,6 +139,34 @@
         .form-label {
             color: #e4e6ef;
         }
+
+        #sidebar {
+            width: 260px;
+            height: 100vh;
+            position: fixed;
+            background: #1e1e2d;
+            border-right: 1px solid #2b2b40;
+            z-index: 100;
+            box-shadow: 4px 0 15px rgba(0, 0, 0, 0.2);
+            overflow-y: auto; /* Thêm dòng này để có thanh cuộn dọc */
+        }
+
+            #sidebar::-webkit-scrollbar {
+                width: 6px;
+            }
+
+            #sidebar::-webkit-scrollbar-track {
+                background: #1e1e2d;
+            }
+
+            #sidebar::-webkit-scrollbar-thumb {
+                background: #565674;
+                border-radius: 3px;
+            }
+
+                #sidebar::-webkit-scrollbar-thumb:hover {
+                    background: #e3002b;
+                }
     </style>
 </head>
 <body>
@@ -148,36 +176,72 @@
             <i class="fas fa-gamepad me-2"></i>T1 ADMIN
         </div>
         <ul class="nav flex-column mt-3">
+            <!-- Hệ Thống -->
             <li class="nav-section-title">Hệ Thống</li>
-            <ul class="nav flex-column">
-                <li class="nav-item">
-                    <a class="nav-link" asp-controller="Admin" asp-action="Index">
-                        <i class="fas fa-tachometer-alt me-2"></i> Tổng quan
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" asp-controller="Admin" asp-action="CustomerSupport">
-                        <i class="fas fa-headset me-2"></i> Chăm sóc KH
-                    </a>
-                </li>
-            </ul>
-            <li class="nav-section-title mt-3">Cửa Hàng (Shop)</li>
             <li class="nav-item">
-                <a class="nav-link" href="/Admin/OrderList"><i class="fas fa-shopping-cart"></i> Quản lý Đơn Hàng</a>
+                <a class="nav-link" asp-controller="Admin" asp-action="Index">
+                    <i class="fas fa-tachometer-alt me-2"></i> Tổng quan
+                </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="/Admin/AddProduct"><i class="fas fa-plus-circle"></i> Thêm Sản Phẩm</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="/Admin/ProductList"><i class="fas fa-box-open"></i> List Sản Phẩm</a>
+                <a class="nav-link" asp-controller="Admin" asp-action="CustomerSupport">
+                    <i class="fas fa-headset me-2"></i> Chăm sóc KH
+                </a>
             </li>
 
-            <li class="nav-section-title mt-3">Giải Trí (Arcade)</li>
+            <!-- Cửa Hàng -->
+            <li class="nav-section-title mt-3">Cửa Hàng (Shop)</li>
             <li class="nav-item">
-                <a class="nav-link" href="/Admin/VoucherList"><i class="fas fa-ticket-alt"></i> Quản lý Voucher</a>
+                <a class="nav-link" asp-controller="Admin" asp-action="OrderList">
+                    <i class="fas fa-shopping-cart"></i> Quản lý Đơn Hàng
+                </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="/Admin/RedemptionHistory"><i class="fas fa-coins"></i> Lịch sử đổi Điểm</a>
+                <a class="nav-link" asp-controller="Admin" asp-action="AddProduct">
+                    <i class="fas fa-plus-circle"></i> Thêm Sản Phẩm
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" asp-controller="Admin" asp-action="ProductList">
+                    <i class="fas fa-box-open"></i> List Sản Phẩm
+                </a>
+            </li>
+
+            <!-- Giải Trí -->
+            <li class="nav-section-title mt-3">Giải Trí (Arcade)</li>
+            <li class="nav-item">
+                <a class="nav-link" asp-controller="Admin" asp-action="VoucherList">
+                    <i class="fas fa-ticket-alt"></i> Quản lý Voucher
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" asp-controller="Admin" asp-action="RedemptionHistory">
+                    <i class="fas fa-coins"></i> Lịch sử đổi Điểm
+                </a>
+            </li>
+
+            <!-- Quản Lý Data -->
+            <li class="nav-section-title mt-3">Quản Lý Data</li>
+            <li class="nav-item">
+                <a class="nav-link" asp-area="Admin" asp-controller="Teams" asp-action="Index">
+                    <i class="fas fa-users"></i> Đội tuyển
+                </a>
+                
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" asp-area="Admin" asp-controller="Tournaments" asp-action="Index">
+                    <i class="fas fa-users"></i> Giải đấu
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" asp-area="Admin" asp-controller="Champions" asp-action="Index">
+                    <i class="fas fa-dragon"></i> Tướng
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" asp-area="Admin" asp-controller="Players" asp-action="Index">
+                    <i class="fas fa-user"></i> Tuyển thủ
+                </a>
             </li>
         </ul>
     </div>

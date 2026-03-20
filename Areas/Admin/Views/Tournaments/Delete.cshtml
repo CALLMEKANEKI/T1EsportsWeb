@@ -1,0 +1,32 @@
+﻿@model T1EsportsWeb.Models.T1Stat.Tournament
+
+@{
+    ViewData["Title"] = "Xóa giải đấu";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<h1>Xóa giải đấu</h1>
+
+<div class="alert alert-danger">
+    <h3>Bạn có chắc chắn muốn xóa giải đấu này?</h3>
+</div>
+
+<div class="card" style="max-width: 500px;">
+    <div class="card-body">
+        <h4 class="card-title">@Model.Name</h4>
+        <dl class="row">
+            <dt class="col-sm-4">Năm</dt>
+            <dd class="col-sm-8">@Model.Year</dd>
+
+            <dt class="col-sm-4">Khu vực</dt>
+            <dd class="col-sm-8">@Model.Region</dd>
+        </dl>
+    </div>
+    <div class="card-footer">
+        <form asp-action="Delete">
+            <input type="hidden" asp-for="IdTournament" />
+            <input type="submit" value="Xóa" class="btn btn-danger" />
+            <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
+        </form>
+    </div>
+</div>

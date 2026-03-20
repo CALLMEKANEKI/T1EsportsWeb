@@ -1,0 +1,135 @@
+﻿@model IEnumerable<T1EsportsWeb.Models.T1Stat.Player>
+
+@{
+    ViewData["Title"] = "Danh sách tuyển thủ";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+
+    int currentPage = ViewBag.CurrentPage ?? 1;
+    int totalPages = ViewBag.TotalPages ?? 1;
+    string searchIngame = ViewBag.SearchIngame ?? "";
+    bool? hasImage = ViewBag.HasImage;
+    string selectedPosition = ViewBag.Position ?? "";
+    string selectedCountry = ViewBag.Country ?? "";
+}
+
+<h1>Quản lý tuyển thủ</h1>
+
+<p>
+    <a asp-area="Admin" asp-action="Create" class="btn btn-primary"><i class="fas fa-plus"></i> Thêm mới</a>
+</p>
+
+<!-- Form lọc -->
+<form asp-area="Admin" asp-action="Index" method="get" id="filterForm" class="mb-3">
+    <div class="row g-2 align-items-end">
+        <div class="col-md-3">
+            <label class="form-label">Tên ingame</label>
+            <input type="text" name="searchIngame" class="form-control" placeholder="Nhập tên..." value="@searchIngame" />
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Ảnh</label>
+            <select name="hasImage" class="form-control" onchange="submitFilter()">
+                <option value="">-- Lọc theo ảnh --</option>
+                <option value="true" selected="@(hasImage == true)">Có ảnh</option>
+                <option value="false" selected="@(hasImage == false)">Không ảnh</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Vị trí</label>
+            <select name="position" class="form-control" onchange="submitFilter()">
+                <option value="">-- Tất cả --</option>
+                <option value="Top" selected=@(selectedPosition == "Top" ? "selected" : "")>Top</option>
+                <option value="Jungle" selected=@(selectedPosition == "Jungle" ? "selected" : "")>Jungle</option>
+                <option value="Mid" selected=@(selectedPosition == "Mid" ? "selected" : "")>Mid</option>
+                <option value="ADC" selected=@(selectedPosition == "ADC" ? "selected" : "")>ADC</option>
+                <option value="Support" selected=@(selectedPosition == "Support" ? "selected" : "")>Support</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Quốc gia</label>
+            <input type="text" name="country" class="form-control" placeholder="VD: KR, CN..." value="@selectedCountry" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">&nbsp;</label>
+            <div>
+                <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i> Tìm</button>
+                <a asp-area="Admin" asp-action="Index" class="btn btn-secondary">Xóa lọc</a>
+            </div>
+        </div>
+    </div>
+</form>
+
+<div class="table-responsive">
+    <table class="table table-dark table-hover align-middle">
+        <thead>
+            <tr>
+                <th>Ingame</th>
+                <th>Tên thật</th>
+                <th>Vị trí</th>
+                <th>Ảnh</th>
+                <th>Ngày sinh</th>
+                <th>Quốc gia</th>
+                <th style="width: 200px;">Thao tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.IngameName</td>
+                    <td>@item.FullName</td>
+                    <td>@item.Position</td>
+                    <td>
+                        @if (!string.IsNullOrEmpty(item.PhotoUrl))
+                        {
+                            <img src="@item.PhotoUrl" alt="photo" style="max-height: 40px;" />
+                        }
+                        else
+                        {
+                            <span class="text-muted">Chưa có</span>
+                        }
+                    </td>
+                    <td>@item.BirthDate?.ToString("dd/MM/yyyy")</td>
+                    <td>@item.Country</td>
+                    <td>
+                        <a asp-area="Admin" asp-action="Edit" asp-route-id="@item.IdPlayer" class="btn btn-sm btn-warning">
+                            <i class="fas fa-edit"></i> Sửa
+                        </a>
+                        <a asp-area="Admin" asp-action="Details" asp-route-id="@item.IdPlayer" class="btn btn-sm btn-info">
+                            <i class="fas fa-info-circle"></i> Chi tiết
+                        </a>
+                        <a asp-area="Admin" asp-action="Delete" asp-route-id="@item.IdPlayer" class="btn btn-sm btn-danger">
+                            <i class="fas fa-trash"></i> Xóa
+                        </a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<!-- Phân trang -->
+@if (totalPages > 1)
+{
+    <nav aria-label="Page navigation">
+        <ul class="pagination justify-content-center">
+            <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                <a class="page-link" asp-area="Admin" asp-action="Index" asp-route-page="@(currentPage - 1)"
+                   asp-route-searchIngame="@searchIngame" asp-route-hasImage="@hasImage"
+                   asp-route-position="@selectedPosition" asp-route-country="@selectedCountry">«</a>
+            </li>
+            @for (int i = 1; i <= totalPages; i++)
+            {
+                <li class="page-item @(i == currentPage ? "active" : "")">
+                    <a class="page-link" asp-area="Admin" asp-action="Index" asp-route-page="@i"
+                       asp-route-searchIngame="@searchIngame" asp-route-hasImage="@hasImage"
+                       asp-route-position="@selectedPosition" asp-route-country="@selectedCountry">@i</a>
+                </li>
+            }
+            <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                <a class="page-link" asp-area="Admin" asp-action="Index" asp-route-page="@(currentPage + 1)"
+                   asp-route-searchIngame="@searchIngame" asp-route-hasImage="@hasImage"
+                   asp-route-position="@selectedPosition" asp-route-country="@selectedCountry">»</a>
+            </li>
+        </ul>
+    </nav>
+}
