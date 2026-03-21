@@ -1,12 +1,13 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using T1EsportsWeb.Models.T1Stat;
-using System.Threading.Tasks;
-using System.IO;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
 using System;
+using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
+using T1EsportsWeb.Models.T1Stat;
 
 namespace T1EsportsWeb.Areas.Admin.Controllers.StatsCore
 {
@@ -26,15 +27,24 @@ namespace T1EsportsWeb.Areas.Admin.Controllers.StatsCore
 
         // GET: Admin/Players
         // GET: Admin/Players
-        public async Task<IActionResult> Index(int? page, string searchIngame, bool? hasImage, string position, string country)
+
+        private async Task<List<SelectListItem>> GetTeamsSelectListAsync(int? selectedTeamId = null)
+        {
+            var teams = await _context.Teams.OrderBy(t => t.Name).ToListAsync();
+            return teams.Select(t => new SelectListItem
+            {
+                Value = t.IdTeam.ToString(),
+                Text = t.Name,
+                Selected = selectedTeamId.HasValue && t.IdTeam == selectedTeamId.Value
+            }).ToList();
+        }
+        public async Task<IActionResult> Index(int? page, string searchIngame, bool? hasImage, string position, string country, int? teamId)
         {
             int pageNumber = page ?? 1;
             var query = _context.Players.AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(searchIngame))
-            {
                 query = query.Where(p => p.IngameName.Contains(searchIngame));
-            }
 
             if (hasImage.HasValue)
             {
@@ -45,17 +55,18 @@ namespace T1EsportsWeb.Areas.Admin.Controllers.StatsCore
             }
 
             if (!string.IsNullOrWhiteSpace(position))
-            {
                 query = query.Where(p => p.Position == position);
-            }
 
             if (!string.IsNullOrWhiteSpace(country))
-            {
                 query = query.Where(p => p.Country != null && p.Country.Contains(country));
-            }
 
-            int totalItems = await query.CountAsync();
+            // Lọc theo team
+            if (teamId.HasValue)
+                query = query.Where(p => p.TeamId == teamId.Value);
+
+            var totalItems = await query.CountAsync();
             var items = await query
+                .Include(p => p.Team) // Include để lấy thông tin team
                 .OrderBy(p => p.IngameName)
                 .Skip((pageNumber - 1) * PageSize)
                 .Take(PageSize)
@@ -67,6 +78,14 @@ namespace T1EsportsWeb.Areas.Admin.Controllers.StatsCore
             ViewBag.HasImage = hasImage;
             ViewBag.Position = position;
             ViewBag.Country = country;
+            ViewBag.TeamId = teamId;
+
+            // Lấy danh sách team để hiển thị dropdown (chỉ các team có tuyển thủ)
+            var teams = await _context.Teams
+                .Where(t => _context.Players.Any(p => p.TeamId == t.IdTeam))
+                .OrderBy(t => t.Name)
+                .ToListAsync();
+            ViewBag.Teams = teams;
 
             return View(items);
         }
@@ -75,7 +94,9 @@ namespace T1EsportsWeb.Areas.Admin.Controllers.StatsCore
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null) return NotFound();
-            var player = await _context.Players.FirstOrDefaultAsync(m => m.IdPlayer == id);
+            var player = await _context.Players
+                        .Include(p => p.Team)
+                        .FirstOrDefaultAsync(m => m.IdPlayer == id);
             if (player == null) return NotFound();
             return View(player);
         }
@@ -83,6 +104,7 @@ namespace T1EsportsWeb.Areas.Admin.Controllers.StatsCore
         // GET: Admin/Players/Create
         public IActionResult Create()
         {
+            ViewBag.Teams = GetTeamsSelectListAsync().Result;
             return View();
         }
 
@@ -112,9 +134,11 @@ namespace T1EsportsWeb.Areas.Admin.Controllers.StatsCore
                 {
                     Console.WriteLine($"Lỗi trong Create: {ex.Message}");
                     ModelState.AddModelError("", "Đã xảy ra lỗi: " + ex.Message);
+                    ViewBag.Teams = await GetTeamsSelectListAsync(player.TeamId);
                     return View(player);
                 }
             }
+            ViewBag.Teams = await GetTeamsSelectListAsync(player.TeamId);
             return View(player);
         }
 
@@ -122,7 +146,9 @@ namespace T1EsportsWeb.Areas.Admin.Controllers.StatsCore
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null) return NotFound();
-            var player = await _context.Players.FindAsync(id);
+            var player = await _context.Players
+                        .Include(p => p.Team)
+                        .FirstOrDefaultAsync(p => p.IdPlayer == id);
             if (player == null) return NotFound();
             return View(player);
         }
@@ -139,6 +165,7 @@ namespace T1EsportsWeb.Areas.Admin.Controllers.StatsCore
             if (existing != null)
             {
                 ModelState.AddModelError("IngameName", "Tên ingame đã tồn tại.");
+                ViewBag.Teams = await GetTeamsSelectListAsync(player.TeamId);
                 return View(player);
             }
 
@@ -160,9 +187,11 @@ namespace T1EsportsWeb.Areas.Admin.Controllers.StatsCore
                 {
                     Console.WriteLine($"Lỗi trong Edit: {ex.Message}");
                     ModelState.AddModelError("", "Đã xảy ra lỗi: " + ex.Message);
+                    ViewBag.Teams = await GetTeamsSelectListAsync(player.TeamId);
                     return View(player);
                 }
             }
+            ViewBag.Teams = await GetTeamsSelectListAsync(player.TeamId);
             return View(player);
         }
 
@@ -170,7 +199,9 @@ namespace T1EsportsWeb.Areas.Admin.Controllers.StatsCore
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null) return NotFound();
-            var player = await _context.Players.FirstOrDefaultAsync(m => m.IdPlayer == id);
+            var player = await _context.Players
+                        .Include(p => p.Team)
+                        .FirstOrDefaultAsync(m => m.IdPlayer == id);
             if (player == null) return NotFound();
             return View(player);
         }
