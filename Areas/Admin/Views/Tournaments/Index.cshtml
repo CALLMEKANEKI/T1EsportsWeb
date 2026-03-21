@@ -2,123 +2,169 @@
 
 @{
     ViewData["Title"] = "Danh sách giải đấu";
-    
+    Layout = "_AdminLayout";
 
     int currentPage = ViewBag.CurrentPage ?? 1;
     int totalPages = ViewBag.TotalPages ?? 1;
     string searchName = ViewBag.SearchName ?? "";
     int? year = ViewBag.Year;
     string region = ViewBag.Region ?? "";
-    string? isT1winner = ViewBag.IsT1winner;
+    string isT1winner = ViewBag.IsT1winner ?? "";
 }
 
-<h1>Quản lý giải đấu</h1>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold mb-1 text-white"><i class="fas fa-trophy me-2 text-danger"></i>Quản Lý Giải Đấu</h2>
+        <p class="text-muted small mb-0">Quản lý danh sách các giải đấu và thành tích của T1.</p>
+    </div>
+    <a asp-area="Admin" asp-action="Create" class="btn btn-danger rounded-pill px-4 shadow-sm fw-bold">
+        <i class="fas fa-plus me-2"></i>Thêm giải mới
+    </a>
+</div>
 
-<p>
-    <a asp-area="Admin" asp-action="Create" class="btn btn-primary"><i class="fas fa-plus"></i> Thêm mới</a>
-</p>
-
-<!-- Form lọc -->
-<div class="row mb-3 g-2">
-    <div class="col-md-3">
-        <form asp-area="Admin" asp-action="Index" method="get" id="filterForm">
-            <div class="input-group">
-                <input type="text" name="searchName" class="form-control" placeholder="Tên giải..." value="@searchName" />
-                <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i> Tìm</button>
-                <a asp-area="Admin" asp-action="Index" class="btn btn-secondary">Xóa lọc</a>
+<div class="card border-0 mb-4 shadow-sm" style="background-color: #1e1e2d;">
+    <div class="card-body">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label text-muted small fw-bold">TÊN GIẢI ĐẤU</label>
+                <input type="text" name="searchName" class="form-control border-0 bg-dark text-white"
+                       placeholder="Tìm tên giải..." value="@searchName" onchange="submitFilter()" />
             </div>
-        </form>
-    </div>
-    <div class="col-md-2">
-        <input type="number" name="year" class="form-control" placeholder="Năm" value="@year" onchange="submitFilter()" />
-    </div>
-    <div class="col-md-2">
-        <select name="region" class="form-control" onchange="submitFilter()">
-            <option value="">-- Khu vực --</option>
-            <option value="KR" selected="@(region == "KR")">KR</option>
-            <option value="INT" selected="@(region == "INT")">INT</option>
-        </select>
-    </div>
-    <div class="col-md-2">
-        <select name="isT1winner" class="form-control" onchange="submitFilter()">
-            <option value="">-- T1 vô địch? --</option>
-            @if (isT1winner == "YES")
-            {
-                <option value="Win" selected>Yes</option>
-            }
-            else
-            {
-                <option value="Win">Win</option>
-            }
-            @if (isT1winner == "NO")
-            {
-                <option value="Loss" selected>No</option>
-            }
-            else
-            {
-                <option value="Loss">Loss</option>
-            }
-        </select>
+            <div class="col-md-2">
+                <label class="form-label text-muted small fw-bold">NĂM TỔ CHỨC</label>
+                <input type="number" name="year" class="form-control border-0 bg-dark text-white"
+                       placeholder="VD: 2023" value="@year" onchange="submitFilter()" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label text-muted small fw-bold">KHU VỰC</label>
+                <select name="region" class="form-select border-0 bg-dark text-white" onchange="submitFilter()">
+                    <option value="">-- Tất cả --</option>
+                    <option value="KR" selected="@(region == "KR")">Hàn Quốc (KR)</option>
+                    <option value="INT" selected="@(region == "INT")">Quốc tế (INT)</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label text-muted small fw-bold">T1 VÔ ĐỊCH</label>
+                <select name="isT1winner" class="form-select border-0 bg-dark text-white" onchange="submitFilter()">
+                    <option value="">-- Tất cả --</option>
+                    <option value="Win" selected="@(isT1winner == "Win")">Vô Địch (Win)</option>
+                    <option value="Loss" selected="@(isT1winner == "Loss")">Không (Loss)</option>
+                </select>
+            </div>
+            <div class="col-md-3 d-flex gap-2">
+                <button type="button" onclick="submitFilter()" class="btn btn-primary flex-grow-1 fw-bold">Tìm kiếm</button>
+                <a asp-area="Admin" asp-action="Index" class="btn btn-outline-secondary px-3" title="Xóa lọc">
+                    <i class="fas fa-redo"></i>
+                </a>
+            </div>
+        </div>
     </div>
 </div>
 
-<div class="table-responsive">
-    <table class="table table-dark table-hover align-middle">
-        <thead>
-            <tr>
-                <th>Tên giải</th>
-                <th>Năm</th>
-                <th>Khu vực</th>
-                <th>T1 vô địch?</th>
-                <th>Đội vô địch</th>
-                <th style="width: 200px;">Thao tác</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var item in Model)
-            {
+<div class="card border-0 shadow-sm" style="background-color: #1e1e2d;">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0" style="color: #e4e6ef;">
+            <thead style="background-color: #2b2b40; color: #a1a5b7;">
                 <tr>
-                    <td>@item.Name</td>
-                    <td>@item.Year</td>
-                    <td>@item.Region</td>
-                    <td>@item.IsT1winner</td>
-                    <td>@item.Winner</td>
-                    <td>
-                        <a asp-area="Admin" asp-action="Edit" asp-route-id="@item.IdTournament" class="btn btn-sm btn-warning">
-                            <i class="fas fa-edit"></i> Sửa
-                        </a>
-                        <a asp-area="Admin" asp-action="Details" asp-route-id="@item.IdTournament" class="btn btn-sm btn-info">
-                            <i class="fas fa-info-circle"></i> Chi tiết
-                        </a>
-                        <a asp-area="Admin" asp-action="Delete" asp-route-id="@item.IdTournament" class="btn btn-sm btn-danger">
-                            <i class="fas fa-trash"></i> Xóa
-                        </a>
-                    </td>
+                    <th class="ps-4 py-3 border-0">ID</th>
+                    <th class="py-3 border-0">TÊN GIẢI ĐẤU</th>
+                    <th class="py-3 border-0">NĂM</th>
+                    <th class="py-3 border-0">KHU VỰC</th>
+                    <th class="py-3 border-0">T1 VÔ ĐỊCH</th>
+                    <th class="py-3 border-0">NHÀ VÔ ĐỊCH</th>
+                    <th class="text-end pe-4 py-3 border-0">THAO TÁC</th>
                 </tr>
-            }
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @if (Model != null && Model.Any())
+                {
+                    foreach (var item in Model)
+                    {
+                        <tr style="border-bottom: 1px solid #2b2b40;">
+                            <td class="ps-4 text-muted">#@item.IdTournament</td>
+                            <td class="py-3 fw-bold text-white fs-6">@item.Name</td>
+                            <td class="py-3 text-muted">@item.Year</td>
+                            <td class="py-3">
+                                @if (item.Region == "KR")
+                                {
+                                    <span class="badge bg-soft-info text-info rounded-pill px-3 py-2" style="background: rgba(13, 202, 240, 0.1);">
+                                        <i class="fas fa-map-marker-alt me-1"></i>Hàn Quốc
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-soft-primary text-primary rounded-pill px-3 py-2" style="background: rgba(13, 110, 253, 0.1);">
+                                        <i class="fas fa-globe-asia me-1"></i>Quốc tế
+                                    </span>
+                                }
+                            </td>
+                            <td class="py-3">
+                                @if (item.IsT1winner == "Win" || item.IsT1winner == "YES" || item.IsT1winner == "true")
+                                {
+                                    <span class="badge rounded-pill px-3 py-2" style="background-color: rgba(227, 0, 43, 0.1); color: #e3002b; border: 1px solid rgba(227, 0, 43, 0.2);">
+                                        <i class="fas fa-crown me-1"></i> Vô Địch
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted"><i class="fas fa-times me-1"></i> Không</span>
+                                }
+                            </td>
+                            <td class="py-3 text-warning fw-bold">@item.Winner</td>
+                            <td class="text-end pe-4 py-3">
+                                <div class="btn-group gap-2">
+                                    <a asp-area="Admin" asp-action="Edit" asp-route-id="@item.IdTournament"
+                                       class="btn btn-sm btn-outline-info rounded-pill px-3 fw-bold">
+                                        <i class="fas fa-edit me-1"></i>Sửa
+                                    </a>
+                                    <a asp-area="Admin" asp-action="Details" asp-route-id="@item.IdTournament"
+                                       class="btn btn-sm btn-outline-light rounded-pill px-3 fw-bold">
+                                        <i class="fas fa-eye me-1"></i>Xem
+                                    </a>
+                                    <a asp-area="Admin" asp-action="Delete" asp-route-id="@item.IdTournament"
+                                       class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-bold">
+                                        <i class="fas fa-trash me-1"></i>Xóa
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="7" class="text-center py-5">
+                            <i class="fas fa-trophy fs-1 mb-3 opacity-25"></i>
+                            <p class="text-muted">Không tìm thấy giải đấu nào!</p>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
 </div>
 
-<!-- Phân trang -->
 @if (totalPages > 1)
 {
-    <nav aria-label="Page navigation">
+    <nav aria-label="Page navigation" class="mt-4">
         <ul class="pagination justify-content-center">
             <li class="page-item @(currentPage == 1 ? "disabled" : "")">
-                <a class="page-link" asp-area="Admin" asp-action="Index" asp-route-page="@(currentPage - 1)"
-                   asp-route-searchName="@searchName" asp-route-year="@year" asp-route-region="@region" asp-route-isT1winner="@isT1winner">«</a>
+                <a class="page-link bg-dark border-secondary text-white" asp-area="Admin" asp-action="Index"
+                   asp-route-page="@(currentPage - 1)" asp-route-searchName="@searchName"
+                   asp-route-region="@region" asp-route-year="@year" asp-route-isT1winner="@isT1winner">«</a>
             </li>
             @for (int i = 1; i <= totalPages; i++)
             {
                 <li class="page-item @(i == currentPage ? "active" : "")">
-                    <a class="page-link" asp-area="Admin" asp-action="Index" asp-route-page="@i"
-                       asp-route-searchName="@searchName" asp-route-year="@year" asp-route-region="@region" asp-route-isT1winner="@isT1winner">@i</a>
+                    <a class="page-link @(i == currentPage ? "bg-danger border-danger" : "bg-dark border-secondary text-white")"
+                       asp-area="Admin" asp-action="Index" asp-route-page="@i"
+                       asp-route-searchName="@searchName" asp-route-region="@region" asp-route-year="@year" asp-route-isT1winner="@isT1winner">@i</a>
                 </li>
             }
             <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
-                <a class="page-link" asp-area="Admin" asp-action="Index" asp-route-page="@(currentPage + 1)"
-                   asp-route-searchName="@searchName" asp-route-year="@year" asp-route-region="@region" asp-route-isT1winner="@isT1winner">»</a>
+                <a class="page-link bg-dark border-secondary text-white" asp-area="Admin" asp-action="Index"
+                   asp-route-page="@(currentPage + 1)" asp-route-searchName="@searchName"
+                   asp-route-region="@region" asp-route-year="@year" asp-route-isT1winner="@isT1winner">»</a>
             </li>
         </ul>
     </nav>
@@ -126,34 +172,24 @@
 
 <script>
     function submitFilter() {
-        var form = document.getElementById('filterForm');
         var url = new URL(window.location.href);
-        // Lấy giá trị từ các select và input
-        var yearInput = document.querySelector('input[name="year"]');
-        if (yearInput && yearInput.value) {
-            url.searchParams.set('year', yearInput.value);
-        } else {
-            url.searchParams.delete('year');
-        }
-        var regionSelect = document.querySelector('select[name="region"]');
-        if (regionSelect && regionSelect.value) {
-            url.searchParams.set('region', regionSelect.value);
-        } else {
-            url.searchParams.delete('region');
-        }
-        var isT1winnerSelect = document.querySelector('select[name="isT1winner"]');
-        if (isT1winnerSelect && isT1winnerSelect.value) {
-            url.searchParams.set('isT1winner', isT1winnerSelect.value);
-        } else {
-            url.searchParams.delete('isT1winner');
-        }
-        // Giữ lại searchName
-        var searchNameInput = document.querySelector('input[name="searchName"]');
-        if (searchNameInput && searchNameInput.value) {
-            url.searchParams.set('searchName', searchNameInput.value);
-        } else {
-            url.searchParams.delete('searchName');
-        }
+
+        var searchName = document.querySelector('input[name="searchName"]')?.value;
+        if (searchName) url.searchParams.set('searchName', searchName);
+        else url.searchParams.delete('searchName');
+
+        var region = document.querySelector('select[name="region"]')?.value;
+        if (region) url.searchParams.set('region', region);
+        else url.searchParams.delete('region');
+
+        var year = document.querySelector('input[name="year"]')?.value;
+        if (year) url.searchParams.set('year', year);
+        else url.searchParams.delete('year');
+
+        var isT1winner = document.querySelector('select[name="isT1winner"]')?.value;
+        if (isT1winner) url.searchParams.set('isT1winner', isT1winner);
+        else url.searchParams.delete('isT1winner');
+
         window.location.href = url.pathname + url.search;
     }
 </script>
