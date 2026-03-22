@@ -24,4 +24,5 @@ public partial class Player
     public virtual ICollection<GamePlayer> GamePlayers { get; set; } = new List<GamePlayer>();
 
     public virtual Team? Team { get; set; }
+
 }

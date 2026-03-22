@@ -13,7 +13,7 @@ builder.Services.AddControllersWithViews();
 
 builder.Services.AddSession(); // <--- THÊM DÒNG NÀY ĐỂ BẬT SESSION
 
-
+builder.Services.AddMemoryCache();
 
 // Cấu hình kết nối Database bằng T1DbContext
 builder.Services.AddDbContext<T1DbContext>(options =>

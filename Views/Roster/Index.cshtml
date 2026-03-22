@@ -1,29 +1,360 @@
-﻿@model IEnumerable<T1EsportsWeb.Models.Player>
+﻿@{
+    ViewData["Title"] = "Đội Hình T1 2026";
+    Layout = "~/Views/Shared/_Layout.cshtml";
 
-@{
-    ViewData["Title"] = "Đội Hình T1";
+    var currentRoster = ViewBag.CurrentRoster as List<T1EsportsWeb.Controllers.PlayerStatsViewModel>;
+    var formerPlayers = ViewBag.FormerPlayers as List<T1EsportsWeb.Controllers.PlayerStatsViewModel>;
 }
 
-<div class="text-center w-100 mt-5">
-    <h1 style="color: #e3002b; font-weight: bold; font-size: 3rem; text-transform: uppercase;">T1 - 2026 - DOFPK</h1>
-    <p style="color: #e5b344; font-size: 1.2rem; letter-spacing: 2px;">LIMITLESS</p>
+<style>
+    .roster-bg {
+        background-color: #05050a;
+    }
 
-    <div class="row row-cols-1 row-cols-md-5 g-4 mt-4 px-3 px-xl-5">
-        @foreach (var player in Model)
-        {
-            <div class="col">
-                <div class="card t1-player-card h-100 shadow-lg" style="background-color: #1a1a1a; border: 1px solid #333;">
-                    <img src="@player.ImageUrl" asp-append-version="true" class="card-img-top" alt="@player.IngameName" style="height: 500px; object-fit: cover; object-position: top center; border-bottom: 2px solid #e3002b;">
+    /* 🎯 CĂN LỀ TRÁI: Đảm bảo các thẻ lẻ luôn xếp từ trái sang */
+    .roster-grid {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-start;
+        gap: 2rem;
+    }
 
-                    <div class="card-body d-flex flex-column p-4 text-center">
-                        <h2 class="card-title fw-bold" style="color: #fff; font-size: 2rem;">@player.IngameName</h2>
-                        <h5 class="card-text text-danger mb-3 fw-bold">@player.Role</h5>
-                        <p class="card-text" style="color: #e5b344; margin-bottom: 25px; font-size: 1.1rem;">Tướng tủ: @player.SignatureChampion</p>
+    .roster-col-5 {
+        flex: 0 0 calc(20% - 1.6rem);
+        max-width: calc(20% - 1.6rem);
+    }
 
-                        <a asp-controller="Roster" asp-action="Details" asp-route-id="@player.Id" class="btn btn-outline-danger btn-lg mt-auto fw-bold" style="border-width: 2px;">XEM CHI TIẾT</a>
+    @@media (max-width: 1400px) {
+        .roster-col-5 {
+            flex: 0 0 calc(25% - 1.5rem);
+            max-width: calc(25% - 1.5rem);
+        }
+    }
+
+    @@media (max-width: 1200px) {
+        .roster-col-5 {
+            flex: 0 0 calc(33.333% - 1.34rem);
+            max-width: calc(33.333% - 1.34rem);
+        }
+    }
+
+    @@media (max-width: 992px) {
+        .roster-col-5 {
+            flex: 0 0 calc(50% - 1rem);
+            max-width: calc(50% - 1rem);
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .roster-col-5 {
+            flex: 0 0 100%;
+            max-width: 100%;
+        }
+    }
+
+    /* 💎 PHONG CÁCH GLASSMORPHISM */
+    .player-card {
+        background: linear-gradient(145deg, #1d1d2b, #11111d);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 20px;
+        overflow: hidden;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+    }
+
+        .player-card:hover {
+            transform: translateY(-15px);
+            box-shadow: 0 20px 40px rgba(227, 0, 43, 0.25);
+            border-color: rgba(227, 0, 43, 0.5);
+        }
+
+    .player-photo-wrapper {
+        position: relative;
+        height: 350px;
+        background: #11111d;
+        overflow: hidden;
+    }
+
+    .player-photo {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: top;
+        transition: 0.5s;
+    }
+
+    .photo-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 100%;
+        background: linear-gradient(to bottom, transparent 40%, #11111d 100%);
+    }
+
+    .card-body-custom {
+        padding: 1.5rem;
+        position: relative;
+        margin-top: -60px;
+        text-align: center;
+    }
+
+    .player-ingame {
+        font-size: 2.2rem;
+        font-weight: 900;
+        color: #fff;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+        margin-bottom: 0;
+    }
+
+    .player-fullname {
+        font-size: 1.15rem;
+        color: #a0a0a0;
+        margin-bottom: 1.2rem;
+        display: block;
+    }
+
+    .stat-container {
+        display: flex;
+        justify-content: space-between;
+        background: rgba(255, 255, 255, 0.03);
+        padding: 10px 15px;
+        border-radius: 12px;
+        margin-bottom: 1.2rem;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .stat-item {
+        text-align: center;
+    }
+
+    .stat-value {
+        display: block;
+        font-weight: 800;
+        font-size: 1.1rem;
+        color: #fff;
+    }
+
+    .stat-label {
+        font-size: 0.65rem;
+        color: #666;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .winrate-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: auto;
+        padding-top: 10px;
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .wr-label {
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #e3002b;
+    }
+
+    .champ-mini-list {
+        display: flex;
+        gap: 6px;
+    }
+
+    /* ✨ FIX LỖI KÉO DÃN: Dùng class này cho tất cả ảnh tướng */
+    .champ-mini {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        object-fit: cover; /* Quan trọng nhất */
+        transition: 0.2s;
+    }
+
+        .champ-mini:hover {
+            border-color: #e3002b;
+            transform: scale(1.15);
+        }
+
+    .pos-badge {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        background: rgba(227, 0, 43, 0.85);
+        padding: 4px 14px;
+        border-radius: 50px;
+        font-weight: 800;
+        font-size: 0.75rem;
+        backdrop-filter: blur(5px);
+        z-index: 10;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
+
+    @@keyframes fadeInScale {
+        0% {
+            opacity: 0;
+            transform: scale(0.9);
+        }
+
+        100% {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+</style>
+
+<div class="roster-bg py-5">
+    <div class="container-fluid px-lg-5 text-white">
+
+        <div class="d-flex justify-content-center mb-5 gap-2 flex-wrap" id="position-filters">
+            <button class="btn btn-danger filter-btn px-4 rounded-pill fw-bold shadow-sm" data-filter="all">TẤT CẢ</button>
+            <button class="btn btn-outline-light filter-btn px-4 rounded-pill fw-bold" data-filter="Top">TOP</button>
+            <button class="btn btn-outline-light filter-btn px-4 rounded-pill fw-bold" data-filter="Jungle">JUNGLE</button>
+            <button class="btn btn-outline-light filter-btn px-4 rounded-pill fw-bold" data-filter="Mid">MID</button>
+            <button class="btn btn-outline-light filter-btn px-4 rounded-pill fw-bold" data-filter="ADC">ADC</button>
+            <button class="btn btn-outline-light filter-btn px-4 rounded-pill fw-bold" data-filter="Support">SUPPORT</button>
+        </div>
+
+        <div class="text-center mb-5">
+            <h1 class="fw-bold text-uppercase" style="color: #e3002b; letter-spacing: 4px; text-shadow: 0 0 20px rgba(227, 0, 43, 0.4);">ĐỘI HÌNH CHÍNH THỨC 2026</h1>
+        </div>
+
+        <div class="roster-grid mb-5 pb-5" style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+            @if (currentRoster != null)
+            {
+                foreach (var stat in currentRoster)
+                {
+                    var p = stat.PlayerInfo;
+                    string pos = p?.Position ?? "Unknown";
+                    string photo = (p == null || string.IsNullOrEmpty(p.PhotoUrl)) ? "/images/default-player.png" : p.PhotoUrl;
+
+                    <div class="roster-col-5 player-filter-item" data-position="@pos">
+                        <div class="player-card">
+                            <div class="pos-badge">@pos</div>
+                            <div class="player-photo-wrapper">
+                                <img src="@photo" alt="@p?.IngameName" class="player-photo">
+                                <div class="photo-overlay"></div>
+                            </div>
+
+                            <div class="card-body-custom">
+                                <div class="player-ingame">@p?.IngameName</div>
+                                <span class="player-fullname">@p?.FullName</span>
+
+                                <div class="stat-container">
+                                    <div class="stat-item"><span class="stat-value">@stat.TotalGames</span><span class="stat-label">Played</span></div>
+                                    <div class="stat-item"><span class="stat-value text-success">@stat.Wins</span><span class="stat-label">Wins</span></div>
+                                    <div class="stat-item"><span class="stat-value text-secondary">@stat.Losses</span><span class="stat-label">Loss</span></div>
+                                </div>
+
+                                <div class="winrate-row">
+                                    <div class="wr-label">WR @stat.WinRate%</div>
+                                    <div class="champ-mini-list">
+                                        @foreach (var champ in stat.TopChampions)
+                                        {
+                                            <img src="@champ.Image" class="champ-mini shadow-sm" title="@champ.Name (@champ.Count T)" data-bs-toggle="tooltip">
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                </div>
+                }
+            }
+        </div>
+
+        @if (formerPlayers != null && formerPlayers.Count > 0)
+        {
+            <div class="text-center mb-5 mt-5">
+                <h2 class="fw-bold text-uppercase text-secondary" style="letter-spacing: 2px; opacity: 0.7;">CỰU TUYỂN THỦ T1</h2>
+            </div>
+
+            <div class="roster-grid">
+                @foreach (var stat in formerPlayers)
+                {
+                    var p = stat.PlayerInfo;
+                    string pos = p?.Position ?? "Unknown";
+                    string photo = (p == null || string.IsNullOrEmpty(p.PhotoUrl)) ? "/images/default-player.png" : p.PhotoUrl;
+
+                    <div class="roster-col-5 player-filter-item" data-position="@pos">
+                        <div class="player-card former-card">
+                            <div class="pos-badge bg-secondary">@pos</div>
+                            <div class="player-photo-wrapper">
+                                <img src="@photo" alt="@p?.IngameName" class="player-photo" style="filter: grayscale(40%);">
+                                <div class="photo-overlay"></div>
+                            </div>
+
+                            <div class="card-body-custom">
+                                <div class="player-ingame">@p?.IngameName</div>
+                                <span class="player-fullname">@p?.FullName</span>
+
+                                <div class="stat-container">
+                                    <div class="stat-item"><span class="stat-value">@stat.TotalGames</span><span class="stat-label">Played</span></div>
+                                    <div class="stat-item"><span class="stat-value text-success">@stat.Wins</span><span class="stat-label">Wins</span></div>
+                                    <div class="stat-item"><span class="stat-value text-secondary">@stat.Losses</span><span class="stat-label">Loss</span></div>
+                                </div>
+
+                                <div class="winrate-row">
+                                    <div class="wr-label text-muted">WR @stat.WinRate%</div>
+                                    <div class="champ-mini-list">
+                                        @foreach (var champ in stat.TopChampions)
+                                        {
+                                            @* 🎯 ĐÃ FIX: Dùng class champ-mini để ảnh không bị dãn *@
+                                            <img src="@champ.Image" class="champ-mini shadow-sm" style="border-color: #444;" title="@champ.Name (@champ.Count T)" data-bs-toggle="tooltip">
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
             </div>
         }
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            if (typeof bootstrap !== 'undefined') {
+                var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                    return new bootstrap.Tooltip(tooltipTriggerEl);
+                });
+            }
+
+            const filterBtns = document.querySelectorAll('.filter-btn');
+            const playerCards = document.querySelectorAll('.player-filter-item');
+
+            if (filterBtns.length > 0 && playerCards.length > 0) {
+                filterBtns.forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        filterBtns.forEach(b => {
+                            b.classList.remove('btn-danger', 'text-white');
+                            b.classList.add('btn-outline-light');
+                        });
+                        btn.classList.remove('btn-outline-light');
+                        btn.classList.add('btn-danger', 'text-white');
+
+                        const filterValue = btn.getAttribute('data-filter');
+
+                        playerCards.forEach(card => {
+                            const playerPos = card.getAttribute('data-position');
+                            if (filterValue === 'all' || playerPos === filterValue) {
+                                card.style.display = 'block';
+                                card.style.animation = 'fadeInScale 0.4s ease-out forwards';
+                            } else {
+                                card.style.display = 'none';
+                            }
+                        });
+                    });
+                });
+            }
+        });
+    </script>
+}
