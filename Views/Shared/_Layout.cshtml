@@ -131,6 +131,12 @@
                         <li class="nav-item mx-2">
                             <a class="nav-link text-light text-uppercase custom-menu-link" asp-area="" asp-controller="Arcade" asp-action="Index">Khu Giải Trí</a>
                         </li>
+                        <li class="nav-item mx-2">
+                            <a class="nav-link text-light text-uppercase custom-menu-link" asp-area="" asp-controller="Dashboard" asp-action="Index">Dashboard</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-light text-uppercase custom-menu-link" asp-controller="MatchHistory" asp-action="Index">Lịch sử đấu</a>
+                        </li>
 
                         @if (User.Identity.IsAuthenticated)
                         {

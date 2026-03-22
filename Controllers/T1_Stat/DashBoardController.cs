@@ -361,25 +361,35 @@ namespace T1EsportsWeb.Controllers
             }
 
             // Nhóm theo opponent
+            // 1. Kiểm tra lại việc gộp nhóm
             var result = games
-                .GroupBy(gt => new { gt.Game.Series.TeamOpponentId, OpponentName = gt.Game.Series.TeamOpponent?.Name ?? "Unknown" })
-                .Select(g => new HeadToHeadDto
-                {
-                    OpponentName = g.Key.OpponentName,
-                    DomesticGames = g.Count(gt => gt.Game.Series.Tournament.Region == "KR"),
-                    DomesticWins = g.Count(gt => gt.Result == "Win" && gt.Game.Series.Tournament.Region == "KR"),
-                    InternationalGames = g.Count(gt => gt.Game.Series.Tournament.Region == "INT"),
-                    InternationalWins = g.Count(gt => gt.Result == "Win" && gt.Game.Series.Tournament.Region == "INT")
+                .Where(gt => gt.Game?.Series?.TeamOpponent != null) // Chỉ lấy khi có đối thủ rõ ràng
+                .GroupBy(gt => new {
+                    Id = gt.Game.Series.TeamOpponentId,
+                    Name = gt.Game.Series.TeamOpponent.Name
+                })
+                .Select(g => {
+                    var domestic = g.Where(gt => gt.Game.Series.Tournament?.Region == "KR");
+                    var international = g.Where(gt => gt.Game.Series.Tournament?.Region == "INT" || gt.Game.Series.Tournament?.Region == "VN"); // Thêm các region khác nếu cần
+
+                    return new HeadToHeadDto
+                    {
+                        OpponentName = g.Key.Name,
+                        DomesticGames = domestic.Count(),
+                        DomesticWins = domestic.Count(gt => gt.Result == "Win"),
+                        InternationalGames = international.Count(),
+                        InternationalWins = international.Count(gt => gt.Result == "Win")
+                    };
                 })
                 .Select(h => new HeadToHeadDto
                 {
                     OpponentName = h.OpponentName,
                     DomesticGames = h.DomesticGames,
                     DomesticWins = h.DomesticWins,
-                    DomesticWinRate = h.DomesticGames == 0 ? 0 : (double)h.DomesticWins / h.DomesticGames * 100,
+                    DomesticWinRate = h.DomesticGames == 0 ? 0 : Math.Round((double)h.DomesticWins / h.DomesticGames * 100, 1),
                     InternationalGames = h.InternationalGames,
                     InternationalWins = h.InternationalWins,
-                    InternationalWinRate = h.InternationalGames == 0 ? 0 : (double)h.InternationalWins / h.InternationalGames * 100
+                    InternationalWinRate = h.InternationalGames == 0 ? 0 : Math.Round((double)h.InternationalWins / h.InternationalGames * 100, 1)
                 })
                 .ToList();
 
