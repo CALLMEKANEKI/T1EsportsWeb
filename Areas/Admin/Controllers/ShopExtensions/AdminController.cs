@@ -286,77 +286,84 @@ namespace T1EsportsWeb.Areas.Admin.Controllers.ShopExtensions
         }
 
         // ==========================================
-        // 5. CHĂM SÓC KHÁCH HÀNG (CHAT)
+        // 5. CHĂM SÓC KHÁCH HÀNG (CHAT) - ĐÃ FIX LỖI GỬI/NHẬN
         // ==========================================
 
-        // 1. Giao diện danh sách khách hàng cần hỗ trợ
+        // 1. Danh sách khách hàng (Chỉ Admin/Staff xem được)
         public IActionResult CustomerSupport()
         {
-            // Lọc bỏ "Admin" và "adminweb" để không bị lọt vào danh sách khách hàng
             var chatList = _context.ChatMessages
-                                   .Where(m => m.SenderUsername != "Admin" && m.SenderUsername != "adminweb")
-                                   .OrderByDescending(m => m.Timestamp)
-                                   .ToList()
-                                   .GroupBy(m => m.SenderUsername)
-                                   .Select(g => g.First())
-                                   .ToList();
-
+                .Where(m => m.SenderUsername != "Admin" && m.SenderUsername != "adminweb")
+                .OrderByDescending(m => m.Timestamp)
+                .ToList()
+                .GroupBy(m => m.SenderUsername)
+                .Select(g => g.First())
+                .ToList();
             return View(chatList);
         }
 
-        // 2. Giao diện Phòng chat của Admin với 1 khách (Hàm này lúc nãy bị thiếu nè)
+        // 2. Phòng chat Admin
         public IActionResult ChatRoom(string user)
         {
             ViewBag.TargetUser = user;
             return View();
         }
 
-        // 3. API để Gửi tin nhắn
-        [AllowAnonymous]
-        [HttpPost]
-        public IActionResult SendMessage(string messageContent, string receiver)
-        {
-            // Logic chuẩn: Nếu gửi tới "Admin" -> Người gửi là Khách. Ngược lại là "Admin".
-            string senderName = receiver == "Admin"
-                ? User.Identity.IsAuthenticated ? User.Identity.Name : "Khách ẩn danh"
-                : "Admin";
+        // 3. API Gửi tin nhắn (Cho phép cả Khách và Admin dùng chung)
+        //[AllowAnonymous]
+        //[HttpPost]
+        //public IActionResult SendMessage(string messageContent, string receiver)
+        //{
+        //    if (string.IsNullOrWhiteSpace(messageContent)) return BadRequest();
 
-            var msg = new ChatMessage
-            {
-                SenderUsername = senderName,
-                ReceiverUsername = receiver,
-                MessageContent = messageContent,
-                Timestamp = DateTime.Now
-            };
-            _context.ChatMessages.Add(msg);
-            _context.SaveChanges();
-            return Ok();
-        }
+        //    // Xác định ai là người gửi thật sự
+        //    string senderName = "Khách ẩn danh";
+        //    if (User.Identity.IsAuthenticated)
+        //    {
+        //        senderName = User.Identity.Name;
+        //    }
 
-        // 4. API để Lấy tin nhắn
-        [AllowAnonymous]
-        [HttpGet]
-        public IActionResult GetMessages(string withUser)
-        {
-            // Logic chuẩn: Lấy tin nhắn với "Admin" -> Người đang lấy là Khách. Ngược lại là "Admin".
-            string currentUser = withUser == "Admin"
-                ? User.Identity.IsAuthenticated ? User.Identity.Name : "Khách ẩn danh"
-                : "Admin";
+        //    // Nếu Admin đang gửi (đang ở trang ChatRoom), senderName sẽ là Admin
+        //    if (User.IsInRole("Admin") || User.IsInRole("Staff"))
+        //    {
+        //        // Nếu receiver KHÔNG PHẢI Admin, nghĩa là Admin đang trả lời khách
+        //        if (receiver != "Admin") senderName = "Admin";
+        //    }
 
-            var msgs = _context.ChatMessages
-                .Where(m => m.SenderUsername == currentUser && m.ReceiverUsername == withUser ||
-                            m.SenderUsername == withUser && m.ReceiverUsername == currentUser)
-                .OrderBy(m => m.Timestamp)
-                .ToList();
+        //    var msg = new ChatMessage
+        //    {
+        //        SenderUsername = senderName,
+        //        ReceiverUsername = receiver,
+        //        MessageContent = messageContent,
+        //        Timestamp = DateTime.Now
+        //    };
+        //    _context.ChatMessages.Add(msg);
+        //    _context.SaveChanges();
+        //    return Ok();
+        //}
 
-            return Json(msgs);
-        }
+        //// 4. API Lấy tin nhắn 
+        //[AllowAnonymous]
+        //[HttpGet]
+        //public IActionResult GetMessages(string withUser)
+        //{
+        //    string currentUser = User.Identity.IsAuthenticated ? User.Identity.Name : "Khách ẩn danh";
 
-        // ==========================================
-        // 6. QUẢN LÝ NHÂN SỰ VÀ PHÂN QUYỀN (ROLE)
-        // ==========================================
+        //    // Nếu là Admin đang xem phòng chat của 1 khách cụ thể
+        //    if ((User.IsInRole("Admin") || User.IsInRole("Staff")) && withUser != "Admin")
+        //    {
+        //        currentUser = "Admin";
+        //    }
 
-        // 1. Hiển thị danh sách toàn bộ User và Admin
+        //    var msgs = _context.ChatMessages
+        //        .Where(m => (m.SenderUsername == currentUser && m.ReceiverUsername == withUser) ||
+        //                    (m.SenderUsername == withUser && m.ReceiverUsername == currentUser))
+        //        .OrderBy(m => m.Timestamp)
+        //        .ToList();
+
+        //    return Json(msgs);
+        //}
+
         // ==========================================
         // 6. QUẢN LÝ NHÂN SỰ VÀ PHÂN QUYỀN (3 CẤP)
         // ==========================================

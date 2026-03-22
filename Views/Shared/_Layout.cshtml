@@ -3,16 +3,14 @@
 
 @{
     int totalCartCount = 0;
-    int totalOrderCount = 0; // Biến đếm số lượng đơn hàng
+    int totalOrderCount = 0;
 
     if (User.Identity.IsAuthenticated)
     {
-        // Tính tổng số lượng giỏ hàng
         totalCartCount = _context.CartItems
                                  .Where(c => c.Username == User.Identity.Name)
                                  .Sum(c => (int?)c.Quantity) ?? 0;
 
-        // Tính tổng số lượng đơn hàng (Chỉ đếm các đơn đang Active: Chờ xử lý, Đã xác nhận, Đang giao hàng)
         totalOrderCount = _context.Orders
                                   .Where(o => o.Username == User.Identity.Name &&
                                               (o.Status == "Chờ xử lý" || o.Status == "Đã xác nhận" || o.Status == "Đang giao hàng"))
@@ -32,7 +30,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
 
     <style>
-        /* CSS Menu Dropdown */
         .user-dropdown-menu {
             background-color: #242424;
             border: none;
@@ -60,7 +57,6 @@
                 padding-top: 10px;
             }
 
-        /* Nút điểm T1 */
         .point-btn {
             transition: transform 0.2s ease;
             cursor: pointer;
@@ -71,7 +67,6 @@
                 color: #ffca2c !important;
             }
 
-        /* KHUNG TÊN NGƯỜI DÙNG */
         .user-box {
             display: inline-flex !important;
             align-items: center;
@@ -88,12 +83,6 @@
                 box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
             }
 
-            .user-box::after {
-                margin-left: 10px;
-                vertical-align: middle;
-            }
-
-        /* Dùng chung CSS cho Badge của Giỏ hàng và Đơn hàng */
         .cart-badge-count, .order-badge-count {
             font-size: 0.75rem;
             padding: 0.35em 0.6em;
@@ -106,16 +95,10 @@
     <header>
         <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark mb-3 py-3" style="background-color: #111; border-bottom: 2px solid #e3002b;">
             <div class="container-fluid px-4 px-lg-5">
-
                 <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">
                     <img src="/images/t1-logo.png" alt="T1 Logo" style="height: 45px; transform: scale(1.6); transform-origin: left center; object-fit: contain;">
                 </a>
-
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse"><span class="navbar-toggler-icon"></span></button>
                 <div class="navbar-collapse collapse d-sm-inline-flex">
                     <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-center" style="font-size: 1.1rem; font-weight: bold;">
 
@@ -141,66 +124,28 @@
                         @if (User.Identity.IsAuthenticated)
                         {
                             var currentUser = _context.Users.FirstOrDefault(u => u.Username == User.Identity.Name);
-                            int t1Points = currentUser != null ? currentUser.T1Points : 0;
+                            int t1Points = currentUser?.T1Points ?? 0;
                             <li class="nav-item dropdown mx-2 d-flex align-items-center">
-
-                                <a asp-area="" asp-controller="Arcade" asp-action="RewardCenter" class="text-warning fw-bold me-3 text-decoration-none point-btn" title="Vào trang Đổi Thưởng">
-                                    <i class="fas fa-star me-1"></i> @t1Points
-                                </a>
-
-                                <a class="nav-link dropdown-toggle text-light fw-bold user-box mx-1" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                    @User.Identity.Name
-                                </a>
-
-                                <ul class="dropdown-menu dropdown-menu-end user-dropdown-menu" aria-labelledby="userDropdown">
+                                <a asp-controller="Arcade" asp-action="RewardCenter" class="text-warning fw-bold me-3 text-decoration-none point-btn"><i class="fas fa-star me-1"></i> @t1Points</a>
+                                <a class="nav-link dropdown-toggle text-light fw-bold user-box mx-1" href="#" id="userDropdown" data-bs-toggle="dropdown">@User.Identity.Name</a>
+                                <ul class="dropdown-menu dropdown-menu-end user-dropdown-menu">
                                     <li><h6 class="dropdown-header">@User.Identity.Name</h6></li>
                                     <li><hr class="dropdown-divider border-secondary mb-2 mt-2"></li>
-
-                                    <li>
-                                        <a class="dropdown-item py-2 d-flex justify-content-between align-items-center" asp-controller="Cart" asp-action="Index">
-                                            <span><i class="fas fa-shopping-cart text-danger me-2"></i>Giỏ Hàng</span>
-                                            <span class="badge bg-danger rounded-pill cart-badge-count" style="@(totalCartCount > 0 ? "" : "display:none")">@totalCartCount</span>
-                                        </a>
-                                    </li>
-
-                                    <li>
-                                        <a class="dropdown-item py-2 d-flex justify-content-between align-items-center" asp-area="" asp-controller="Order" asp-action="Index">
-                                            <span><i class="fas fa-box-open text-warning me-2"></i>Đơn Hàng</span>
-                                            <span class="badge bg-warning text-dark rounded-pill order-badge-count" style="@(totalOrderCount > 0 ? "" : "display:none")">@totalOrderCount</span>
-                                        </a>
-                                    </li>
-
+                                    <li><a class="dropdown-item py-2 d-flex justify-content-between align-items-center" asp-controller="Cart" asp-action="Index"><span><i class="fas fa-shopping-cart text-danger me-2"></i>Giỏ Hàng</span><span class="badge bg-danger rounded-pill cart-badge-count" style="@(totalCartCount > 0 ? "" : "display:none")">@totalCartCount</span></a></li>
+                                    <li><a class="dropdown-item py-2 d-flex justify-content-between align-items-center" asp-controller="Order" asp-action="Index"><span><i class="fas fa-box-open text-warning me-2"></i>Đơn Hàng</span><span class="badge bg-warning text-dark rounded-pill order-badge-count" style="@(totalOrderCount > 0 ? "" : "display:none")">@totalOrderCount</span></a></li>
                                     @if (User.IsInRole("Admin") || User.IsInRole("Staff"))
                                     {
-                                        <li>
-                                            <a class="dropdown-item text-danger fw-bold py-2" asp-area="Admin" asp-controller="Admin" asp-action="Index">
-                                                <i class="fas fa-cogs me-2"></i>Quản Trị Hệ Thống
-                                            </a>
-                                        </li>
+                                        <li><a class="dropdown-item text-danger fw-bold py-2" asp-area="Admin" asp-controller="Admin" asp-action="Index"><i class="fas fa-cogs me-2"></i>Quản Trị</a></li>
                                     }
-
-                                    <li>
-                                        <a class="dropdown-item py-2" asp-area="" asp-controller="Account" asp-action="ChangePassword">
-                                            <i class="fas fa-key text-info me-2"></i>Đổi Mật Khẩu
-                                        </a>
-                                    </li>
-
-                                    <li>
-                                        <a class="dropdown-item py-2" asp-area="" asp-controller="Account" asp-action="Logout">
-                                            <i class="fas fa-sign-out-alt text-secondary me-2"></i>Đăng Xuất
-                                        </a>
-                                    </li>
+                                    <li><a class="dropdown-item py-2" asp-controller="Account" asp-action="ChangePassword"><i class="fas fa-key text-info me-2"></i>Đổi Mật Khẩu</a></li>
+                                    <li><a class="dropdown-item py-2" asp-controller="Account" asp-action="Logout"><i class="fas fa-sign-out-alt text-secondary me-2"></i>Đăng Xuất</a></li>
                                 </ul>
                             </li>
                         }
                         else
                         {
-                            <li class="nav-item mx-2 border-start border-secondary ps-3 ms-1">
-                                <a class="nav-link text-light text-uppercase custom-menu-link" asp-area="" asp-controller="Account" asp-action="Login">Đăng Nhập</a>
-                            </li>
-                            <li class="nav-item mx-1">
-                                <a class="nav-link text-light text-uppercase custom-menu-link" asp-area="" asp-controller="Account" asp-action="Register">Đăng Ký</a>
-                            </li>
+                            <li class="nav-item mx-2 border-start border-secondary ps-3 ms-1"><a class="nav-link text-light text-uppercase custom-menu-link" asp-controller="Account" asp-action="Login">Đăng Nhập</a></li>
+                            <li class="nav-item mx-1"><a class="nav-link text-light text-uppercase custom-menu-link" asp-controller="Account" asp-action="Register">Đăng Ký</a></li>
                         }
                     </ul>
                 </div>
@@ -208,65 +153,60 @@
         </nav>
     </header>
 
-    <div class="container-fluid p-0">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
+    <div class="container-fluid p-0"><main role="main" class="pb-3">@RenderBody()</main></div>
 
+    @* --- PHẦN CHAT: ĐÃ FIX VỊ TRÍ CÙNG CỘT BÊN PHẢI --- *@
     @{
-        // Lấy tên Controller hiện tại mà khách đang truy cập
-        var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
-
-        // Danh sách các trang được phép hiện Chatbox
-        var allowedChatControllers = new[] { "Shop", "Cart", "Checkout", "Order" };
+        var currentCtrl = ViewContext.RouteData.Values["controller"]?.ToString().ToLower();
+        var allowedList = new[] { "shop", "cart", "checkout", "order" };
     }
 
-    @if (allowedChatControllers.Contains(currentController))
+    @if (allowedList.Contains(currentCtrl))
     {
         <style>
-            /* Nút tròn nổi góc phải dưới */
+            /* Nút chat: Ép buộc nằm ở tọa độ phải dưới, ngay trên nút Giỏ hàng */
             .t1-chat-btn {
-                position: fixed;
-                bottom: 180px; /* Đẩy lên cao hơn nút Giỏ hàng (100px) */
-                right: 30px;
-                background-color: #e3002b; /* Màu đỏ chuẩn T1 giống giỏ hàng */
+                position: fixed !important;
+                bottom: 180px !important;
+                right: 30px !important;
+                left: auto !important; /* Chặn lỗi CSS lạ đẩy nút sang trái */
+                background-color: #e3002b;
                 color: #fff;
-                width: 65px; /* Kích thước to bằng giỏ hàng */
+                width: 65px;
                 height: 65px;
                 border-radius: 50%;
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 font-size: 1.8rem;
-                box-shadow: 0 4px 15px rgba(227, 0, 43, 0.5); /* Bóng đổ đỏ giống giỏ hàng */
+                box-shadow: 0 4px 15px rgba(227, 0, 43, 0.5);
                 cursor: pointer;
-                z-index: 1050;
-                border: none; /* Bỏ viền cho đồng bộ */
+                z-index: 2000 !important;
+                border: none;
                 transition: all 0.3s ease;
             }
 
                 .t1-chat-btn:hover {
                     transform: scale(1.1);
-                    /* Đã xóa hiệu ứng đổi màu nền, chỉ giữ lại hiệu ứng phóng to xíu cho có tương tác */
                 }
 
-            /* Khung cửa sổ Chat */
+            /* Cửa sổ chat: Mở ra sát cạnh cột nút */
             .t1-chat-window {
-                position: fixed;
-                bottom: 180px; /* Mở ra ngang hàng với nút Chat */
-                right: 110px; /* Đẩy sang trái để không che lấp 2 nút tròn */
+                position: fixed !important;
+                bottom: 180px !important;
+                right: 110px !important;
+                left: auto !important;
                 width: 350px;
                 background-color: #1a1a24;
                 border: 1px solid #333;
                 border-radius: 12px;
                 box-shadow: 0 10px 30px rgba(0,0,0,0.7);
-                z-index: 1050;
-                display: none; /* Mặc định ẩn */
+                z-index: 2000 !important;
+                display: none;
                 flex-direction: column;
                 overflow: hidden;
                 transform-origin: bottom right;
-                animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+                animation: popIn 0.3s forwards;
             }
 
                 .t1-chat-window.active {
@@ -285,7 +225,6 @@
                 }
             }
 
-            /* Header Chat */
             .chat-header {
                 background: linear-gradient(135deg, #e3002b, #8a001a);
                 color: white;
@@ -295,24 +234,6 @@
                 align-items: center;
             }
 
-                .chat-header h5 {
-                    margin: 0;
-                    font-size: 1.1rem;
-                    font-weight: bold;
-                }
-
-            .chat-close-btn {
-                cursor: pointer;
-                font-size: 1.2rem;
-                transition: 0.2s;
-            }
-
-                .chat-close-btn:hover {
-                    color: #f3c623;
-                    transform: rotate(90deg);
-                }
-
-            /* Khu vực hiển thị tin nhắn */
             .chat-body {
                 height: 350px;
                 padding: 20px;
@@ -323,17 +244,6 @@
                 gap: 15px;
             }
 
-                /* Thanh cuộn tàng hình */
-                .chat-body::-webkit-scrollbar {
-                    width: 5px;
-                }
-
-                .chat-body::-webkit-scrollbar-thumb {
-                    background: #444;
-                    border-radius: 5px;
-                }
-
-            /* Bong bóng chat */
             .msg-bubble {
                 max-width: 80%;
                 padding: 10px 15px;
@@ -342,7 +252,6 @@
                 line-height: 1.4;
             }
 
-            /* Tin nhắn của Bot */
             .msg-bot {
                 background-color: #2b2b36;
                 color: #fff;
@@ -350,7 +259,6 @@
                 border-bottom-left-radius: 2px;
             }
 
-            /* Tin nhắn của Khách */
             .msg-user {
                 background-color: #e3002b;
                 color: #fff;
@@ -358,7 +266,6 @@
                 border-bottom-right-radius: 2px;
             }
 
-            /* Footer nhập tin nhắn */
             .chat-footer {
                 padding: 15px;
                 background-color: #1a1a24;
@@ -377,10 +284,6 @@
                 outline: none;
             }
 
-                .chat-input:focus {
-                    border-color: #e3002b;
-                }
-
             .chat-send-btn {
                 background-color: #e3002b;
                 color: white;
@@ -395,159 +298,89 @@
                 transition: 0.2s;
             }
 
-                .chat-send-btn:hover {
-                    background-color: #f3c623;
-                    color: #000;
-                    transform: translateX(3px);
-                }
+            #chatNotificationBadge {
+                position: absolute;
+                top: -5px;
+                right: -5px;
+                font-size: 0.75rem;
+                border: 2px solid white;
+                display: none;
+            }
         </style>
 
         <div class="t1-chat-btn" id="t1ChatToggleBtn" onclick="toggleChat()">
             <i class="fas fa-comments"></i>
+            <span id="chatNotificationBadge" class="badge bg-danger rounded-pill">0</span>
         </div>
-
         <div class="t1-chat-window" id="t1ChatWindow">
             <div class="chat-header">
                 <div class="d-flex align-items-center">
-                    <div style="width: 35px; height: 35px; background: white; border-radius: 50%; display:flex; align-items:center; justify-content:center; margin-right: 10px;">
-                        <img src="/images/t1-logo.png" style="height: 15px;" alt="T1">
-                    </div>
-                    <div>
-                        <h5>T1 Support</h5>
-                        <small style="font-size: 0.75rem; color: #21D375;">● Trực tuyến</small>
-                    </div>
+                    <div style="width: 35px; height: 35px; background: white; border-radius: 50%; display:flex; align-items:center; justify-content:center; margin-right: 10px;"><img src="/images/t1-logo.png" style="height: 15px;" alt="T1"></div>
+                    <div><h5 class="mb-0" style="font-size: 1rem;">T1 Support</h5><small style="font-size: 0.75rem; color: #21D375;">● Trực tuyến</small></div>
                 </div>
-                <i class="fas fa-times chat-close-btn" onclick="toggleChat()"></i>
+                <i class="fas fa-times cursor-pointer" onclick="toggleChat()"></i>
             </div>
-
-            <div class="chat-body" id="chatBody">
-            </div>
-
+            <div class="chat-body" id="chatBody"></div>
             <div class="chat-footer">
-                <input type="text" class="chat-input" id="chatInputMessage" placeholder="Nhập tin nhắn..." onkeypress="handleEnter(event)">
-                <button class="chat-send-btn" onclick="sendChatMessage()">
-                    <i class="fas fa-paper-plane"></i>
-                </button>
+                <input type="text" class="chat-input" id="chatInputMessage" placeholder="Nhập tin nhắn..." onkeypress="if(event.key==='Enter') sendChatMessage()">
+                <button class="chat-send-btn" onclick="sendChatMessage()"><i class="fas fa-paper-plane"></i></button>
             </div>
         </div>
 
         <script>
             let currentMsgCount = 0;
-
             function toggleChat() {
-                const chatWindow = document.getElementById('t1ChatWindow');
-                const chatBtnIcon = document.querySelector('#t1ChatToggleBtn i');
-
-                chatWindow.classList.toggle('active');
-
-                if (chatWindow.classList.contains('active')) {
-                    chatBtnIcon.className = "fas fa-times";
-                    loadClientMessages(); // Load tin nhắn thật khi mở
-                } else {
-                    chatBtnIcon.className = "fas fa-comments";
-                }
+                const win = document.getElementById('t1ChatWindow');
+                const btn = document.querySelector('#t1ChatToggleBtn i');
+                win.classList.toggle('active');
+                btn.className = win.classList.contains('active') ? "fas fa-times" : "fas fa-comments";
+                if (win.classList.contains('active')) { loadClientMessages(); markMessagesAsRead(); }
             }
-
-            function handleEnter(e) {
-                if (e.key === 'Enter') sendChatMessage();
-            }
-
-            // GỬI TIN NHẮN THẬT LÊN DATABASE
-            function sendChatMessage() {
-                const inputField = document.getElementById('chatInputMessage');
-                const message = inputField.value.trim();
-                if (message === '') return;
-
-                fetch('/Admin/SendMessage', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: `messageContent=${encodeURIComponent(message)}&receiver=Admin`
-                }).then(response => {
-                    if (response.ok) {
-                        inputField.value = '';
-                        loadClientMessages(); // Ép load lại ngay lập tức
-                    }
+            function markMessagesAsRead() { fetch('/Chat/MarkAsRead', { method: 'POST' }).then(() => { document.getElementById('chatNotificationBadge').style.display = 'none'; }); }
+            function updateChatBadge() {
+                if (document.getElementById('t1ChatWindow').classList.contains('active')) return;
+                fetch('/Chat/GetUnreadCount').then(res => res.json()).then(data => {
+                    const badge = document.getElementById('chatNotificationBadge');
+                    if (data.count > 0) { badge.innerText = data.count; badge.style.display = 'block'; } else { badge.style.display = 'none'; }
                 });
             }
-
-            // LẤY TIN NHẮN TỪ DATABASE VỀ
+            function sendChatMessage() {
+                const input = document.getElementById('chatInputMessage');
+                const msg = input.value.trim();
+                if (!msg) return;
+                fetch('/Chat/SendMessage', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: `messageContent=${encodeURIComponent(msg)}&receiver=Admin`
+                }).then(res => { if (res.ok) { input.value = ''; loadClientMessages(); } });
+            }
             function loadClientMessages() {
-                const chatWindow = document.getElementById('t1ChatWindow');
-                if (!chatWindow.classList.contains('active')) return;
-
-                fetch('/Admin/GetMessages?withUser=Admin')
-                .then(res => res.json())
-                .then(data => {
+                if (!document.getElementById('t1ChatWindow').classList.contains('active')) return;
+                fetch('/Chat/GetMessages?withUser=Admin').then(res => res.json()).then(data => {
                     if (data.length !== currentMsgCount) {
-                        const chatBody = document.getElementById('chatBody');
-
-                        // Lời chào mặc định
-                        chatBody.innerHTML = `
-                            <div class="msg-bubble msg-bot">
-                                <strong>T1 Support</strong><br>
-                                Xin chào @(User.Identity.IsAuthenticated? User.Identity.Name : "bạn")! Mình có thể giúp gì cho bạn? - Nếu cần hỗ trợ gấp hãy LH: 0395607276
-                            </div>`;
-
-                        // Đổ dữ liệu tin nhắn từ DB ra giao diện
+                        const body = document.getElementById('chatBody');
+                        body.innerHTML = `<div class="msg-bubble msg-bot">Xin chào @(User.Identity.IsAuthenticated? User.Identity.Name : "bạn")! T1 Support có thể giúp gì cho bạn?</div>`;
                         data.forEach(m => {
-                            const isUser = m.senderUsername !== 'Admin';
-                            chatBody.insertAdjacentHTML('beforeend', `
-                                <div class="msg-bubble ${isUser ? 'msg-user' : 'msg-bot'}">
-                                    ${!isUser ? '<strong>T1 Support</strong><br>' : ''}${m.messageContent}
-                                </div>
-                            `);
+                            const isUser = m.senderUsername !== 'Admin' && m.senderUsername !== 'adminweb';
+                            body.insertAdjacentHTML('beforeend', `<div class="msg-bubble ${isUser ? 'msg-user' : 'msg-bot'}">${!isUser ? '<strong>T1 Support</strong><br>' : ''}${m.messageContent}</div>`);
                         });
-
-                        chatBody.scrollTop = chatBody.scrollHeight;
+                        body.scrollTop = body.scrollHeight;
                         currentMsgCount = data.length;
                     }
                 });
             }
-
-            // Cứ 3 giây quét tin nhắn mới 1 lần
             setInterval(loadClientMessages, 3000);
+            setInterval(updateChatBadge, 4000);
         </script>
     }
 
-    <footer class="border-top footer text-muted mt-5" style="border-top-color: #333 !important; background-color: #111;">
-        <div class="container text-center" style="color: #aaa;">
-            &copy; 2026 - T1EsportsWeb - Thiết kế bởi Phi Anh
-        </div>
+    <footer class="border-top footer text-muted mt-5" style="background-color: #111;">
+        <div class="container text-center" style="color: #aaa;">&copy; 2026 - T1EsportsWeb - Thiết kế bởi Phi Anh</div>
     </footer>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
-
-    <script>
-        function refreshCartBadge() {
-            fetch('/Cart/GetCartBadgeCount')
-                .then(res => res.json())
-                .then(data => {
-                    // Cập nhật tất cả các badge giỏ hàng trên trang (bao gồm cả trong Dropdown)
-                    let badges = document.querySelectorAll('.cart-badge-count');
-                    badges.forEach(badge => {
-                        badge.innerText = data.count;
-                        if (data.count > 0) {
-                            badge.style.display = ''; // Hiện badge
-                        } else {
-                            badge.style.display = 'none'; // Ẩn badge nếu = 0
-                        }
-                    });
-                })
-                .catch(err => console.log("Lỗi cập nhật giỏ hàng: ", err));
-        }
-
-        // Sự kiện 'pageshow' sẽ kích hoạt mỗi khi trang được hiển thị lên màn hình
-        window.addEventListener('pageshow', function(event) {
-            // event.persisted = true nghĩa là trang vừa được load lại từ Cache (do bấm nút Back)
-            if (event.persisted) {
-                // Gọi API ngầm lấy số mới nhất và đắp lên UI ngay lập tức
-                refreshCartBadge();
-            }
-        });
-    </script>
-
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

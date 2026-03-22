@@ -1,7 +1,6 @@
 ﻿@{
     ViewData["Title"] = "Tổng quan hệ thống";
 
-
     var recentOrders = ViewBag.RecentOrders as IEnumerable<T1EsportsWeb.Models.Order>;
     var recentVouchers = ViewBag.RecentVouchers as IEnumerable<T1EsportsWeb.Models.UserVoucher>;
     var recentChats = ViewBag.RecentChats as IEnumerable<T1EsportsWeb.Models.ChatMessage>;
@@ -67,7 +66,7 @@
         <div class="card p-0 border-0 shadow-sm h-100" style="background-color: #1e1e2d;">
             <div class="card-header bg-transparent border-bottom p-4 d-flex justify-content-between align-items-center" style="border-color: #2b2b40 !important;">
                 <h5 class="fw-bold mb-0 text-white"><i class="fas fa-shopping-cart me-2 text-primary"></i>Đơn hàng mới nhất</h5>
-                <a href="/Admin/OrderList" class="btn btn-sm btn-outline-primary rounded-pill px-3">Xem tất cả</a>
+                <a asp-area="Admin" asp-controller="Admin" asp-action="OrderList" class="btn btn-sm btn-outline-primary rounded-pill px-3">Xem tất cả</a>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
@@ -95,22 +94,19 @@
                                             }
                                             else if (order.Status == "Đã xác nhận")
                                             {
-
                                                 <span class="badge bg-info text-dark">Đã xác nhận</span>
                                             }
                                             else if (order.Status == "Đang giao hàng")
                                             {
-
                                                 <span class="badge bg-primary">Đang giao</span>
                                             }
                                             else
                                             {
-
                                                 <span class="badge bg-success">Hoàn thành</span>
                                             }
                                         </td>
                                         <td class="pe-4 py-3 text-end">
-                                            <a href="/Admin/OrderDetail/@order.OrderId" class="btn btn-sm btn-outline-light rounded-pill">Xem</a>
+                                            <a asp-area="Admin" asp-controller="Admin" asp-action="OrderDetail" asp-route-id="@order.OrderId" class="btn btn-sm btn-outline-light rounded-pill">Xem</a>
                                         </td>
                                     </tr>
                                 }
@@ -130,7 +126,7 @@
         <div class="card p-0 border-0 shadow-sm flex-fill" style="background-color: #1e1e2d;">
             <div class="card-header bg-transparent border-bottom p-3 px-4 d-flex justify-content-between align-items-center" style="border-color: #2b2b40 !important;">
                 <h6 class="fw-bold mb-0 text-white"><i class="fas fa-comment-dots me-2 text-danger"></i>Chat hỗ trợ gần đây</h6>
-                <a href="/Admin/CustomerSupport" style="font-size: 0.8rem; text-decoration: none; color: #0dcaf0;">Xem tất cả</a>
+                <a asp-area="Admin" asp-controller="Admin" asp-action="CustomerSupport" style="font-size: 0.8rem; text-decoration: none; color: #0dcaf0;">Xem tất cả</a>
             </div>
             <div class="card-body p-3">
                 @if (recentChats != null && recentChats.Any())
@@ -148,7 +144,7 @@
                                         <div style="font-size: 0.75rem; color: #a1a5b7;">@chat.Timestamp.ToString("HH:mm - dd/MM")</div>
                                     </div>
                                 </div>
-                                <a href="/Admin/ChatRoom?user=@chat.SenderUsername" class="btn btn-sm btn-danger rounded-circle" style="width: 30px; height: 30px; padding: 0; line-height: 30px;"><i class="fas fa-reply"></i></a>
+                                <a asp-area="Admin" asp-controller="Admin" asp-action="ChatRoom" asp-route-user="@chat.SenderUsername" class="btn btn-sm btn-danger rounded-circle" style="width: 30px; height: 30px; padding: 0; line-height: 30px;"><i class="fas fa-reply"></i></a>
                             </div>
                         }
                     </div>
@@ -192,7 +188,7 @@
 <div class="card p-0 border-0 shadow-sm mb-5" style="background-color: #1e1e2d;">
     <div class="card-header bg-transparent border-bottom p-4 d-flex justify-content-between align-items-center" style="border-color: #2b2b40 !important;">
         <h5 class="fw-bold mb-0 text-white"><i class="fas fa-boxes me-2 text-info"></i>Sản phẩm vừa nhập kho</h5>
-        <a href="/Admin/ProductList" class="btn btn-sm btn-outline-info rounded-pill px-3">Quản lý kho</a>
+        <a asp-area="Admin" asp-controller="Admin" asp-action="ProductList" class="btn btn-sm btn-outline-info rounded-pill px-3">Quản lý kho</a>
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">
@@ -228,17 +224,15 @@
                                     }
                                     else if (p.StockQuantity > 0)
                                     {
-
                                         <span class="text-warning fw-bold"><i class="fas fa-exclamation-triangle me-1"></i>@p.StockQuantity</span>
                                     }
                                     else
                                     {
-
                                         <span class="text-danger fw-bold"><i class="fas fa-times-circle me-1"></i>Hết hàng</span>
                                     }
                                 </td>
                                 <td class="pe-4 py-3 text-end">
-                                    <a href="/Admin/EditProduct/@p.ProductId" class="btn btn-sm btn-outline-light rounded-pill px-3">Sửa</a>
+                                    <a asp-area="Admin" asp-controller="Admin" asp-action="EditProduct" asp-route-id="@p.ProductId" class="btn btn-sm btn-outline-light rounded-pill px-3">Sửa</a>
                                 </td>
                             </tr>
                         }

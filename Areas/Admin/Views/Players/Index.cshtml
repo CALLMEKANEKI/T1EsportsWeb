@@ -2,11 +2,11 @@
 
 @{
     ViewData["Title"] = "Danh sách tuyển thủ";
+    Layout = "_AdminLayout";
 
     int currentPage = ViewBag.CurrentPage ?? 1;
     int totalPages = ViewBag.TotalPages ?? 1;
-    string searchIngame = ViewBag.SearchIngame ?? "";
-    bool? hasImage = ViewBag.HasImage;
+    string searchName = ViewBag.SearchName ?? "";
     string selectedPosition = ViewBag.Position ?? "";
     string selectedCountry = ViewBag.Country ?? "";
     int? selectedTeamId = ViewBag.TeamId;
@@ -77,84 +77,152 @@
                 <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i> Tìm</button>
                 <a asp-area="Admin" asp-action="Index" class="btn btn-secondary">Xóa lọc</a>
             </div>
-        </div>
-    </div>
-</form>
 
-<div class="table-responsive">
-    <table class="table table-dark table-hover align-middle">
-        <thead>
-            <tr>
-                <th>Ảnh</th>
-                <th>Ingame</th>
-                <th>Tên thật</th>
-                <th>Vị trí</th>
-                <th>Ngày sinh</th>
-                <th>Quốc gia</th>
-                <th>Đội</th>
-                <th style="width: 200px;">Thao tác</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var item in Model)
-            {
-                <tr>
-                    <td>
-                        @if (!string.IsNullOrEmpty(item.PhotoUrl))
-                        {
-                            <img src="@item.PhotoUrl" alt="photo" style="max-height: 40px;" />
-                        }
-                        else
-                        {
-                            <span class="text-muted">Chưa có</span>
-                        }
-                    </td>
-                    <td>@item.IngameName</td>
-                    <td>@item.FullName</td>
-                    <td>@item.Position</td>
-                    <td>@item.BirthDate?.ToString("dd/MM/yyyy")</td>
-                    <td>@item.Country</td>
-                    <td>@(item.Team?.Name ?? "Chưa có")</td>
-                    <td>
-                        <a asp-area="Admin" asp-action="Edit" asp-route-id="@item.IdPlayer" class="btn btn-sm btn-warning">
-                            <i class="fas fa-edit"></i> Sửa
-                        </a>
-                        <a asp-area="Admin" asp-action="Details" asp-route-id="@item.IdPlayer" class="btn btn-sm btn-info">
-                            <i class="fas fa-info-circle"></i> Chi tiết
-                        </a>
-                        <a asp-area="Admin" asp-action="Delete" asp-route-id="@item.IdPlayer" class="btn btn-sm btn-danger">
-                            <i class="fas fa-trash"></i> Xóa
-                        </a>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
+            <div class="col-md-2">
+                <label class="form-label text-muted small fw-bold">QUỐC GIA</label>
+                <input type="text" name="country" class="form-control border-0 bg-dark text-white"
+                       placeholder="VD: KR, VN..." value="@selectedCountry" onchange="submitFilter()" />
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label text-muted small fw-bold">ĐỘI TUYỂN</label>
+                <select name="teamId" class="form-select border-0 bg-dark text-white" onchange="submitFilter()">
+                    <option value="">-- Tất cả đội --</option>
+                    @foreach (var team in teams)
+                    {
+                        <option value="@team.IdTeam" selected="@(selectedTeamId == team.IdTeam)">@team.Name</option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-3 d-flex gap-2">
+                <button type="submit" class="btn btn-primary flex-grow-1 fw-bold">Tìm kiếm</button>
+                <a asp-area="Admin" asp-action="Index" class="btn btn-outline-secondary px-3" title="Xóa lọc">
+                    <i class="fas fa-redo"></i>
+                </a>
+            </div>
+        </form>
+    </div>
 </div>
 
-<!-- Phân trang -->
+<div class="card border-0 shadow-sm" style="background-color: #1e1e2d;">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0" style="color: #e4e6ef;">
+            <thead style="background-color: #2b2b40; color: #a1a5b7;">
+                <tr>
+                    <th class="ps-4 py-3 border-0">ID</th>
+                    <th class="py-3 border-0">VỊ TRÍ</th>
+                    <th class="py-3 border-0">QUỐC GIA</th>
+                    <th class="py-3 border-0">ĐỘI TUYỂN</th>
+                    <th class="text-end pe-4 py-3 border-0">THAO TÁC</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model != null && Model.Any())
+                {
+                    foreach (var item in Model)
+                    {
+                        <tr style="border-bottom: 1px solid #2b2b40;">
+                            <td class="ps-4 text-muted">#@item.IdPlayer</td>
+                            <td class="py-3">
+                                @if (item.Position == "Top")
+                                {
+                                    <span class="badge bg-soft-primary text-primary"><i class="fas fa-arrow-up me-1"></i> Top</span>
+                                }
+                                else if (item.Position == "Jungle")
+                                {
+
+                                    <span class="badge bg-soft-success text-success"><i class="fas fa-tree me-1"></i> Jungle</span>
+                                }
+                                else if (item.Position == "Mid")
+                                {
+
+                                    <span class="badge bg-soft-warning text-warning"><i class="fas fa-fire me-1"></i> Mid</span>
+                                }
+                                else if (item.Position == "ADC")
+                                {
+
+                                    <span class="badge bg-soft-danger text-danger"><i class="fas fa-crosshairs me-1"></i> ADC</span>
+                                }
+                                else if (item.Position == "Support")
+                                {
+
+                                    <span class="badge bg-soft-info text-info"><i class="fas fa-shield-alt me-1"></i> Support</span>
+                                }
+                                else
+                                {
+
+                                    <span class="text-muted">@item.Position</span>
+                                }
+                            </td>
+                            <td class="py-3">
+                                @if (!string.IsNullOrEmpty(item.Country))
+                                {
+                                    <span class="badge bg-dark border border-secondary text-white rounded-pill px-3 py-2">
+                                        <i class="fas fa-flag me-1"></i>@item.Country
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">Chưa rõ</span>
+                                }
+                            </td>
+                            <td class="py-3 fw-bold" style="color: #e3002b;">@(item.Team?.Name ?? "Tuyển thủ tự do")</td>
+                            <td class="text-end pe-4 py-3">
+                                <div class="btn-group gap-2">
+                                    <a asp-area="Admin" asp-action="Edit" asp-route-id="@item.IdPlayer"
+                                       class="btn btn-sm btn-outline-info rounded-pill px-3 fw-bold">
+                                        <i class="fas fa-edit me-1"></i>Sửa
+                                    </a>
+                                    <a asp-area="Admin" asp-action="Details" asp-route-id="@item.IdPlayer"
+                                       class="btn btn-sm btn-outline-light rounded-pill px-3 fw-bold">
+                                        <i class="fas fa-eye me-1"></i>Xem
+                                    </a>
+                                    <a asp-area="Admin" asp-action="Delete" asp-route-id="@item.IdPlayer"
+                                       class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-bold">
+                                        <i class="fas fa-trash me-1"></i>Xóa
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="5" class="text-center py-5">
+                            <i class="fas fa-users-slash fs-1 mb-3 opacity-25"></i>
+                            <p class="text-muted">Không tìm thấy tuyển thủ nào!</p>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
 @if (totalPages > 1)
 {
-    <nav aria-label="Page navigation">
+    <nav aria-label="Page navigation" class="mt-4">
         <ul class="pagination justify-content-center">
             <li class="page-item @(currentPage == 1 ? "disabled" : "")">
-                <a class="page-link" asp-area="Admin" asp-action="Index" asp-route-page="@(currentPage - 1)"
-                   asp-route-searchIngame="@searchIngame" asp-route-hasImage="@hasImage"
+                <a class="page-link bg-dark border-secondary text-white" asp-area="Admin" asp-action="Index"
+                   asp-route-page="@(currentPage - 1)" asp-route-searchName="@searchName"
                    asp-route-position="@selectedPosition" asp-route-country="@selectedCountry"
                    asp-route-teamId="@selectedTeamId">«</a>
             </li>
             @for (int i = 1; i <= totalPages; i++)
             {
                 <li class="page-item @(i == currentPage ? "active" : "")">
-                    <a class="page-link" asp-area="Admin" asp-action="Index" asp-route-page="@i"
-                       asp-route-searchIngame="@searchIngame" asp-route-hasImage="@hasImage"
-                       asp-route-position="@selectedPosition" asp-route-country="@selectedCountry"
-                       asp-route-teamId="@selectedTeamId">@i</a>
+                    <a class="page-link @(i == currentPage ? "bg-danger border-danger" : "bg-dark border-secondary text-white")"
+                       asp-area="Admin" asp-action="Index" asp-route-page="@i"
+                       asp-route-searchName="@searchName" asp-route-position="@selectedPosition"
+                       asp-route-country="@selectedCountry" asp-route-teamId="@selectedTeamId">@i</a>
                 </li>
             }
             <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
-                <a class="page-link" asp-area="Admin" asp-action="Index" asp-route-page="@(currentPage + 1)"
-                   asp-route-searchIngame="@searchIngame" asp-route-hasImage="@hasImage"
+                <a class="page-link bg-dark border-secondary text-white" asp-area="Admin" asp-action="Index"
+                   asp-route-page="@(currentPage + 1)" asp-route-searchName="@searchName"
                    asp-route-position="@selectedPosition" asp-route-country="@selectedCountry"
                    asp-route-teamId="@selectedTeamId">»</a>
             </li>
@@ -164,7 +232,6 @@
 
 <script>
     function submitFilter() {
-        var form = document.getElementById('filterForm');
-        form.submit();
+        document.getElementById('filterForm').submit();
     }
 </script>

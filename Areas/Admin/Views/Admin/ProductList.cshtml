@@ -15,7 +15,7 @@
             <i class="fas fa-trash-alt me-2"></i>Xóa mục đã chọn (<span id="selected-count">0</span>)
         </button>
 
-        <a href="/Admin/AddProduct" class="btn btn-danger fw-bold rounded-pill px-4">
+        <a asp-area="Admin" asp-controller="Admin" asp-action="AddProduct" class="btn btn-danger fw-bold rounded-pill px-4">
             <i class="fas fa-plus me-2"></i>Thêm Mới
         </a>
     </div>
@@ -78,7 +78,7 @@
                             </td>
                             <td class="py-3 text-muted">@(string.IsNullOrEmpty(item.Sizes) ? "Freesize" : item.Sizes)</td>
                             <td class="py-3 text-end">
-                                <a href="/Admin/EditProduct/@item.ProductId" class="btn btn-sm btn-outline-warning rounded-circle me-1" title="Chỉnh sửa">
+                                <a asp-area="Admin" asp-controller="Admin" asp-action="EditProduct" asp-route-id="@item.ProductId" class="btn btn-sm btn-outline-warning rounded-circle me-1" title="Chỉnh sửa">
                                     <i class="fas fa-pen"></i>
                                 </a>
                                 <button type="button" class="btn btn-sm btn-outline-danger rounded-circle btn-delete-product"
