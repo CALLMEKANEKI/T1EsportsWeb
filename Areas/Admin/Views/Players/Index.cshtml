@@ -13,6 +13,18 @@
     var teams = ViewBag.Teams as List<T1EsportsWeb.Models.T1Stat.Team> ?? new List<T1EsportsWeb.Models.T1Stat.Team>();
 }
 
+<style>
+    .chart-container {
+        overflow-x: auto;
+        width: 100%;
+    }
+
+        .chart-container canvas {
+            min-width: 800px; /* đủ rộng để hiển thị nhiều cột */
+            height: 400px;
+        }
+</style>
+
 <h1>Quản lý tuyển thủ</h1>
 
 <p>
