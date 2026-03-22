@@ -2,7 +2,6 @@
 
 @{
     ViewData["Title"] = "Danh sách tuyển thủ";
-    Layout = "~/Views/Shared/_AdminLayout.cshtml";
 
     int currentPage = ViewBag.CurrentPage ?? 1;
     int totalPages = ViewBag.TotalPages ?? 1;
@@ -10,7 +9,21 @@
     bool? hasImage = ViewBag.HasImage;
     string selectedPosition = ViewBag.Position ?? "";
     string selectedCountry = ViewBag.Country ?? "";
+    int? selectedTeamId = ViewBag.TeamId;
+    var teams = ViewBag.Teams as List<T1EsportsWeb.Models.T1Stat.Team> ?? new List<T1EsportsWeb.Models.T1Stat.Team>();
 }
+
+<style>
+    .chart-container {
+        overflow-x: auto;
+        width: 100%;
+    }
+
+        .chart-container canvas {
+            min-width: 800px; /* đủ rộng để hiển thị nhiều cột */
+            height: 400px;
+        }
+</style>
 
 <h1>Quản lý tuyển thủ</h1>
 
@@ -37,18 +50,28 @@
             <label class="form-label">Vị trí</label>
             <select name="position" class="form-control" onchange="submitFilter()">
                 <option value="">-- Tất cả --</option>
-                <option value="Top" selected=@(selectedPosition == "Top" ? "selected" : "")>Top</option>
-                <option value="Jungle" selected=@(selectedPosition == "Jungle" ? "selected" : "")>Jungle</option>
-                <option value="Mid" selected=@(selectedPosition == "Mid" ? "selected" : "")>Mid</option>
-                <option value="ADC" selected=@(selectedPosition == "ADC" ? "selected" : "")>ADC</option>
-                <option value="Support" selected=@(selectedPosition == "Support" ? "selected" : "")>Support</option>
+                <option value="Top" selected="@(selectedPosition == "Top")">Top</option>
+                <option value="Jungle" selected="@(selectedPosition == "Jungle")">Jungle</option>
+                <option value="Mid" selected="@(selectedPosition == "Mid")">Mid</option>
+                <option value="ADC" selected="@(selectedPosition == "ADC")">ADC</option>
+                <option value="Support" selected="@(selectedPosition == "Support")">Support</option>
             </select>
         </div>
         <div class="col-md-2">
             <label class="form-label">Quốc gia</label>
             <input type="text" name="country" class="form-control" placeholder="VD: KR, CN..." value="@selectedCountry" />
         </div>
-        <div class="col-md-3">
+        <div class="col-md-2">
+            <label class="form-label">Đội tuyển</label>
+            <select name="teamId" class="form-control" onchange="submitFilter()">
+                <option value="">-- Tất cả đội --</option>
+                @foreach (var team in teams)
+                {
+                    <option value="@team.IdTeam" selected="@(selectedTeamId == team.IdTeam)">@team.Name</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-1">
             <label class="form-label">&nbsp;</label>
             <div>
                 <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i> Tìm</button>
@@ -62,12 +85,13 @@
     <table class="table table-dark table-hover align-middle">
         <thead>
             <tr>
+                <th>Ảnh</th>
                 <th>Ingame</th>
                 <th>Tên thật</th>
                 <th>Vị trí</th>
-                <th>Ảnh</th>
                 <th>Ngày sinh</th>
                 <th>Quốc gia</th>
+                <th>Đội</th>
                 <th style="width: 200px;">Thao tác</th>
             </tr>
         </thead>
@@ -75,9 +99,6 @@
             @foreach (var item in Model)
             {
                 <tr>
-                    <td>@item.IngameName</td>
-                    <td>@item.FullName</td>
-                    <td>@item.Position</td>
                     <td>
                         @if (!string.IsNullOrEmpty(item.PhotoUrl))
                         {
@@ -88,8 +109,12 @@
                             <span class="text-muted">Chưa có</span>
                         }
                     </td>
+                    <td>@item.IngameName</td>
+                    <td>@item.FullName</td>
+                    <td>@item.Position</td>
                     <td>@item.BirthDate?.ToString("dd/MM/yyyy")</td>
                     <td>@item.Country</td>
+                    <td>@(item.Team?.Name ?? "Chưa có")</td>
                     <td>
                         <a asp-area="Admin" asp-action="Edit" asp-route-id="@item.IdPlayer" class="btn btn-sm btn-warning">
                             <i class="fas fa-edit"></i> Sửa
@@ -115,21 +140,31 @@
             <li class="page-item @(currentPage == 1 ? "disabled" : "")">
                 <a class="page-link" asp-area="Admin" asp-action="Index" asp-route-page="@(currentPage - 1)"
                    asp-route-searchIngame="@searchIngame" asp-route-hasImage="@hasImage"
-                   asp-route-position="@selectedPosition" asp-route-country="@selectedCountry">«</a>
+                   asp-route-position="@selectedPosition" asp-route-country="@selectedCountry"
+                   asp-route-teamId="@selectedTeamId">«</a>
             </li>
             @for (int i = 1; i <= totalPages; i++)
             {
                 <li class="page-item @(i == currentPage ? "active" : "")">
                     <a class="page-link" asp-area="Admin" asp-action="Index" asp-route-page="@i"
                        asp-route-searchIngame="@searchIngame" asp-route-hasImage="@hasImage"
-                       asp-route-position="@selectedPosition" asp-route-country="@selectedCountry">@i</a>
+                       asp-route-position="@selectedPosition" asp-route-country="@selectedCountry"
+                       asp-route-teamId="@selectedTeamId">@i</a>
                 </li>
             }
             <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
                 <a class="page-link" asp-area="Admin" asp-action="Index" asp-route-page="@(currentPage + 1)"
                    asp-route-searchIngame="@searchIngame" asp-route-hasImage="@hasImage"
-                   asp-route-position="@selectedPosition" asp-route-country="@selectedCountry">»</a>
+                   asp-route-position="@selectedPosition" asp-route-country="@selectedCountry"
+                   asp-route-teamId="@selectedTeamId">»</a>
             </li>
         </ul>
     </nav>
 }
+
+<script>
+    function submitFilter() {
+        var form = document.getElementById('filterForm');
+        form.submit();
+    }
+</script>

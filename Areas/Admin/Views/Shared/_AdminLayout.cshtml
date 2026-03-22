@@ -1,0 +1,268 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - T1 Admin Dashboard</title>
+
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* TỔNG THỂ GIAO DIỆN TỐI (DARK MODE) */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #151521; /* Nền xám đen cực ngầu */
+            color: #e4e6ef; /* Chữ màu sáng */
+            overflow-x: hidden;
+        }
+
+        /* CỘT MENU BÊN TRÁI (SIDEBAR) CHUẨN ESPORTS */
+        #sidebar {
+            width: 260px;
+            height: 100vh;
+            position: fixed;
+            background: #1e1e2d; /* Màu Panel tối */
+            border-right: 1px solid #2b2b40;
+            z-index: 100;
+            box-shadow: 4px 0 15px rgba(0, 0, 0, 0.2);
+            overflow-y: auto; /* Thêm dòng này để có thanh cuộn dọc */
+        }
+
+        .sidebar-logo {
+            padding: 25px 20px;
+            border-bottom: 1px solid #2b2b40;
+            font-weight: 900;
+            font-size: 1.8rem;
+            color: #e3002b; /* Đỏ T1 */
+            letter-spacing: 2px;
+            text-align: center;
+            text-transform: uppercase;
+        }
+
+        .nav-section-title {
+            color: #565674;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 1px;
+            padding: 15px 30px 5px;
+        }
+
+        .nav-item .nav-link {
+            color: #a1a5b7;
+            padding: 12px 20px;
+            margin: 5px 15px;
+            font-weight: 600;
+            border-radius: 10px; /* Bo góc mượt mà */
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+        }
+
+            .nav-item .nav-link i {
+                width: 30px;
+                font-size: 1.2rem;
+            }
+            /* Hiệu ứng khi di chuột hoặc đang ở trang đó */
+            .nav-item .nav-link:hover, .nav-item .nav-link.active {
+                color: #ffffff;
+                background-color: #e3002b; /* Nền đỏ T1 */
+                box-shadow: 0 4px 10px rgba(227, 0, 43, 0.3); /* Phát sáng nhẹ */
+                transform: translateX(5px); /* Đẩy nhẹ sang phải cực mượt */
+            }
+
+        /* KHU VỰC NỘI DUNG CHÍNH */
+        #main-content {
+            margin-left: 260px;
+            min-height: 100vh;
+        }
+
+        /* THANH ĐIỀU HƯỚNG TRÊN CÙNG (TOPBAR) */
+        #topbar {
+            height: 70px;
+            background: #1e1e2d;
+            border-bottom: 1px solid #2b2b40;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding: 0 30px;
+        }
+
+        .admin-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #e3002b, #ff4b6b);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            box-shadow: 0 4px 8px rgba(227, 0, 43, 0.3);
+        }
+
+        /* ĐIỀU CHỈNH CARD VÀ FORM CHO DARK MODE */
+        .content-wrapper {
+            padding: 30px;
+        }
+
+        .card {
+            background-color: #1e1e2d;
+            border: 1px solid #2b2b40 !important;
+            border-radius: 15px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            color: #ffffff;
+        }
+
+        .text-muted {
+            color: #a1a5b7 !important;
+        }
+
+        /* Ép các ô nhập liệu trong trang Thêm Sản Phẩm thành màu tối */
+        .form-control, .form-select {
+            background-color: #151521;
+            border: 1px solid #2b2b40;
+            color: #e4e6ef;
+        }
+
+            .form-control:focus, .form-select:focus {
+                background-color: #151521;
+                border-color: #e3002b;
+                color: #ffffff;
+                box-shadow: 0 0 0 0.25rem rgba(227, 0, 43, 0.25);
+            }
+
+        .form-label {
+            color: #e4e6ef;
+        }
+
+        #sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #sidebar::-webkit-scrollbar-track {
+            background: #1e1e2d;
+        }
+
+        #sidebar::-webkit-scrollbar-thumb {
+            background: #565674;
+            border-radius: 3px;
+        }
+
+            #sidebar::-webkit-scrollbar-thumb:hover {
+                background: #e3002b;
+            }
+    </style>
+</head>
+<body>
+
+    <div id="sidebar">
+        <div class="sidebar-logo">
+            <i class="fas fa-gamepad me-2"></i>T1 ADMIN
+        </div>
+        <ul class="nav flex-column mt-3">
+            <li class="nav-section-title">Hệ Thống</li>
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link" asp-area="Admin" asp-controller="Admin" asp-action="Index">
+                        <i class="fas fa-tachometer-alt me-2"></i> Tổng quan
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" asp-area="Admin" asp-controller="Admin" asp-action="UserList">
+                        <i class="fas fa-users-cog"></i> Quản lý Nhân sự
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" asp-area="Admin" asp-controller="Admin" asp-action="CustomerSupport">
+                        <i class="fas fa-headset me-2"></i> CSKH
+                    </a>
+                </li>
+
+            </ul>
+            <li class="nav-section-title mt-3">Cửa Hàng (Shop)</li>
+            <li class="nav-item">
+                <a class="nav-link" asp-area="Admin" asp-controller="Admin" asp-action="OrderList">
+                    <i class="fas fa-shopping-cart"></i> Quản lý Đơn Hàng
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" asp-area="Admin" asp-controller="Admin" asp-action="AddProduct">
+                    <i class="fas fa-plus-circle"></i> Thêm Sản Phẩm
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" asp-area="Admin" asp-controller="Admin" asp-action="ProductList">
+                    <i class="fas fa-box-open"></i> List Sản Phẩm
+                </a>
+            </li>
+
+            <li class="nav-section-title mt-3">Giải Trí (Arcade)</li>
+            <li class="nav-item">
+                <a class="nav-link" asp-area="Admin" asp-controller="Admin" asp-action="VoucherList">
+                    <i class="fas fa-ticket-alt"></i> Quản lý Voucher
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" asp-area="Admin" asp-controller="Admin" asp-action="RedemptionHistory">
+                    <i class="fas fa-coins"></i> Lịch sử đổi Điểm
+                </a>
+            </li>
+
+            <li class="nav-section-title mt-3">Quản Lý Data</li>
+            <li class="nav-item">
+                <a class="nav-link" asp-area="Admin" asp-controller="Teams" asp-action="Index">
+                    <i class="fas fa-users"></i> Đội tuyển
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" asp-area="Admin" asp-controller="Tournaments" asp-action="Index">
+                    <i class="fas fa-users"></i> Giải đấu
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" asp-area="Admin" asp-controller="Champions" asp-action="Index">
+                    <i class="fas fa-dragon"></i> Tướng
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" asp-area="Admin" asp-controller="Players" asp-action="Index">
+                    <i class="fas fa-user"></i> Tuyển thủ
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <div id="main-content">
+        <div id="topbar">
+            <div class="d-flex align-items-center gap-4">
+                <a href="/" class="btn btn-outline-danger btn-sm fw-bold rounded-pill px-3">
+                    <i class="fas fa-globe me-1"></i> Về trang chủ
+                </a>
+                <div class="d-flex align-items-center gap-2">
+                    <div class="admin-avatar">T1</div>
+                    <div>
+                        <h6 class="mb-0 fw-bold" style="font-size: 0.9rem;">Admin T1</h6>
+                        <small class="text-muted" style="font-size: 0.75rem;">Quản trị viên</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-wrapper">
+            @RenderBody()
+        </div>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

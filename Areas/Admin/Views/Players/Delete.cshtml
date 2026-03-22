@@ -20,6 +20,9 @@
 
             <dt class="col-sm-4">Vị trí</dt>
             <dd class="col-sm-8">@Model.Position</dd>
+
+            <dt class="col-sm-4">Đội</dt>
+            <dd class="col-sm-8">@(Model.Team?.Name ?? "Chưa có")</dd>
         </dl>
     </div>
     <div class="card-footer">

@@ -1,0 +1,234 @@
+﻿@{
+    ViewData["Title"] = "Phòng Chat Hỗ Trợ";
+
+    // Lấy tên khách hàng từ đường dẫn URL hoặc ViewBag
+    string targetUser = Context.Request.Query["user"];
+    if (string.IsNullOrEmpty(targetUser))
+    {
+        targetUser = ViewBag.TargetUser;
+    }
+}
+
+<style>
+    /* CSS Tùy chỉnh cho Phòng Chat Dark Mode */
+    .chat-container {
+        height: 72vh;
+        background-color: #1e1e2d; /* Nền Card tối */
+        border: 1px solid #2b2b40;
+        border-radius: 15px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .chat-header {
+        background-color: #1e1e2d;
+        border-bottom: 1px solid #2b2b40;
+        padding: 20px;
+        display: flex;
+        align-items: center;
+    }
+
+    .chat-avatar {
+        width: 48px;
+        height: 48px;
+        background: rgba(227, 0, 43, 0.1);
+        color: #e3002b;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-right: 15px;
+    }
+
+    .chat-body {
+        flex: 1;
+        background-color: #151521; /* Nền khu vực chat tối hơn */
+        padding: 20px 30px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+        /* Tùy chỉnh thanh cuộn cho mượt */
+        .chat-body::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chat-body::-webkit-scrollbar-thumb {
+            background: #2b2b40;
+            border-radius: 10px;
+        }
+
+    /* Bong bóng chat chung */
+    .chat-bubble {
+        max-width: 75%;
+        padding: 12px 18px;
+        font-size: 0.95rem;
+        line-height: 1.5;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        word-wrap: break-word;
+    }
+
+    /* Tin nhắn của Admin (Nằm bên phải, màu đỏ T1) */
+    .bubble-admin {
+        align-self: flex-end;
+        background-color: #e3002b;
+        color: #fff;
+        border-radius: 20px 20px 4px 20px; /* Góc dưới phải vuông hơn */
+    }
+
+    /* Tin nhắn của Khách (Nằm bên trái, màu xám) */
+    .bubble-user {
+        align-self: flex-start;
+        background-color: #2b2b40;
+        color: #e4e6ef;
+        border-radius: 20px 20px 20px 4px; /* Góc dưới trái vuông hơn */
+    }
+
+    .chat-footer {
+        background-color: #1e1e2d;
+        border-top: 1px solid #2b2b40;
+        padding: 15px 20px;
+        display: flex;
+        gap: 15px;
+    }
+
+    .chat-input {
+        flex: 1;
+        background-color: #151521;
+        border: 1px solid #2b2b40;
+        color: #e4e6ef;
+        border-radius: 25px;
+        padding: 12px 25px;
+        outline: none;
+        transition: 0.3s;
+    }
+
+        .chat-input:focus {
+            border-color: #e3002b;
+            box-shadow: 0 0 0 0.2rem rgba(227, 0, 43, 0.25);
+        }
+
+    .btn-send {
+        background-color: #e3002b;
+        color: white;
+        border: none;
+        border-radius: 25px;
+        padding: 0 30px;
+        font-weight: bold;
+        transition: 0.3s;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+        .btn-send:hover {
+            background-color: #ff1a40;
+            transform: translateY(-2px);
+        }
+</style>
+
+<div class="mb-4 d-flex align-items-center justify-content-between">
+    <div>
+        <h2 class="fw-bold mb-1"><i class="fas fa-comments me-2 text-danger"></i>Phòng Chat</h2>
+        <p class="text-muted">Hỗ trợ trực tuyến cho khách hàng T1 Shop</p>
+    </div>
+    <a href="/Admin/CustomerSupport" class="btn btn-outline-secondary btn-sm rounded-pill px-4 py-2 fw-bold">
+        <i class="fas fa-arrow-left me-2"></i> Trở về danh sách
+    </a>
+</div>
+
+<div class="chat-container shadow-lg">
+    <div class="chat-header">
+        <div class="chat-avatar">
+            <i class="fas fa-user"></i>
+        </div>
+        <div>
+            <h5 class="mb-0 fw-bold text-white">@targetUser</h5>
+            <small class="text-success fw-bold"><i class="fas fa-circle me-1" style="font-size: 8px;"></i>Đang kết nối</small>
+        </div>
+    </div>
+
+    <div class="chat-body" id="adminChatBody">
+        <div class="text-center text-muted my-3 small fw-bold">
+            <i class="fas fa-shield-alt me-1"></i> Cuộc trò chuyện được bảo mật
+        </div>
+    </div>
+
+    <div class="chat-footer">
+        <input type="text" id="adminInput" class="chat-input" placeholder="Soạn tin nhắn trả lời @targetUser..." autocomplete="off" onkeypress="if(event.key === 'Enter') adminSendMessage()">
+        <button class="btn-send" onclick="adminSendMessage()">
+            Gửi tin <i class="fas fa-paper-plane"></i>
+        </button>
+    </div>
+</div>
+
+<script>
+    const targetUser = "@targetUser";
+    let msgCount = 0;
+
+    function loadMessages() {
+        if(!targetUser) return;
+
+        fetch(`/Admin/GetMessages?withUser=${targetUser}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.length > msgCount) {
+                const body = document.getElementById('adminChatBody');
+
+                let html = `<div class="text-center text-muted my-3 small fw-bold"><i class="fas fa-shield-alt me-1"></i> Cuộc trò chuyện được bảo mật</div>`;
+
+                data.forEach(m => {
+                    // Kiểm tra xem ai là người gửi
+                    const isAdmin = m.senderUsername === 'Admin' || m.senderUsername === '@User.Identity.Name';
+
+                    // Format lại thời gian giờ:phút
+                    const timeString = new Date(m.timestamp).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+
+                    if (isAdmin) {
+                        html += `
+                            <div class="chat-bubble bubble-admin">
+                                ${m.messageContent}
+                                <div class="text-end mt-1" style="font-size: 0.7rem; opacity: 0.7;">${timeString}</div>
+                            </div>
+                        `;
+                    } else {
+                        html += `
+                            <div class="chat-bubble bubble-user">
+                                ${m.messageContent}
+                                <div class="text-start mt-1" style="font-size: 0.7rem; opacity: 0.5;">${timeString}</div>
+                            </div>
+                        `;
+                    }
+                });
+
+                body.innerHTML = html;
+                body.scrollTop = body.scrollHeight; // Cuộn xuống cuối
+                msgCount = data.length;
+            }
+        });
+    }
+
+    function adminSendMessage() {
+        const msg = document.getElementById('adminInput').value.trim();
+        if (!msg) return;
+
+        // Gửi qua API
+        fetch('/Admin/SendMessage', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `messageContent=${encodeURIComponent(msg)}&receiver=${targetUser}`
+        }).then(() => {
+            document.getElementById('adminInput').value = '';
+            loadMessages(); // Load ngay lại tin nhắn vừa gửi
+        });
+    }
+
+    // Chạy load ngay khi mở trang
+    loadMessages();
+    // Tự động quét tin nhắn mới mỗi 2 giây
+    setInterval(loadMessages, 2000);
+</script>

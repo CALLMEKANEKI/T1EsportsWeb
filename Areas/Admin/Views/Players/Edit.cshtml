@@ -46,6 +46,14 @@
                 <input asp-for="Country" class="form-control" />
                 <span asp-validation-for="Country" class="text-danger"></span>
             </div>
+            <!-- Dropdown chọn đội -->
+            <div class="form-group mb-3">
+                <label asp-for="TeamId" class="control-label">Đội tuyển</label>
+                <select asp-for="TeamId" class="form-control" asp-items="ViewBag.Teams">
+                    <option value="">-- Chọn đội --</option>
+                </select>
+                <span asp-validation-for="TeamId" class="text-danger"></span>
+            </div>
             <div class="form-group mb-3">
                 <label>Ảnh hiện tại</label>
                 @if (!string.IsNullOrEmpty(Model.PhotoUrl))

@@ -1,0 +1,169 @@
+﻿@model T1EsportsWeb.Models.Product
+
+@{
+    ViewData["Title"] = "Chỉnh sửa sản phẩm";
+
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold mb-1">T1 Shop Management</h2>
+        <p class="text-muted">Cập nhật thông tin sản phẩm cho bộ sưu tập T1 Esports.</p>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-9">
+        <div class="card p-4">
+
+            <div class="text-center mb-4 py-3 bg-danger bg-opacity-10 rounded-2 border border-danger border-opacity-25">
+                <h3 class="fw-bold mb-0 text-danger text-uppercase">
+                    <i class="fas fa-edit me-2"></i>Cập nhật sản phẩm
+                </h3>
+            </div>
+
+            @if (TempData["SuccessMsg"] != null)
+            {
+                <div class="alert alert-success fw-bold text-center">
+                    <i class="fas fa-check-circle me-2"></i>@TempData["SuccessMsg"]
+                </div>
+            }
+
+            <form asp-action="EditProduct" method="post" enctype="multipart/form-data">
+                <input type="hidden" asp-for="ProductId" />
+                <input type="hidden" asp-for="ImageUrl" />
+
+                <div class="row g-3">
+                    <div class="col-md-8">
+                        <label class="form-label fw-bold">Tên Sản Phẩm (Áo đấu, Lót chuột...)</label>
+                        <input asp-for="ProductName" class="form-control" required />
+                        <span asp-validation-for="ProductName" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Giá Tiền (VNĐ)</label>
+                        <input asp-for="Price" type="number" class="form-control" required />
+                        <span asp-validation-for="Price" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <div class="row g-3 mt-2">
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold text-white">Số Lượng Trong Kho</label>
+                        <input asp-for="StockQuantity" type="number" class="form-control" required min="0" />
+                        <span asp-validation-for="StockQuantity" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-8">
+                        <label class="form-label fw-bold text-white">Các Size Đang Có (Phân cách bằng dấu phẩy)</label>
+                        <input asp-for="Sizes" class="form-control" placeholder="Ví dụ: S, M, L, XL" />
+                    </div>
+                </div>
+
+                <div class="mt-3">
+                    <label class="form-label fw-bold">Mô tả chi tiết sản phẩm</label>
+                    <textarea asp-for="Description" class="form-control" rows="4"></textarea>
+                </div>
+
+                <div class="mt-3 mb-4">
+                    <label class="form-label fw-bold">Quản Lý Hình Ảnh</label>
+
+                    @if (ViewBag.OldImages != null)
+                    {
+                        <div class="mb-3 p-3 bg-dark rounded border border-secondary border-opacity-25">
+                            <small class="text-white fw-bold d-block mb-2">Ảnh cũ đang có trong kho:</small>
+                            <div class="d-flex flex-wrap gap-2" id="old-images-container">
+                                @foreach (var imgUrl in ViewBag.OldImages)
+                                {
+                                    <div class="position-relative image-thumbnail" data-image-url="@imgUrl">
+                                        <img src="@imgUrl" class="rounded border border-secondary" style="width: 80px; height: 80px; object-fit: cover;" />
+
+                                        <span class="delete-old-image position-absolute top-0 end-0 text-white rounded-circle d-flex align-items-center justify-content-center"
+                                              style="width: 22px; height: 22px; background-color: rgba(0, 0, 0, 0.4); backdrop-filter: blur(4px); border: 1px solid rgba(255, 255, 255, 0.2); font-size: 0.7rem; transform: translate(40%, -40%); cursor: pointer; transition: all 0.2s ease;"
+                                              onmouseover="this.style.backgroundColor='rgba(227, 0, 43, 0.8)'"
+                                              onmouseout="this.style.backgroundColor='rgba(0, 0, 0, 0.4)'"
+                                              title="Xóa ảnh này">
+                                            <i class="fas fa-times"></i>
+                                        </span>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+
+                    <div class="mt-3">
+                        <small class="text-white fw-bold d-block mb-2 text-warning">Chọn ảnh mới để thay thế ảnh cũ:</small>
+                        <input type="file" name="imageFiles" class="form-control" accept="image/*" multiple id="image-upload-input" />
+                        
+
+                        <div id="image-preview-container" class="mt-3 d-flex flex-wrap gap-2">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center">
+                    <button type="submit" class="btn btn-danger btn-lg fw-bold rounded-pill px-5 shadow">
+                        <i class="fas fa-save me-2"></i> LƯU SẢN PHẨM
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const fileInput = document.getElementById('image-upload-input');
+        const previewContainer = document.getElementById('image-preview-container');
+        const oldImagesContainer = document.getElementById('old-images-container');
+
+        // Hiển thị xem trước ảnh mới
+        fileInput.addEventListener('change', function() {
+            previewContainer.innerHTML = '';
+            const files = fileInput.files;
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                if (file.type.match('image.*')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.className = 'rounded border border-danger';
+                        img.style.width = '80px';
+                        img.style.height = '80px';
+                        img.style.objectFit = 'cover';
+                        previewContainer.appendChild(img);
+                    }
+                    reader.readAsDataURL(file);
+                }
+            }
+        });
+
+        
+        // Xóa ảnh cũ trên giao diện VÀ cập nhật dữ liệu ngầm
+        if (oldImagesContainer) {
+            oldImagesContainer.addEventListener('click', function(e) {
+                const deleteBtn = e.target.closest('.delete-old-image');
+                if (deleteBtn) {
+                    const imageThumbnail = deleteBtn.closest('.image-thumbnail');
+                    if (imageThumbnail) {
+                        // 1. Lấy link của bức ảnh sắp bị xóa
+                        const imageUrlToRemove = imageThumbnail.dataset.imageUrl;
+
+                        // 2. Xóa thẻ ảnh khỏi giao diện
+                        imageThumbnail.remove();
+
+                        // 3. Cập nhật lại thẻ hidden input (Báo cho C# biết)
+                        const hiddenInput = document.getElementById('ImageUrl');
+                        if (hiddenInput) {
+                            // Lấy chuỗi link hiện tại, tách ra, lọc bỏ cái link vừa xóa, rồi ghép lại
+                            let currentUrls = hiddenInput.value.split(';').filter(url => url !== '');
+                            currentUrls = currentUrls.filter(url => url !== imageUrlToRemove);
+                            hiddenInput.value = currentUrls.join(';');
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+}

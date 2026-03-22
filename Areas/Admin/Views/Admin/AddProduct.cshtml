@@ -1,0 +1,109 @@
+﻿@model T1EsportsWeb.Models.Product
+
+@{
+    ViewData["Title"] = "Thêm Sản Phẩm Mới";
+
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold mb-1 text-danger"><i class="fas fa-plus-circle me-2"></i>T1 Shop Management</h2>
+        <p class="text-muted">Tạo sản phẩm mới cho bộ sưu tập T1 Esports.</p>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-9">
+        <div class="card p-4">
+
+            <div class="text-center mb-4 py-3 bg-danger bg-opacity-10 rounded-2 border border-danger border-opacity-25">
+                <h3 class="fw-bold mb-0 text-danger text-uppercase">
+                    <i class="fas fa-plus-circle me-2"></i>Thêm Sản Phẩm Mới
+                </h3>
+            </div>
+
+            @if (TempData["SuccessMsg"] != null)
+            {
+                <div class="alert alert-success fw-bold text-center">
+                    <i class="fas fa-check-circle me-2"></i>@TempData["SuccessMsg"]
+                </div>
+            }
+
+            <form asp-action="AddProduct" method="post" enctype="multipart/form-data">
+
+                <div class="row g-3">
+                    <div class="col-md-8">
+                        <label class="form-label fw-bold">Tên Sản Phẩm (Áo đấu, Lót chuột...)</label>
+                        <input asp-for="ProductName" class="form-control" required />
+                        <span asp-validation-for="ProductName" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Giá Tiền (VNĐ)</label>
+                        <input asp-for="Price" type="number" class="form-control" required />
+                        <span asp-validation-for="Price" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <div class="row g-3 mt-2">
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold text-white">Số Lượng Trong Kho</label>
+                        <input asp-for="StockQuantity" type="number" class="form-control" required min="0" />
+                        <span asp-validation-for="StockQuantity" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-8">
+                        <label class="form-label fw-bold text-white">Các Size Đang Có (Phân cách bằng dấu phẩy)</label>
+                        <input asp-for="Sizes" class="form-control" placeholder="Ví dụ: S, M, L, XL" />
+                    </div>
+                </div>
+
+                <div class="mt-3">
+                    <label class="form-label fw-bold">Mô tả chi tiết sản phẩm</label>
+                    <textarea asp-for="Description" class="form-control" rows="4"></textarea>
+                </div>
+
+                <div class="mt-3 mb-4">
+                    <label class="form-label fw-bold">Tải Ảnh Sản Phẩm Lên</label>
+                    <input type="file" name="imageFiles" class="form-control" accept="image/*" multiple required id="image-upload-input" />
+                    <small class="text-muted">Có thể chọn nhiều ảnh cùng lúc bằng cách đè phím Ctrl</small>
+
+                    <div id="image-preview-container" class="mt-3 d-flex flex-wrap gap-2"></div>
+                </div>
+
+                <div class="text-center">
+                    <button type="submit" class="btn btn-danger btn-lg fw-bold rounded-pill px-5 shadow">
+                        <i class="fas fa-save me-2"></i> LƯU SẢN PHẨM
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const fileInput = document.getElementById('image-upload-input');
+        const previewContainer = document.getElementById('image-preview-container');
+
+        fileInput.addEventListener('change', function() {
+            previewContainer.innerHTML = '';
+            const files = fileInput.files;
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                if (file.type.match('image.*')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.className = 'rounded border border-secondary';
+                        img.style.width = '80px';
+                        img.style.height = '80px';
+                        img.style.objectFit = 'cover';
+                        previewContainer.appendChild(img);
+                    }
+                    reader.readAsDataURL(file);
+                }
+            }
+        });
+    </script>
+}

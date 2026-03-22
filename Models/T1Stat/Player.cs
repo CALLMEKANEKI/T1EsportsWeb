@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 namespace T1EsportsWeb.Models.T1Stat;
 
 [Table("players")]
+[Index("TeamId", Name = "IX_players_team_id")]
 [Index("IngameName", Name = "UQ__players__2AF4ED2AA199B9C3", IsUnique = true)]
 public partial class Player
 {
@@ -37,6 +38,13 @@ public partial class Player
     [StringLength(50)]
     public string? Country { get; set; }
 
+    [Column("team_id")]
+    public int? TeamId { get; set; }
+
     [InverseProperty("Player")]
     public virtual ICollection<GamePlayer> GamePlayers { get; set; } = new List<GamePlayer>();
+
+    [ForeignKey("TeamId")]
+    [InverseProperty("Players")]
+    public virtual Team? Team { get; set; }
 }

@@ -32,6 +32,9 @@ public partial class Team
     [InverseProperty("Team")]
     public virtual ICollection<GameTeam> GameTeams { get; set; } = new List<GameTeam>();
 
+    [InverseProperty("Team")]
+    public virtual ICollection<Player> Players { get; set; } = new List<Player>();
+
     [InverseProperty("TeamOpponent")]
     public virtual ICollection<Series> SeriesTeamOpponents { get; set; } = new List<Series>();
 

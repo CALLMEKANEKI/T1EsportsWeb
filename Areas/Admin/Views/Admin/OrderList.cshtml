@@ -1,0 +1,207 @@
+﻿@model IEnumerable<T1EsportsWeb.Models.Order>
+@using T1EsportsWeb.Models
+@inject T1DbContext _context
+
+@{
+    ViewData["Title"] = "Quản lý Đơn Hàng";
+
+
+    // Lấy phí ship từ hệ thống để tính toán tiền giảm giá
+    var shippingSetting = _context.SystemSettings.FirstOrDefault(s => s.Key == "ShippingFee");
+    decimal globalShippingFee = shippingSetting != null ? decimal.Parse(shippingSetting.Value) : 30000m;
+}
+
+<style>
+    .t1-toast {
+        position: fixed;
+        bottom: 40px;
+        right: 40px;
+        background-color: #1e1e2d;
+        border: 1px solid #2b2b40;
+        border-left: 4px solid #00e676;
+        padding: 15px 25px;
+        border-radius: 12px;
+        box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        z-index: 9999;
+        transform: translateX(calc(100% + 50px));
+        transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+        .t1-toast.show {
+            transform: translateX(0);
+        }
+
+    .toast-icon {
+        color: #00e676;
+        font-size: 2.2rem;
+        display: flex;
+        align-items: center;
+    }
+
+    .t1-toast.show .toast-icon {
+        /* Nhớ dùng hai dấu @@ ở đây nếu bạn bọc trong style */
+        animation: scaleIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+    }
+
+    /* CHỖ QUAN TRỌNG NHẤT ĐÂY: Dùng @@ để thoát lệnh Razor */
+    @@keyframes scaleIn {
+        0% { transform: scale(0);
+        }
+        100% { transform: scale(1);
+        }
+    }
+</style>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold mb-1 text-primary"><i class="fas fa-clipboard-check me-2"></i>Quản Lý Đơn Hàng</h2>
+        <p class="text-muted">Kiểm tra chi tiết sản phẩm khách đặt, chuyển trạng thái và chuẩn bị giao hàng.</p>
+    </div>
+</div>
+
+<div class="card p-0 overflow-hidden">
+    <div class="table-responsive">
+        <table class="table table-dark table-hover align-middle mb-0">
+            <thead style="background-color: #2b2b40;">
+                <tr>
+                    <th class="ps-4 py-3 text-muted small text-uppercase">Mã Đơn</th>
+                    <th class="py-3 text-muted small text-uppercase" style="width: 200px;">Khách / Liên hệ</th>
+                    <th class="py-3 text-muted small text-uppercase" style="width: auto; min-width: 350px;">Chi tiết sản phẩm</th>
+                    <th class="py-3 text-muted small text-uppercase text-success">Tổng Thu</th>
+                    <th class="pe-4 py-3 text-muted small text-uppercase" style="width: 250px;">Trạng Thái</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="5" class="text-center py-5 text-muted">
+                            <i class="fas fa-box-open fs-1 mb-3"></i>
+                            <p>Chưa có đơn hàng nào.</p>
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var item in Model)
+                    {
+                        var orderDetails = _context.OrderDetails.Where(od => od.OrderId == item.OrderId).ToList();
+                        decimal originalItemsTotal = orderDetails.Sum(d => d.Price * d.Quantity);
+                        decimal discountAmount = (originalItemsTotal + globalShippingFee) - item.TotalAmount;
+
+                        <tr>
+                            <td class="ps-4 py-3 fw-bold text-danger">
+                                #T1-@item.OrderId
+                                <small class="d-block text-muted mt-1 fw-normal">@item.OrderDate.ToString("dd/MM/yyyy HH:mm")</small>
+                            </td>
+
+                            <td class="py-3">
+                                <span class="fw-bold text-white d-block">@item.FullName</span>
+                                <small class="text-info"><i class="fas fa-phone-alt me-1"></i>@item.Phone</small>
+                                <div class="text-muted mt-1" style="font-size: 0.75rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;" title="@item.Address">
+                                    <i class="fas fa-map-marker-alt me-1"></i>@item.Address
+                                </div>
+                            </td>
+
+                            <td class="py-3">
+                                <div class="d-flex flex-column gap-2">
+                                    @foreach (var detail in orderDetails)
+                                    {
+                                        <div class="product-item-row">
+                                            <span class="text-danger fw-bold me-1">@detail.Quantity x</span>
+                                            <span class="text-white fw-semibold">@detail.ProductName</span>
+                                            <span class="text-muted small ms-1">(Size: @(string.IsNullOrEmpty(detail.Size) ? "Freesize" : detail.Size))</span>
+                                        </div>
+                                    }
+
+                                    @if (discountAmount > 0)
+                                    {
+                                        <div class="voucher-tag mt-1">
+                                            <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 px-2 py-1">
+                                                <i class="fas fa-ticket-alt me-1"></i> Đã giảm @discountAmount.ToString("N0")₫
+                                            </span>
+                                        </div>
+                                    }
+                                </div>
+                            </td>
+
+                            <td class="py-3 fw-bold text-success fs-5">
+                                @item.TotalAmount.ToString("N0")₫
+                            </td>
+
+                            <td class="pe-4 py-3">
+                                <form asp-controller="Admin" asp-action="UpdateOrderStatus" method="post" class="d-flex gap-2">
+                                    <input type="hidden" name="orderId" value="@item.OrderId" />
+                                    <select name="newStatus" class="form-select form-select-sm bg-dark text-white border-secondary">
+                                        <option value="Chờ xử lý" selected="@(item.Status == "Chờ xử lý")">Chờ xử lý</option>
+                                        <option value="Đã xác nhận" selected="@(item.Status == "Đã xác nhận")">Đã xác nhận</option>
+                                        <option value="Đang giao hàng" selected="@(item.Status == "Đang giao hàng")">Đang giao hàng</option>
+                                        <option value="Hoàn thành" selected="@(item.Status == "Hoàn thành")">Hoàn thành</option>
+                                        <option value="Đã hủy" selected="@(item.Status == "Đã hủy")">Đã hủy</option>
+                                    </select>
+                                    <button type="submit" class="btn btn-sm btn-outline-primary d-flex align-items-center justify-content-center" title="Lưu">
+                                        <i class="fas fa-save"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div id="t1Toast" class="t1-toast">
+    <div id="toastIconContainer" class="toast-icon">
+        <i id="toastIcon" class="fas fa-check-circle"></i>
+    </div>
+    <div class="pe-3">
+        <strong id="toastTitle" class="d-block text-white" style="font-size: 1.15rem; letter-spacing: 0.5px;">Hệ Thống T1 Shop</strong>
+        <span id="toastMessage" class="text-muted" style="font-size: 0.95rem;">Cập nhật trạng thái thành công.</span>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Dùng Html.Raw để tránh lỗi hiển thị mã HTML Entity tiếng Việt
+            var successMsg = "@Html.Raw(TempData["SuccessMsg"])";
+            var errorMsg = "@Html.Raw(TempData["ErrorMsg"])";
+
+            if (successMsg || errorMsg) {
+                var toast = document.getElementById('t1Toast');
+                var title = document.getElementById('toastTitle');
+                var msgSpan = document.getElementById('toastMessage');
+                var icon = document.getElementById('toastIcon');
+                var iconContainer = document.querySelector('.toast-icon');
+
+                if (errorMsg) {
+                    title.innerText = "Lỗi Hệ Thống";
+                    msgSpan.innerText = errorMsg;
+                    icon.className = "fas fa-times-circle";
+                    iconContainer.style.color = "#e3002b";
+                    toast.style.borderLeftColor = "#e3002b";
+                } else {
+                    title.innerText = "Thành Công";
+                    msgSpan.innerText = successMsg;
+                    icon.className = "fas fa-check-circle";
+                    iconContainer.style.color = "#00e676";
+                    toast.style.borderLeftColor = "#00e676";
+                }
+
+                // Chờ 100ms để đảm bảo hiệu ứng trượt mượt mà
+                setTimeout(() => {
+                    toast.classList.add('show');
+                }, 100);
+
+                // Tự động đóng sau 4 giây
+                setTimeout(function() {
+                    toast.classList.remove('show');
+                }, 2000);
+            }
+        });
+    </script>
+}
