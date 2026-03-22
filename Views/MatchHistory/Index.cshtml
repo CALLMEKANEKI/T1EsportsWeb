@@ -1,0 +1,325 @@
+﻿@model IEnumerable<T1EsportsWeb.Models.T1Stat.DTO.MatchHistoryDto>
+
+@{
+    ViewData["Title"] = "Lịch sử đấu";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>   
+    /* Tooltip cho tướng */
+    .champion-tooltip {
+        position: relative;
+        display: inline-block;
+    }
+
+    .champion-tooltip .tooltiptext {
+        visibility: hidden;
+        width: 100px;
+        background-color: rgba(0,0,0,0.9);
+        color: #fff;
+        text-align: center;
+        border-radius: 4px;
+        padding: 5px;
+        position: absolute;
+        z-index: 10;
+        bottom: 110%;
+        left: 50%;
+        margin-left: -50px;
+        opacity: 0;
+        transition: opacity 0.2s;
+        font-size: 0.75rem;
+    }
+
+    .champion-tooltip:hover .tooltiptext {
+        visibility: visible;
+        opacity: 1;
+    }
+
+    /* Định dạng Side */
+    .side-blue-text {
+        color: #3b82f6 !important;
+        font-weight: bold;
+    }
+
+    .side-red-text {
+        color: #ef4444 !important;
+        font-weight: bold;
+    }
+
+    .team-header-left {
+        border-left: 4px solid #3b82f6;
+        padding-left: 10px;
+    }
+
+    .team-header-right {
+        border-right: 4px solid #ef4444;
+        padding-right: 10px;
+        text-align: right;
+    }
+
+    /* Divider ở giữa */
+    .vs-divider {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        position: relative;
+    }
+
+    .vs-line {
+        width: 1px;
+        flex-grow: 1;
+        background: #444;
+    }
+
+    .vs-circle {
+        width: 35px;
+        height: 35px;
+        border: 1px solid #444;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #1a1a1a;
+        font-size: 0.7rem;
+        color: #888;
+        margin: 10px 0;
+    }
+
+    /* Icon và Image */
+    .lane-icon {
+        width: 18px;
+        height: 18px;
+        opacity: 0.8;
+        filter: brightness(1.2);
+    }
+
+    .champion-img {
+        width: 42px;
+        height: 42px;
+        border-radius: 4px;
+        border: 1px solid #333;
+    }
+
+    .ban-img {
+        width: 28px;
+        height: 28px;
+        border-radius: 2px;
+        filter: grayscale(0.4);
+        border: 1px solid #444;
+    }
+
+    .cursor-pointer {
+        cursor: pointer;
+    }
+</style>
+
+<h1 class="text-center text-danger mb-4">Lịch sử đấu</h1>
+
+<!-- Filter form -->
+<form method="get" class="row g-3 mb-4" id="filterForm">
+    <div class="col-md-3">
+        <label for="startDate" class="form-label">Từ ngày</label>
+        <input type="date" class="form-control" id="startDate" name="startDate" value="@ViewBag.StartDate" />
+    </div>
+    <div class="col-md-3">
+        <label for="endDate" class="form-label">Đến ngày</label>
+        <input type="date" class="form-control" id="endDate" name="endDate" value="@ViewBag.EndDate" />
+    </div>
+    <div class="col-md-3">
+        <label for="tournamentId" class="form-label">Giải đấu</label>
+        <select class="form-select" id="tournamentId" name="tournamentId">
+            <option value="">-- Tất cả --</option>
+            @foreach (var t in ViewBag.Tournaments)
+            {
+                <option value="@t.IdTournament" selected="@(ViewBag.SelectedTournament == t.IdTournament ? "selected" : null)">
+                    @t.Name (@t.Year)
+                </option>
+            }
+        </select>
+    </div>
+    <div class="col-md-3 d-flex align-items-end">
+        <button type="submit" class="btn btn-primary w-100"><i class="fas fa-search"></i> Lọc</button>
+    </div>
+</form>
+
+<!-- Series list -->
+<div id="seriesList">
+    @foreach (var series in Model)
+    {
+        <div class="card mb-4 bg-dark text-white border-secondary">
+            <div class="card-header d-flex justify-content-between align-items-center cursor-pointer" onclick="$('#series-@series.SeriesId').collapse('toggle')">
+                <div>
+                    <span class="text-muted small">@series.MatchDate.ToString("dd/MM/yyyy")</span>
+                    <strong class="ms-2">T1 vs @series.OpponentName</strong>
+                    <span class="badge @(series.Result == "Win" ? "bg-success" : "bg-danger") ms-2">@series.Result</span>
+                    <span class="text-muted small">@series.TournamentName</span>
+                </div>
+                <i class="fas fa-chevron-down"></i>
+            </div>
+
+            <div id="series-@series.SeriesId" class="collapse show">
+                <div class="card-body p-0">
+                    <table class="table table-dark table-hover mb-0">
+                        <thead>
+                            <tr class="text-muted small">
+                                <th>GAME</th>
+                                <th>PATCH</th>
+                                <th>SIDE</th>
+                                <th>RESULT</th>
+                                <th>VOD</th>
+                                <th>ACTION</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var game in series.Games)
+                            {
+                                <tr>
+                                    <td>Game @game.GameNumber</td>
+                                    <td>@game.Patch</td>
+                                    <td class="@(game.Side == "Blue" ? "side-blue-text" : "side-red-text")">@game.Side</td>
+                                    <td><span class="badge @(game.Result == "Win" ? "bg-success" : "bg-danger")">@game.Result</span></td>
+                                    <td><a href="@game.Link" target="_blank" class="text-danger"><i class="fab fa-youtube"></i></a></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-info" onclick="loadGameDetails(@game.GameId, '@game.Side', this)">Chi tiết</button>
+                                    </td>
+                                </tr>
+                                <tr id="game-detail-@game.GameId" style="display: none;">
+                                    <td colspan="6" class="p-3" style="background: #121212;">
+                                        <div class="row mb-4 align-items-center">
+                                            <div class="col-5">
+                                                <div id="left-bans-@game.GameId" class="d-flex gap-1"></div>
+                                            </div>
+                                            <div class="col-2 text-center text-muted small fw-bold">BANS</div>
+                                            <div class="col-5">
+                                                <div id="right-bans-@game.GameId" class="d-flex gap-1 justify-content-end"></div>
+                                            </div>
+                                        </div>
+
+                                        <div class="row">
+                                            <div class="col-5">
+                                                <div id="left-team-label-@game.GameId" class="mb-3"></div>
+                                                <div id="left-lineup-@game.GameId" class="d-flex flex-column gap-2"></div>
+                                            </div>
+                                            <div class="col-2">
+                                                <div class="vs-divider">
+                                                    <div class="vs-line"></div>
+                                                    <div class="vs-circle">VS</div>
+                                                    <div class="vs-line"></div>
+                                                </div>
+                                            </div>
+                                            <div class="col-5 text-end">
+                                                <div id="right-team-label-@game.GameId" class="mb-3"></div>
+                                                <div id="right-lineup-@game.GameId" class="d-flex flex-column gap-2 align-items-end"></div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        const laneIcons = {
+            "TOP": "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-clash/global/default/assets/images/position-selector/positions/icon-position-top.png",
+            "JUNGLE": "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-clash/global/default/assets/images/position-selector/positions/icon-position-jungle.png",
+            "MID": "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-clash/global/default/assets/images/position-selector/positions/icon-position-middle.png",
+            "ADC": "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-clash/global/default/assets/images/position-selector/positions/icon-position-bottom.png",
+            "SUPPORT": "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-clash/global/default/assets/images/position-selector/positions/icon-position-utility.png"
+        };
+
+        async function loadGameDetails(gameId, t1Side, button) {
+            const detailRow = document.getElementById('game-detail-' + gameId);
+            if (detailRow.style.display === 'table-row') {
+                detailRow.style.display = 'none';
+                button.innerText = 'Chi tiết';
+                return;
+            }
+
+            detailRow.style.display = 'table-row';
+            if (detailRow.getAttribute('data-loaded') === 'true') return;
+
+            button.innerText = '...';
+
+            try {
+                const res = await fetch(`/MatchHistory/GetGameDetails?gameId=${gameId}`);
+                const data = await res.json();
+
+                const isT1Left = (t1Side === 'Blue');
+                const roles = ["TOP", "JUNGLE", "MID", "ADC", "SUPPORT"];
+
+                // 1. Setup Labels
+                const leftLabel = document.getElementById(`left-team-label-${gameId}`);
+                const rightLabel = document.getElementById(`right-team-label-${gameId}`);
+
+                leftLabel.className = `team-header-left ${isT1Left ? 'side-blue-text' : 'side-blue-text'}`;
+                leftLabel.innerHTML = `<small>BLUE SIDE</small><br>${isT1Left ? 'T1' : 'OPPONENT'}`;
+
+                rightLabel.className = `team-header-right ${!isT1Left ? 'side-red-text' : 'side-red-text'}`;
+                rightLabel.innerHTML = `<small>RED SIDE</small><br>${!isT1Left ? 'T1' : 'OPPONENT'}`;
+
+                // 2. Render Lineups
+                const leftCont = document.getElementById(`left-lineup-${gameId}`);
+                const rightCont = document.getElementById(`right-lineup-${gameId}`);
+                leftCont.innerHTML = ''; rightCont.innerHTML = '';
+
+                const leftPlayers = isT1Left ? data.t1Lineup : data.opponentLineup;
+                const rightPlayers = isT1Left ? data.opponentLineup : data.t1Lineup;
+
+                leftPlayers.forEach((p, i) => leftCont.appendChild(renderPlayer(p, 'left', roles[i])));
+                rightPlayers.forEach((p, i) => rightCont.appendChild(renderPlayer(p, 'right', roles[i])));
+
+                // 3. Render Bans
+                const leftBans = document.getElementById(`left-bans-${gameId}`);
+                const rightBans = document.getElementById(`right-bans-${gameId}`);
+                leftBans.innerHTML = ''; rightBans.innerHTML = '';
+
+                data.bans.forEach(ban => {
+                    const img = `<div class="champion-tooltip">
+                                    <img src="${ban.championImageUrl}" class="ban-img">
+                                    <span class="tooltiptext">${ban.championName}</span>
+                                 </div>`;
+                    const isT1Ban = (ban.teamName === "T1");
+                    if (isT1Left) {
+                        isT1Ban ? leftBans.insertAdjacentHTML('beforeend', img) : rightBans.insertAdjacentHTML('beforeend', img);
+                    } else {
+                        isT1Ban ? rightBans.insertAdjacentHTML('beforeend', img) : leftBans.insertAdjacentHTML('beforeend', img);
+                    }
+                });
+
+                detailRow.setAttribute('data-loaded', 'true');
+                button.innerText = 'Ẩn';
+            } catch (e) {
+                button.innerText = 'Lỗi';
+            }
+        }
+
+        function renderPlayer(p, align, role) {
+            const isRight = align === 'right';
+            const div = document.createElement('div');
+            div.className = `d-flex align-items-center gap-2 ${isRight ? 'flex-row-reverse' : ''}`;
+            div.innerHTML = `
+                <div class="champion-tooltip">
+                    <img src="${p.championImageUrl}" class="champion-img">
+                    <span class="tooltiptext">${p.championName}</span>
+                </div>
+                <div>
+                    <div class="d-flex align-items-center gap-1 ${isRight ? 'justify-content-end' : ''}">
+                        ${!isRight ? `<img src="${laneIcons[role]}" class="lane-icon">` : ''}
+                        <span class="small fw-bold">${p.playerName}</span>
+                        ${isRight ? `<img src="${laneIcons[role]}" class="lane-icon">` : ''}
+                    </div>
+                    <div class="text-muted" style="font-size: 0.65rem;">${p.championName}</div>
+                </div>
+            `;
+            return div;
+        }
+    </script>
+}

@@ -13,35 +13,69 @@
     var teams = ViewBag.Teams as List<T1EsportsWeb.Models.T1Stat.Team> ?? new List<T1EsportsWeb.Models.T1Stat.Team>();
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h2 class="fw-bold mb-1 text-white"><i class="fas fa-user-ninja me-2 text-danger"></i>Quản Lý Tuyển Thủ</h2>
-        <p class="text-muted small mb-0">Quản lý danh sách các tuyển thủ thi đấu chuyên nghiệp.</p>
-    </div>
-    <a asp-area="Admin" asp-action="Create" class="btn btn-danger rounded-pill px-4 shadow-sm fw-bold">
-        <i class="fas fa-plus me-2"></i>Thêm tuyển thủ
-    </a>
-</div>
+<style>
+    .chart-container {
+        overflow-x: auto;
+        width: 100%;
+    }
 
-<div class="card border-0 mb-4 shadow-sm" style="background-color: #1e1e2d;">
-    <div class="card-body">
-        <form asp-area="Admin" asp-action="Index" method="get" id="filterForm" class="row g-3 align-items-end">
-            <div class="col-md-3">
-                <label class="form-label text-muted small fw-bold">TÊN TUYỂN THỦ</label>
-                <input type="text" name="searchName" class="form-control border-0 bg-dark text-white"
-                       placeholder="Tìm tên..." value="@searchName" onchange="submitFilter()" />
-            </div>
+        .chart-container canvas {
+            min-width: 800px; /* đủ rộng để hiển thị nhiều cột */
+            height: 400px;
+        }
+</style>
 
-            <div class="col-md-2">
-                <label class="form-label text-muted small fw-bold">VỊ TRÍ</label>
-                <select name="position" class="form-select border-0 bg-dark text-white" onchange="submitFilter()">
-                    <option value="">-- Tất cả --</option>
-                    <option value="Top" selected="@(selectedPosition == "Top")">Đường trên (Top)</option>
-                    <option value="Jungle" selected="@(selectedPosition == "Jungle")">Đi rừng (Jungle)</option>
-                    <option value="Mid" selected="@(selectedPosition == "Mid")">Đường giữa (Mid)</option>
-                    <option value="ADC" selected="@(selectedPosition == "ADC")">Xạ thủ (ADC)</option>
-                    <option value="Support" selected="@(selectedPosition == "Support")">Hỗ trợ (Support)</option>
-                </select>
+<h1>Quản lý tuyển thủ</h1>
+
+<p>
+    <a asp-area="Admin" asp-action="Create" class="btn btn-primary"><i class="fas fa-plus"></i> Thêm mới</a>
+</p>
+
+<!-- Form lọc -->
+<form asp-area="Admin" asp-action="Index" method="get" id="filterForm" class="mb-3">
+    <div class="row g-2 align-items-end">
+        <div class="col-md-3">
+            <label class="form-label">Tên ingame</label>
+            <input type="text" name="searchIngame" class="form-control" placeholder="Nhập tên..." value="@searchIngame" />
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Ảnh</label>
+            <select name="hasImage" class="form-control" onchange="submitFilter()">
+                <option value="">-- Lọc theo ảnh --</option>
+                <option value="true" selected="@(hasImage == true)">Có ảnh</option>
+                <option value="false" selected="@(hasImage == false)">Không ảnh</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Vị trí</label>
+            <select name="position" class="form-control" onchange="submitFilter()">
+                <option value="">-- Tất cả --</option>
+                <option value="Top" selected="@(selectedPosition == "Top")">Top</option>
+                <option value="Jungle" selected="@(selectedPosition == "Jungle")">Jungle</option>
+                <option value="Mid" selected="@(selectedPosition == "Mid")">Mid</option>
+                <option value="ADC" selected="@(selectedPosition == "ADC")">ADC</option>
+                <option value="Support" selected="@(selectedPosition == "Support")">Support</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Quốc gia</label>
+            <input type="text" name="country" class="form-control" placeholder="VD: KR, CN..." value="@selectedCountry" />
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Đội tuyển</label>
+            <select name="teamId" class="form-control" onchange="submitFilter()">
+                <option value="">-- Tất cả đội --</option>
+                @foreach (var team in teams)
+                {
+                    <option value="@team.IdTeam" selected="@(selectedTeamId == team.IdTeam)">@team.Name</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-1">
+            <label class="form-label">&nbsp;</label>
+            <div>
+                <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i> Tìm</button>
+                <a asp-area="Admin" asp-action="Index" class="btn btn-secondary">Xóa lọc</a>
             </div>
 
             <div class="col-md-2">

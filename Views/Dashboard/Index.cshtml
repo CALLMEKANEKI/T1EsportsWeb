@@ -1,0 +1,694 @@
+﻿@{
+    ViewData["Title"] = "Dashboard T1";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    .chart-container {
+        overflow-x: auto;
+        width: 100%;
+    }
+
+        .chart-container canvas {
+            min-width: 800px;
+            height: 400px;
+        }
+</style>
+
+<h1 class="text-center text-danger">T1 Performance Dashboard</h1>
+
+<!-- Filter panel -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <label>Tournament</label>
+        <select id="tournamentFilter" class="form-control">
+            <option value="">All</option>
+            @foreach (var t in ViewBag.Tournaments)
+            {
+                <option value="@t.IdTournament">@t.Name (@t.Year)</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-3">
+        <label>Opponent</label>
+        <select id="opponentFilter" class="form-control">
+            <option value="">All</option>
+            @foreach (var o in ViewBag.Opponents)
+            {
+                <option value="@o.IdTeam">@o.Name</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-3">
+        <label>Start Date</label>
+        <input type="date" id="startDate" class="form-control" />
+    </div>
+    <div class="col-md-3">
+        <label>End Date</label>
+        <input type="date" id="endDate" class="form-control" />
+    </div>
+</div>
+
+<!-- Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-white bg-dark">
+            <div class="card-body">
+                <h5 class="card-title">Domestic Series</h5>
+                <p class="card-text" id="domesticSeries">-</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-dark">
+            <div class="card-body">
+                <h5 class="card-title">International Series</h5>
+                <p class="card-text" id="internationalSeries">-</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-dark">
+            <div class="card-body">
+                <h5 class="card-title">Total Games</h5>
+                <p class="card-text" id="totalGames">-</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-dark">
+            <div class="card-body">
+                <h5 class="card-title">BO3/BO5/BO1</h5>
+                <p class="card-text" id="boStats">-</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chars -->
+<div class="row mt-4">
+    <h4>Total series by tournament</h4>
+    <div class="chart-container">
+        <canvas id="seriesChart"></canvas>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <h4>Total games by tournament</h4>
+    <div class="chart-container">
+        <canvas id="gamesChart"></canvas>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6 offset-md-3">
+        <h5 class="text-center">Blue vs Red Side Performance</h5>
+        <canvas id="sideDonutChart" width="400" height="400" style="display: block; margin: auto;"></canvas>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <h4>Player Winrate by Role</h4>
+        <div>
+            <select id="roleFilter" class="form-control w-auto d-inline-block">
+                <option value="">All Roles</option>
+                <option value="Top">Top</option>
+                <option value="Jungle">Jungle</option>
+                <option value="Mid">Mid</option>
+                <option value="ADC">ADC</option>
+                <option value="Support">Support</option>
+            </select>
+        </div>
+        <div class="chart-container">
+            <canvas id="playerChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <h4>Win Rate by Patch</h4>
+        <div class="chart-container">
+            <canvas id="winrateByPatchChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <h4>Head-to-Head vs Opponents</h4>
+        <div class="chart-scroll-container" style="overflow-x: auto; width: 100%;">
+            <canvas id="headToHeadChart" style="min-width: 1000px; height: 400px;"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Champion Stats Section -->
+<div class="row mt-5">
+    <div class="col-md-12">
+        <h3>Champion Stats</h3>
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label>Tournament</label>
+                <select id="champTournamentFilter" class="form-control">
+                    <option value="">All</option>
+                    @foreach (var t in ViewBag.Tournaments)
+                    {
+                        <option value="@t.IdTournament">@t.Name (@t.Year)</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label>Opponent</label>
+                <select id="champOpponentFilter" class="form-control">
+                    <option value="">All</option>
+                    @foreach (var o in ViewBag.Opponents)
+                    {
+                        <option value="@o.IdTeam">@o.Name</option>
+                    }
+                </select>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6">
+                <h4>T1 Champions</h4>
+                <div id="t1Loading" class="text-center" style="display: none;">
+                    <i class="fas fa-spinner fa-pulse"></i> Loading...
+                </div>
+                <div style="overflow-x: auto;">
+                    <table class="table table-dark table-hover" id="t1ChampionTable">
+                        <thead>
+                            <tr>
+                                <th>Champion</th>
+                                <th>Picks</th>
+                                <th>Bans</th>
+                                <th>Wins</th>
+                                <th>Win Rate</th>
+                        </thead>
+                        <tbody>
+                        <td colspan="5" class="text-center">-- Chưa có dữ liệu --</td>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <h4>Opponent Champions</h4>
+                <div id="oppLoading" class="text-center" style="display: none;">
+                    <i class="fas fa-spinner fa-pulse"></i> Loading...
+                </div>
+                <div style="overflow-x: auto;">
+                    <table class="table table-dark table-hover" id="opponentChampionTable">
+                        <thead>
+                            <tr>
+                                <th>Champion</th>
+                                <th>Picks</th>
+                                <th>Bans</th>
+                                <th>Wins</th>
+                                <th>Win Rate</th>
+                        </thead>
+                        <tbody>
+                        <td colspan="5" class="text-center">-- Chưa có dữ liệu --</td>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Global chart instances
+        let seriesChart, gamesChart, winrateChart, sideChart, playerChart, headToHeadChart;
+
+        // Get current filter values
+        function getFilterParams() {
+            return {
+                tournamentId: document.getElementById('tournamentFilter').value || null,
+                opponentId: document.getElementById('opponentFilter').value || null,
+                startDate: document.getElementById('startDate').value || null,
+                endDate: document.getElementById('endDate').value || null
+            };
+        }
+
+        // Overview (no filter)
+        async function loadSideChart() {
+            try {
+                const res = await fetch('/Dashboard/Overview');
+                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+                const data = await res.json();
+                console.log('Overview data:', data);
+
+                document.getElementById('domesticSeries').innerText = data.domesticSeriesCount;
+                document.getElementById('internationalSeries').innerText = data.internationalSeriesCount;
+                document.getElementById('totalGames').innerText = data.totalGames;
+                document.getElementById('boStats').innerText = `BO3: ${data.bo3Count} / BO5: ${data.bo5Count} / BO1: ${data.bo1Count}`;
+
+                const blueWins = data.blueWins;
+                const blueLosses = data.blueGames - blueWins;
+                const redWins = data.redWins;
+                const redLosses = data.redGames - redWins;
+
+                const canvas = document.getElementById('sideDonutChart');
+                if (!canvas) {
+                    console.error('Canvas sideDonutChart not found');
+                    return;
+                }
+                const ctx = canvas.getContext('2d');
+                if (window.sideDonutChart && typeof window.sideDonutChart.destroy === 'function') {
+                    window.sideDonutChart.destroy();
+                }
+                window.sideDonutChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Blue Wins', 'Blue Losses', 'Red Wins', 'Red Losses'],
+                        datasets: [{
+                            data: [blueWins, blueLosses, redWins, redLosses],
+                            backgroundColor: ['#0d6efd', '#6c8ebf', '#dc3545', '#e68a8a'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            tooltip: {
+                                callbacks: {
+                                    label: (ctx) => {
+                                        const label = ctx.label || '';
+                                        const value = ctx.raw;
+                                        const total = ctx.dataset.data.reduce((a,b) => a + b, 0);
+                                        const percent = total === 0 ? 0 : (value / total * 100).toFixed(1);
+                                        return `${label}: ${value} (${percent}%)`;
+                                    }
+                                }
+                            },
+                            legend: { position: 'bottom' }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Error loading side chart:', error);
+            }
+        }
+
+        async function loadSeriesByTournament() {
+            const params = getFilterParams();
+            const query = new URLSearchParams(params).toString();
+            const url = `/Dashboard/SeriesByTournament?${query}`;
+            const res = await fetch(url);
+            const data = await res.json();
+
+            const labels = data.map(d => `${d.tournamentName} (${d.year})`);
+            const krWon = data.map(d => d.krWon);
+            const krLost = data.map(d => d.krLost);
+            const intWon = data.map(d => d.intWon);
+            const intLost = data.map(d => d.intLost);
+            const winRates = data.map(d => d.winRate);
+
+            const ctx = document.getElementById('seriesChart').getContext('2d');
+            if (seriesChart) seriesChart.destroy();
+
+            seriesChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'KR Won',
+                            data: krWon,
+                            backgroundColor: '#660000',
+                            stack: 'series'
+                        },
+                        {
+                            label: 'KR Lost',
+                            data: krLost,
+                            backgroundColor: '#FF0000',
+                            stack: 'series'
+                        },
+                        {
+                            label: 'INT Won',
+                            data: intWon,
+                            backgroundColor: '#000077',
+                            stack: 'series'
+                        },
+                        {
+                            label: 'INT Lost',
+                            data: intLost,
+                            backgroundColor: '#0000FF',
+                            stack: 'series'
+                        },
+                        {
+                            label: 'Win Rate (%)',
+                            data: winRates,
+                            type: 'line',
+                            borderColor: '#22c55e',
+                            backgroundColor: 'rgba(34,197,94,0.1)',
+                            fill: false,
+                            tension: 0.4,
+                            yAxisID: 'y1',
+                            pointRadius: 3,
+                            pointBackgroundColor: '#22c55e'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'Number of Series' }
+                        },
+                        y1: {
+                            position: 'right',
+                            beginAtZero: true,
+                            max: 100,
+                            title: { display: true, text: 'Win Rate (%)' },
+                            grid: { drawOnChartArea: false }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                afterBody: (context) => {
+                                    const idx = context[0].dataIndex;
+                                    return `Win Rate: ${winRates[idx].toFixed(1)}%`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        async function loadGamesByTournament() {
+            try {
+                const params = getFilterParams();
+                const query = new URLSearchParams(params).toString();
+                const url = `/Dashboard/GamesByTournament?${query}`;
+                const res = await fetch(url);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+                console.log('Games data sample:', data[0]);
+
+                if (!data || data.length === 0) return;
+
+                const labels = data.map(d => `${d.tournamentName} (${d.year})`);
+                const winRates = data.map(d => d.winRate);
+
+                const krWon = data.map(d => d.gamesKRWon);
+                const krLost = data.map(d => d.gamesKRLost);
+                const intWon = data.map(d => d.gamesINTWon);
+                const intLost = data.map(d => d.gamesINTLost);
+
+                const ctx = document.getElementById('gamesChart').getContext('2d');
+                if (gamesChart) gamesChart.destroy();
+
+                gamesChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'KR Won',
+                                data: krWon,
+                                backgroundColor: '#660000',
+                                stack: 'total',
+                                order: 1
+                            },
+                            {
+                                label: 'KR Lost',
+                                data: krLost,
+                                backgroundColor: '#FF0000',
+                                stack: 'total',
+                                order: 2
+                            },
+                            {
+                                label: 'INT Won',
+                                data: intWon,
+                                backgroundColor: '#000077',
+                                stack: 'total',
+                                order: 3
+                            },
+                            {
+                                label: 'INT Lost',
+                                data: intLost,
+                                backgroundColor: '#0000FF',
+                                stack: 'total',
+                                order: 4
+                            },
+                            {
+                                label: 'Win Rate (%)',
+                                data: winRates,
+                                type: 'line',
+                                borderColor: '#22c55e',
+                                backgroundColor: 'rgba(34,197,94,0.1)',
+                                fill: false,
+                                tension: 0.4,
+                                yAxisID: 'y1',
+                                pointRadius: 3,
+                                pointBackgroundColor: '#22c55e',
+                                order: 0
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                stacked: true,
+                                title: { display: true, text: 'Number of Games' }
+                            },
+                            y1: {
+                                position: 'right',
+                                beginAtZero: true,
+                                max: 100,
+                                title: { display: true, text: 'Win Rate (%)' },
+                                grid: { drawOnChartArea: false }
+                            }
+                        },
+                        plugins: {
+                            tooltip: {
+                                callbacks: {
+                                    afterBody: (ctx) => {
+                                        const idx = ctx[0].dataIndex;
+                                        return `Win Rate: ${winRates[idx].toFixed(1)}%`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+                console.log('Games chart created successfully');
+            } catch (error) {
+                console.error('Error loading games chart:', error);
+            }
+        }
+
+        async function loadWinrateByPatch() {
+            const params = getFilterParams();
+            const query = new URLSearchParams(params).toString();
+            const url = `/Dashboard/WinrateByPatch?${query}`;
+            const res = await fetch(url);
+            const data = await res.json();
+            const patches = data.map(d => d.patch);
+            const winrates = data.map(d => d.winRate);
+            const ctx = document.getElementById('winrateByPatchChart').getContext('2d');
+            if (winrateChart) winrateChart.destroy();
+            winrateChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: patches,
+                    datasets: [{ label: 'Win Rate (%)', data: winrates, borderColor: '#3b82f6', fill: false }]
+                },
+                options: { responsive: true, scales: { y: { beginAtZero: true, max: 100 } } }
+            });
+        }
+        async function loadPlayerWinrate() {
+            try {
+                const role = document.getElementById('roleFilter').value;
+                const params = getFilterParams();
+                params.role = role || null;
+                const query = new URLSearchParams(params).toString();
+                const url = `/Dashboard/PlayerWinrate?${query}`;
+                const res = await fetch(url);
+                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+                const data = await res.json();
+                console.log('Player data:', data);
+
+                if (!Array.isArray(data)) {
+                    console.error('Invalid player data:', data);
+                    return;
+                }
+
+                const players = data.map(p => p.playerName);
+                const winrates = data.map(p => p.winRate);
+                console.table(data);
+                const ctx = document.getElementById('playerChart').getContext('2d');
+                if (playerChart) playerChart.destroy();
+                playerChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: players,
+                        datasets: [{ label: 'Win Rate (%)', data: winrates, backgroundColor: '#f97316' }]
+                    },
+                    options: { responsive: true, scales: { y: { beginAtZero: true, max: 100 } } }
+                });
+            } catch (error) {
+                console.error('Error loading player winrate:', error);
+            }
+        }
+
+        async function loadHeadToHead() {
+            const params = getFilterParams();
+            const query = new URLSearchParams(params).toString();
+            const url = `/Dashboard/HeadToHead?${query}`;
+            const res = await fetch(url);
+            const data = await res.json();
+            const opponents = data.map(d => d.opponentName);
+            const domestic = data.map(d => d.domesticWinRate);
+            const international = data.map(d => d.internationalWinRate);
+            const ctx = document.getElementById('headToHeadChart').getContext('2d');
+            if (headToHeadChart) headToHeadChart.destroy();
+            headToHeadChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: opponents,
+                    datasets: [
+                        {
+                            label: 'Domestic Win Rate (%)',
+                            data: domestic,
+                            backgroundColor: '#3b82f6',
+                            barPercentage: 0.8,
+                            categoryPercentage: 0.8
+                        },
+                        {
+                            label: 'International Win Rate (%)',
+                            data: international,
+                            backgroundColor: '#ef4444',
+                            barPercentage: 0.8,
+                            categoryPercentage: 0.8
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            title: { display: true, text: 'Win Rate (%)' }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => {
+                                    const label = ctx.dataset.label || '';
+                                    const value = ctx.raw;
+                                    return `${label}: ${value.toFixed(1)}%`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+                async function loadChampionStats() {
+            // Không lấy ngày nữa
+            const tournamentId = document.getElementById('champTournamentFilter')?.value || '';
+            const opponentId = document.getElementById('champOpponentFilter')?.value || '';
+
+            // Hiển thị loading
+            const t1Loading = document.getElementById('t1Loading');
+            const oppLoading = document.getElementById('oppLoading');
+            if (t1Loading) t1Loading.style.display = 'block';
+            if (oppLoading) oppLoading.style.display = 'block';
+
+            try {
+                // T1 stats
+                let t1Url = `/Dashboard/ChampionStats?type=T1&tournamentId=${tournamentId}`;
+                if (opponentId) t1Url += `&opponentId=${opponentId}`;
+                const t1Res = await fetch(t1Url);
+                if (!t1Res.ok) throw new Error(`T1 stats HTTP ${t1Res.status}`);
+                const t1Data = await t1Res.json();
+                renderChampionTable(t1Data, '#t1ChampionTable');
+
+                // Opponent stats
+                if (opponentId) {
+                    const oppUrl = `/Dashboard/ChampionStats?type=Opponent&tournamentId=${tournamentId}&opponentId=${opponentId}`;
+                    const oppRes = await fetch(oppUrl);
+                    if (!oppRes.ok) throw new Error(`Opponent stats HTTP ${oppRes.status}`);
+                    const oppData = await oppRes.json();
+                    renderChampionTable(oppData, '#opponentChampionTable');
+                } else {
+                    const oppTbody = document.querySelector('#opponentChampionTable tbody');
+                    if (oppTbody) oppTbody.innerHTML = '<td colspan="5" class="text-center">Chọn đối thủ để xem thống kê';
+                }
+            } catch (error) {
+                console.error('Error loading champion stats:', error);
+                const t1Tbody = document.querySelector('T1ChampionTable tbody');
+                if (t1Tbody) t1Tbody.innerHTML = '<td colspan="5" class="text-center text-danger">Lỗi tải dữ liệu';
+                const oppTbody = document.querySelector('opponentChampionTable tbody');
+                if (oppTbody) oppTbody.innerHTML = '<td colspan="5" class="text-center text-danger">Lỗi tải dữ liệu';
+            } finally {
+                if (t1Loading) t1Loading.style.display = 'none';
+                if (oppLoading) oppLoading.style.display = 'none';
+            }
+        }
+
+        function renderChampionTable(data, tableId) {
+            const tbody = document.querySelector(`${tableId} tbody`);
+            if (!tbody) return;
+            if (!data || data.length === 0) {
+                tbody.innerHTML = '<td colspan="5" class="text-center">Không có dữ liệu</td>';
+                return;
+            }
+            tbody.innerHTML = '';
+            data.forEach(c => {
+                const row = tbody.insertRow();
+                row.insertCell(0).innerText = c.championName;
+                row.insertCell(1).innerText = c.picks;
+                row.insertCell(2).innerText = c.bans;
+                row.insertCell(3).innerText = c.wins;
+                row.insertCell(4).innerText = c.winRate.toFixed(1) + '%';
+            });
+        }
+
+        function refreshAllCharts() {
+            loadSeriesByTournament().catch(e => console.error('Series error:', e));
+            loadGamesByTournament().catch(e => console.error('Games error:', e));
+            loadWinrateByPatch().catch(e => console.error('WinrateByPatch error:', e));
+            loadPlayerWinrate().catch(e => console.error('PlayerWinrate error:', e));
+            loadHeadToHead().catch(e => console.error('HeadToHead error:', e));
+            loadChampionStats().catch(e => console.error('ChampionStats error:', e));
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Gắn sự kiện cho các filter chính
+            document.getElementById('tournamentFilter').addEventListener('change', refreshAllCharts);
+            document.getElementById('opponentFilter').addEventListener('change', refreshAllCharts);
+            document.getElementById('startDate').addEventListener('change', refreshAllCharts);
+            document.getElementById('endDate').addEventListener('change', refreshAllCharts);
+            document.getElementById('roleFilter').addEventListener('change', loadPlayerWinrate);
+
+            // Gắn sự kiện cho champion stats
+            const champTournament = document.getElementById('champTournamentFilter');
+            const champOpponent = document.getElementById('champOpponentFilter');
+            if (champTournament) champTournament.addEventListener('change', loadChampionStats);
+            if (champOpponent) champOpponent.addEventListener('change', loadChampionStats);
+
+            // Load dữ liệu ban đầu
+            loadSideChart();
+            refreshAllCharts();
+            loadChampionStats();
+        });
+    </script>
+}
