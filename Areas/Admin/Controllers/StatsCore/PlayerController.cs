@@ -158,11 +158,14 @@ namespace T1EsportsWeb.Areas.Admin.Controllers.StatsCore
         {
             if (id == null) return NotFound();
             var player = await _context.Players
-                        .Include(p => p.Team)
-                        .FirstOrDefaultAsync(p => p.IdPlayer == id);
+                .Include(p => p.Team)
+                .FirstOrDefaultAsync(p => p.IdPlayer == id);
             if (player == null) return NotFound();
+
+            ViewBag.Teams = await _context.Teams.OrderBy(t => t.Name).ToListAsync();
             return View(player);
         }
+        
 
         // POST: Admin/Players/Edit/5
         [HttpPost]

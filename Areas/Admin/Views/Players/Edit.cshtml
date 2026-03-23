@@ -53,6 +53,21 @@
                 </div>
             </div>
 
+            <!-- Thêm dropdown chọn đội -->
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label asp-for="TeamId" class="form-label fw-bold text-muted">Đội Tuyển</label>
+                    <select asp-for="TeamId" class="form-select bg-dark border-secondary text-white">
+                        <option value="">-- Chọn đội --</option>
+                        @foreach (var team in ViewBag.Teams)
+                        {
+                            <option value="@team.IdTeam">@team.Name</option>
+                        }
+                    </select>
+                    <span asp-validation-for="TeamId" class="text-danger"></span>
+                </div>
+            </div>
+
             <div class="row mb-4">
                 <div class="col-md-6">
                     <label class="form-label fw-bold text-muted">Thay Đổi Ảnh</label>
