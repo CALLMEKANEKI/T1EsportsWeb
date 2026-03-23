@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using T1EsportsWeb.Models;
 
@@ -11,9 +12,11 @@ using T1EsportsWeb.Models;
 namespace T1EsportsWeb.Migrations
 {
     [DbContext(typeof(T1DbContext))]
-    partial class T1DbContextModelSnapshot : ModelSnapshot
+    [Migration("20260323040741_AddPickEm")]
+    partial class AddPickEm
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -157,39 +160,6 @@ namespace T1EsportsWeb.Migrations
                     b.HasKey("OrderDetailId");
 
                     b.ToTable("OrderDetails");
-                });
-
-            modelBuilder.Entity("T1EsportsWeb.Models.PickEmMatch", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("ActualScore")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("IsLocked")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsRewarded")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTime>("MatchTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("OpponentName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("TournamentName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("PickEmMatches");
                 });
 
             modelBuilder.Entity("T1EsportsWeb.Models.PickEmPrediction", b =>

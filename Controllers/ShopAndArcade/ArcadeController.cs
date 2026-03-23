@@ -1,18 +1,25 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
 using T1EsportsWeb.Models;
+using T1EsportsWeb.Models.T1Stat; // Khai báo DB Thống kê
 using System.Linq;
 using System;
+using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace T1EsportsWeb.Controllers.ShopAndArcade
 {
     public class ArcadeController : Controller
     {
         private readonly T1DbContext _context;
+        private readonly T1StatDbContext _statContext; // 🎯 Khai báo thêm DB Thống kê
 
-        public ArcadeController(T1DbContext context)
+        // 🎯 Tiêm cả 2 Database vào Controller
+        public ArcadeController(T1DbContext context, T1StatDbContext statContext)
         {
             _context = context;
+            _statContext = statContext;
         }
 
         // Sảnh chờ Arcade
@@ -22,22 +29,79 @@ namespace T1EsportsWeb.Controllers.ShopAndArcade
         }
 
         // 1. Game T1 Trivia
+        [Authorize]
         public IActionResult Quizgame()
         {
             return View();
         }
 
         // 2. Game Flappy ATI
+        [Authorize]
         public IActionResult FlappyATI()
         {
             return View();
         }
+        // ==========================================
+        // 3. GAME ORACLE PICK'EM (DỰ ĐOÁN TỈ SỐ)
+        // ==========================================
 
-        // 3. Game Oracle Pick'em
-        public IActionResult PickEm()
+        [Authorize]
+        public async Task<IActionResult> PickEm()
         {
-            return View();
+            // 🎯 Lấy các trận dự đoán từ DB Arcade (Chỉ lấy các trận chưa đóng sổ)
+            var upcomingMatches = await _context.PickEmMatches
+                .Where(m => !m.IsLocked)
+                .OrderBy(m => m.MatchTime) // Sắp xếp trận nào đá trước thì lên đầu
+                .ToListAsync();
+
+            // Lấy lịch sử dự đoán của User
+            var userPredictions = await _context.PickEmPredictions
+                .Where(p => p.Username == User.Identity.Name)
+                .ToListAsync();
+
+            ViewBag.UserPredictions = userPredictions;
+
+            return View(upcomingMatches); // Trả về list PickEmMatch thay vì Series
         }
+        
+        [HttpPost]
+        [Authorize]
+        public IActionResult SubmitPickEm([FromBody] SubmitPickEmRequest request)
+        {
+            if (request == null || request.Predictions == null || !request.Predictions.Any())
+            {
+                return Json(new { success = false, message = "Dữ liệu không hợp lệ!" });
+            }
+
+            var username = User.Identity.Name;
+
+            foreach (var pick in request.Predictions)
+            {
+                // Kiểm tra xem trận này user đã dự đoán chưa
+                var existing = _context.PickEmPredictions.FirstOrDefault(p => p.SeriesId == pick.SeriesId && p.Username == username);
+
+                if (existing != null)
+                {
+                    // Nếu đã dự đoán rồi thì cập nhật lại tỉ số mới
+                    existing.PredictedScore = pick.Score;
+                    existing.CreatedAt = DateTime.Now;
+                }
+                else
+                {
+                    // Chưa dự đoán thì thêm mới vào DB
+                    _context.PickEmPredictions.Add(new PickEmPrediction
+                    {
+                        Username = username,
+                        SeriesId = pick.SeriesId,
+                        PredictedScore = pick.Score
+                    });
+                }
+            }
+
+            _context.SaveChanges();
+            return Json(new { success = true, message = "Đã chốt dự đoán thành công! Chúc bạn may mắn lụm T1 Points nhé!" });
+        }
+
 
         // ==========================================
         // KHU VỰC XỬ LÝ TRUNG TÂM ĐỔI THƯỞNG
@@ -149,5 +213,19 @@ namespace T1EsportsWeb.Controllers.ShopAndArcade
             }
             return Json(new { success = false });
         }
+    }
+
+    // ==========================================
+    // CLASS PHỤ TRỢ NHẬN DỮ LIỆU TỪ JS
+    // ==========================================
+    public class SubmitPickEmRequest
+    {
+        public List<PickEmItem> Predictions { get; set; }
+    }
+
+    public class PickEmItem
+    {
+        public int SeriesId { get; set; }
+        public string Score { get; set; }
     }
 }

@@ -134,7 +134,7 @@
                                     <li><a class="dropdown-item py-2 d-flex justify-content-between align-items-center" asp-controller="Order" asp-action="Index"><span><i class="fas fa-box-open text-warning me-2"></i>Đơn Hàng</span><span class="badge bg-warning text-dark rounded-pill order-badge-count" style="@(totalOrderCount > 0 ? "" : "display:none")">@totalOrderCount</span></a></li>
                                     @if (User.IsInRole("Admin") || User.IsInRole("Staff"))
                                     {
-                                        <li><a class="dropdown-item text-danger fw-bold py-2" asp-area="Admin" asp-controller="Admin" asp-action="Index"><i class="fas fa-cogs me-2"></i>Quản Trị</a></li>
+                                        <li><a class="dropdown-item text-danger fw-bold py-2" asp-area="Admin" asp-controller="Admin" asp-action="Index"><i class="fas fa-cogs me-2"></i>Hệ thống</a></li>
                                     }
                                     <li><a class="dropdown-item py-2" asp-controller="Account" asp-action="ChangePassword"><i class="fas fa-key text-info me-2"></i>Đổi Mật Khẩu</a></li>
                                     <li><a class="dropdown-item py-2" asp-controller="Account" asp-action="Logout"><i class="fas fa-sign-out-alt text-secondary me-2"></i>Đăng Xuất</a></li>

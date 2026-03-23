@@ -9,7 +9,7 @@
 
 <div class="mb-4 d-flex justify-content-between align-items-center">
     <div>
-        <h2 class="fw-bold mb-1 text-white"><i class="fas fa-tachometer-alt me-2 text-danger"></i>Dashboard</h2>
+        <h2 class="fw-bold mb-1 text-white"><i class="fas fa-tachometer-alt me-2" style="color: #00d2ff;"></i>Dashboard</h2>
         <p class="text-muted">Trung tâm điều khiển và giám sát toàn bộ hệ thống T1 Shop.</p>
     </div>
     <div>
@@ -216,7 +216,7 @@
                                         <div class="fw-bold text-white text-truncate" style="max-width: 250px;">@p.ProductName</div>
                                     </div>
                                 </td>
-                                <td class="py-3 text-warning fw-bold">@p.Price.ToString("N0")₫</td>
+                                <td class="py-3 text-success fw-bold">@p.Price.ToString("N0")₫</td>
                                 <td class="py-3">
                                     @if (p.StockQuantity > 10)
                                     {

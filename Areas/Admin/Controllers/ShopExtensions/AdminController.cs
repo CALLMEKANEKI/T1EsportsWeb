@@ -257,9 +257,44 @@ namespace T1EsportsWeb.Areas.Admin.Controllers.ShopExtensions
         [HttpPost]
         public IActionResult AddVoucher(Voucher voucher)
         {
-            _context.Vouchers.Add(voucher);
-            _context.SaveChanges();
-            TempData["SuccessMsg"] = "Đã thêm Voucher mới thành công!";
+            try
+            {
+                // 1. TỰ ĐỘNG SINH MÃ NẾU BOSS KHÔNG NHẬP (Định dạng: T1-XXXXXX)
+                if (string.IsNullOrWhiteSpace(voucher.EventCode))
+                {
+                    var random = new Random();
+                    const string letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+                    const string numbers = "0123456789";
+                    const string allChars = letters + numbers;
+                    var codeChars = new char[6];
+                    codeChars[0] = letters[random.Next(letters.Length)];
+                    codeChars[1] = numbers[random.Next(numbers.Length)];
+                    for (int i = 2; i < 6; i++)
+                    {
+                        codeChars[i] = allChars[random.Next(allChars.Length)];
+                    }
+                    codeChars = codeChars.OrderBy(x => random.Next()).ToArray();
+                    voucher.EventCode = "T1-" + new string(codeChars);
+                }
+                else
+                {
+                    voucher.EventCode = voucher.EventCode.Trim().ToUpper();
+                }
+                if (string.IsNullOrWhiteSpace(voucher.Title))
+                {
+                    voucher.Title = "Thẻ Quà Tặng T1 Shop";
+                }
+                //Lưu vào Database
+                _context.Vouchers.Add(voucher);
+                _context.SaveChanges();
+                // Gửi thông báo xịn xò về lại View
+                TempData["SuccessMsg"] = $"Tạo thẻ quà thành công! Mã: {voucher.EventCode}";
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMsg"] = "Lỗi khi tạo thẻ quà: " + ex.Message;
+            }
+
             return RedirectToAction("VoucherList");
         }
 
@@ -309,60 +344,86 @@ namespace T1EsportsWeb.Areas.Admin.Controllers.ShopExtensions
             return View();
         }
 
-        // 3. API Gửi tin nhắn (Cho phép cả Khách và Admin dùng chung)
-        //[AllowAnonymous]
-        //[HttpPost]
-        //public IActionResult SendMessage(string messageContent, string receiver)
-        //{
-        //    if (string.IsNullOrWhiteSpace(messageContent)) return BadRequest();
+        // ==========================================
+        // QUẢN LÝ DỰ ĐOÁN PICK'EM
+        // ==========================================
+        public IActionResult ManagePickEm()
+        {
+            var matches = _context.PickEmMatches.OrderByDescending(m => m.MatchTime).ToList();
+            return View(matches);
+        }
 
-        //    // Xác định ai là người gửi thật sự
-        //    string senderName = "Khách ẩn danh";
-        //    if (User.Identity.IsAuthenticated)
-        //    {
-        //        senderName = User.Identity.Name;
-        //    }
+        [HttpPost]
+        public IActionResult RewardPickEmMatch(int matchId, string realScore)
+        {
+            var match = _context.PickEmMatches.Find(matchId);
+            if (match == null) return Json(new { success = false, message = "Không tìm thấy trận đấu!" });
+            if (match.IsRewarded) return Json(new { success = false, message = "Đã phát thưởng rồi!" });
 
-        //    // Nếu Admin đang gửi (đang ở trang ChatRoom), senderName sẽ là Admin
-        //    if (User.IsInRole("Admin") || User.IsInRole("Staff"))
-        //    {
-        //        // Nếu receiver KHÔNG PHẢI Admin, nghĩa là Admin đang trả lời khách
-        //        if (receiver != "Admin") senderName = "Admin";
-        //    }
+            match.ActualScore = realScore;
+            match.IsLocked = true;
+            match.IsRewarded = true;
 
-        //    var msg = new ChatMessage
-        //    {
-        //        SenderUsername = senderName,
-        //        ReceiverUsername = receiver,
-        //        MessageContent = messageContent,
-        //        Timestamp = DateTime.Now
-        //    };
-        //    _context.ChatMessages.Add(msg);
-        //    _context.SaveChanges();
-        //    return Ok();
-        //}
+            var winningPicks = _context.PickEmPredictions
+                .Where(p => p.SeriesId == matchId && p.PredictedScore == realScore && !p.IsProcessed).ToList();
 
-        //// 4. API Lấy tin nhắn 
-        //[AllowAnonymous]
-        //[HttpGet]
-        //public IActionResult GetMessages(string withUser)
-        //{
-        //    string currentUser = User.Identity.IsAuthenticated ? User.Identity.Name : "Khách ẩn danh";
+            int countWinners = 0;
+            foreach (var pick in winningPicks)
+            {
+                var user = _context.Users.FirstOrDefault(u => u.Username == pick.Username);
+                if (user != null)
+                {
+                    user.T1Points += 100; // Cộng 100 Points
+                    pick.IsProcessed = true;
+                    countWinners++;
+                }
+            }
 
-        //    // Nếu là Admin đang xem phòng chat của 1 khách cụ thể
-        //    if ((User.IsInRole("Admin") || User.IsInRole("Staff")) && withUser != "Admin")
-        //    {
-        //        currentUser = "Admin";
-        //    }
+            _context.SaveChanges();
+            return Json(new { success = true, message = $"Đã chốt tỉ số {realScore} và phát 100 Points cho {countWinners} người đoán trúng!" });
+        }
 
-        //    var msgs = _context.ChatMessages
-        //        .Where(m => (m.SenderUsername == currentUser && m.ReceiverUsername == withUser) ||
-        //                    (m.SenderUsername == withUser && m.ReceiverUsername == currentUser))
-        //        .OrderBy(m => m.Timestamp)
-        //        .ToList();
+        [HttpPost]
+        public IActionResult AddPickEmMatch(string tournamentName, DateTime matchTime, string opponentName)
+        {
+            if (string.IsNullOrEmpty(tournamentName) || string.IsNullOrEmpty(opponentName))
+            {
+                return Json(new { success = false, message = "Vui lòng nhập đủ thông tin!" });
+            }
 
-        //    return Json(msgs);
-        //}
+            var newMatch = new PickEmMatch
+            {
+                TournamentName = tournamentName,
+                MatchTime = matchTime,
+                OpponentName = opponentName,
+                IsLocked = false,
+                IsRewarded = false,
+                ActualScore = ""
+            };
+
+            _context.PickEmMatches.Add(newMatch);
+            _context.SaveChanges();
+            return Json(new { success = true, message = "Thêm trận đấu thành công!" });
+        }
+        [HttpPost]
+        public IActionResult DeletePickEmMatch(int matchId)
+        {
+            var match = _context.PickEmMatches.Find(matchId);
+            if (match == null) return Json(new { success = false, message = "Không tìm thấy trận đấu!" });
+
+            // Tìm và xóa luôn các dự đoán của người chơi liên quan đến trận này (tránh lỗi khóa ngoại)
+            var relatedPicks = _context.PickEmPredictions.Where(p => p.SeriesId == matchId).ToList();
+            if (relatedPicks.Any())
+            {
+                _context.PickEmPredictions.RemoveRange(relatedPicks);
+            }
+
+            // Xóa trận đấu
+            _context.PickEmMatches.Remove(match);
+            _context.SaveChanges();
+
+            return Json(new { success = true, message = "Đã xóa trận đấu thành công!" });
+        }
 
         // ==========================================
         // 6. QUẢN LÝ NHÂN SỰ VÀ PHÂN QUYỀN (3 CẤP)
@@ -407,5 +468,6 @@ namespace T1EsportsWeb.Areas.Admin.Controllers.ShopExtensions
             }
             return RedirectToAction("UserList");
         }
+
     }
 }

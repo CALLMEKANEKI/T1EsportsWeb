@@ -1,0 +1,432 @@
+﻿@model IEnumerable<T1EsportsWeb.Models.PickEmMatch>
+@using T1EsportsWeb.Models
+@{
+    ViewData["Title"] = "Dự Đoán Tỉ Số - LCK Cup 26 Oracle Pick'Em";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var userPicks = ViewBag.UserPredictions as List<PickEmPrediction> ?? new List<PickEmPrediction>();
+}
+
+@functions {
+    public string GetTeamColor(string teamName)
+    {
+        if (string.IsNullOrEmpty(teamName)) return "#ffffff";
+        var name = teamName.ToLower();
+        if (name.Contains("hanwha") || name.Contains("hle")) return "#ff6b00";
+        if (name.Contains("gen") || name.Contains("geng")) return "#aa8a00";
+        if (name.Contains("dplus") || name.Contains("dk")) return "#00b2a9";
+        if (name.Contains("kt")) return "#ff0000";
+        if (name.Contains("ns") || name.Contains("nongshim")) return "#ff4d4d";
+        if (name.Contains("kdf") || name.Contains("kwangdong")) return "#e05c20";
+        if (name.Contains("bro") || name.Contains("brion")) return "#3b823e";
+        if (name.Contains("fox") || name.Contains("fearx")) return "#ffcc00";
+        if (name.Contains("krx")) return "#5a8dff";
+        return "#a1a5b7";
+    }
+}
+
+<style>
+    body {
+        background-color: #05050a;
+        color: #fff;
+        font-family: 'Poppins', sans-serif;
+    }
+
+    /* 🎯 ĐÃ FIX Ở ĐÂY: Thêm flex-direction: column và canh giữa chuẩn */
+    .pickem-banner {
+        background: linear-gradient(rgba(5, 5, 10, 0.3), #05050a), url('/images/banner pickem.jpg') no-repeat;
+        background-size: cover;
+        background-position: center 15%;
+        height: 250px;
+        display: flex;
+        flex-direction: column; /* Bắt buộc để xếp dọc 2 hàng */
+        align-items: center; /* Canh giữa theo chiều ngang */
+        justify-content: flex-end; /* Đẩy xuống nửa dưới */
+        padding-bottom: 25px; /* Khoảng cách với viền dưới */
+        text-align: center;
+        border-bottom: 3px solid #f3c623;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+        margin-top: -16px;
+    }
+
+    .btn-t1-return {
+        background-color: #e3002b;
+        color: white;
+        font-weight: bold;
+        text-transform: uppercase;
+        border: 2px solid #e3002b;
+        border-radius: 8px;
+        padding: 8px 20px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 10px rgba(227, 0, 43, 0.5);
+        display: inline-block;
+        text-decoration: none;
+    }
+
+        .btn-t1-return:hover {
+            background-color: transparent;
+            color: #e3002b;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(227, 0, 43, 0.7);
+        }
+
+    .glass-panel {
+        background: rgba(30, 30, 45, 0.7);
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 30px;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.6);
+        backdrop-filter: blur(10px);
+    }
+
+    .match-card {
+        background: linear-gradient(145deg, #111119, #1a1a24);
+        border: 1px solid rgba(255,255,255,0.03);
+        border-radius: 16px;
+        padding: 20px;
+        transition: 0.3s ease-in-out;
+        position: relative;
+        overflow: hidden;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+        .match-card:hover {
+            border-color: rgba(227, 0, 43, 0.5);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(227, 0, 43, 0.15);
+        }
+
+        .match-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(227, 0, 43, 0.05) 0%, rgba(0,0,0,0) 70%);
+            opacity: 0;
+            transition: 0.5s;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .match-card:hover::before {
+            opacity: 1;
+        }
+
+        .match-card > div {
+            position: relative;
+            z-index: 1;
+        }
+
+    /* NÚT TỈ SỐ */
+    .score-btn {
+        background-color: #2b2b40;
+        color: #a1a5b7;
+        border: 2px solid #3b3b54;
+        border-radius: 8px;
+        font-weight: 900;
+        font-size: 1.1rem;
+        padding: 8px 0;
+        width: 70px;
+        transition: 0.2s;
+    }
+
+        .score-btn:hover:not(:disabled) {
+            background-color: #3b3b54;
+            color: #fff;
+            border-color: #f3c623;
+        }
+
+        .score-btn.active.t1-win {
+            background-color: #e3002b;
+            color: #fff;
+            border-color: #ff4d4d;
+            box-shadow: 0 0 15px rgba(227, 0, 43, 0.5);
+            transform: scale(1.05);
+        }
+
+        .score-btn.active.opp-win {
+            background-color: #0d6efd;
+            color: #fff;
+            border-color: #4da3ff;
+            box-shadow: 0 0 15px rgba(13, 110, 253, 0.5);
+            transform: scale(1.05);
+        }
+
+        .score-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+    .team-name {
+        font-size: 1.4rem;
+        font-weight: 900;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+    }
+
+    .vs-badge {
+        background-color: #111;
+        border: 2px solid #444;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.9rem;
+        font-weight: bold;
+        color: #f3c623;
+        box-shadow: 0 0 10px rgba(243, 198, 35, 0.3);
+    }
+
+    /* TRẠNG THÁI CÁC NÚT CHỐT */
+    .btn-save-match {
+        background: linear-gradient(135deg, #e3002b 0%, #ff1f4f 100%);
+        color: white;
+        border: none;
+        box-shadow: 0 4px 10px rgba(227, 0, 43, 0.3);
+        transition: 0.3s;
+        font-size: 0.9rem;
+        letter-spacing: 0.5px;
+    }
+
+        .btn-save-match:hover {
+            background: linear-gradient(135deg, #ff1f4f 0%, #e3002b 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(227, 0, 43, 0.5);
+            color: white;
+        }
+
+    .btn-saved {
+        background: #22c55e !important;
+        color: white !important;
+        box-shadow: 0 4px 10px rgba(34, 197, 94, 0.3) !important;
+        pointer-events: none;
+    }
+
+    .btn-disabled {
+        background: #3b3b54 !important;
+        color: #888 !important;
+        box-shadow: none !important;
+        pointer-events: none;
+    }
+
+    .btn-locked {
+        background: #222 !important;
+        color: #666 !important;
+        border: 1px solid #444 !important;
+        pointer-events: none;
+    }
+</style>
+
+<div class="pickem-banner">
+    <h1 class="fw-bold text-uppercase mb-2" style="font-size: 3.5rem; color: #f3c623; text-shadow: 0 0 25px rgba(243, 198, 35, 0.8), 3px 3px 5px rgba(0,0,0,0.9);">
+        <i class="fas fa-crystal-ball me-3"></i>Oracle Pick'Em
+    </h1>
+    <p class="text-light fs-5 mb-0 fw-bold" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.9); letter-spacing: 1px;">Dự đoán tỉ số LCK Cup 26 - Rinh ngay T1 Points!</p>
+</div>
+
+<div class="container-fluid px-4 mt-4 pt-2 pb-5" style="max-width: 1400px;">
+    <div class="d-flex justify-content-end mb-4">
+        <a asp-controller="Arcade" asp-action="Index" class="btn-t1-return">
+            <i class="fas fa-sign-out-alt me-2"></i> Trở về Sảnh
+        </a>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-xl-11 col-lg-12">
+            <div class="glass-panel">
+                <div class="d-flex justify-content-between align-items-center border-bottom border-secondary pb-4 mb-4">
+                    <h3 class="fw-bold mb-0 text-white"><i class="fas fa-fire text-danger me-2"></i>CÁC TRẬN ĐẤU ĐANG MỞ</h3>
+                    <span class="badge bg-warning text-dark fs-6 px-3 py-2 rounded-pill fw-bold"><i class="fas fa-coins me-1"></i>Thưởng: +100 Points / Trận đúng</span>
+                </div>
+
+                <form id="pickemForm">
+                    @if (Model != null && Model.Any())
+                    {
+                        <div class="row g-4">
+                            @foreach (var match in Model)
+                            {
+                                var myPick = userPicks.FirstOrDefault(p => p.SeriesId == match.Id)?.PredictedScore ?? "";
+
+                                bool isLocked = match.IsLocked || DateTime.Now >= match.MatchTime;
+
+                                <div class="col-md-6">
+                                    <div class="match-card" data-series-id="@match.Id">
+                                        <div class="text-center mb-4">
+                                            <span class="badge @(isLocked ? "bg-secondary text-dark" : "bg-dark text-light") border border-secondary px-3 py-2 fs-6 rounded-pill shadow-sm">
+                                                <i class="far fa-clock me-2"></i> @match.TournamentName - @match.MatchTime.ToString("HH:mm - dd/MM/yyyy")
+                                            </span>
+                                        </div>
+
+                                        <div class="row align-items-center text-center">
+                                            <div class="col-4 px-1">
+                                                <div class="team-name" style="color: #e3002b;">T1</div>
+                                                <div class="text-danger fw-bold small mt-1" style="letter-spacing: 1px;">HOME</div>
+                                            </div>
+
+                                            <div class="col-4 d-flex flex-column align-items-center px-0">
+                                                <div class="vs-badge mb-3">VS</div>
+
+                                                <input type="hidden" class="prediction-input" id="match_val_@match.Id" value="@myPick">
+
+                                                <div class="d-flex gap-2 justify-content-center mb-2 w-100">
+                                                    <button type="button" class="btn score-btn @(myPick == "2-0" ? "active t1-win" : "")" onclick="selectScore(@match.Id, '2-0', 't1-win')" @(isLocked ? "disabled" : "")>2 - 0</button>
+                                                    <button type="button" class="btn score-btn @(myPick == "2-1" ? "active t1-win" : "")" onclick="selectScore(@match.Id, '2-1', 't1-win')" @(isLocked ? "disabled" : "")>2 - 1</button>
+                                                </div>
+                                                <div class="d-flex gap-2 justify-content-center w-100">
+                                                    <button type="button" class="btn score-btn @(myPick == "1-2" ? "active opp-win" : "")" onclick="selectScore(@match.Id, '1-2', 'opp-win')" @(isLocked ? "disabled" : "")>1 - 2</button>
+                                                    <button type="button" class="btn score-btn @(myPick == "0-2" ? "active opp-win" : "")" onclick="selectScore(@match.Id, '0-2', 'opp-win')" @(isLocked ? "disabled" : "")>0 - 2</button>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-4 px-1">
+                                                <div class="team-name" style="color: @GetTeamColor(match.OpponentName);">
+                                                    @match.OpponentName
+                                                </div>
+                                                <div class="text-primary fw-bold small mt-1" style="letter-spacing: 1px;">AWAY</div>
+                                            </div>
+                                        </div>
+
+                                        <div class="flex-grow-1"></div> <hr class="border-secondary mt-4 mb-3" style="opacity: 0.3;">
+
+                                        <div class="d-flex justify-content-between align-items-center mt-auto">
+
+                                            <div id="status_@match.Id" class="small fw-bold">
+                                                @if (!string.IsNullOrEmpty(myPick))
+                                                {
+                                                    <span class="text-info"><i class="fas fa-check-circle me-1"></i>Đã dự đoán: @myPick</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted"><i class="fas fa-exclamation-circle me-1"></i>Chưa dự đoán</span>
+                                                }
+                                            </div>
+
+                                            <div>
+                                                @if (!string.IsNullOrEmpty(match.ActualScore))
+                                                {
+                                                    if (myPick == match.ActualScore)
+                                                    {
+                                                        <div class="alert alert-success m-0 py-2 px-3 rounded-pill fw-bold border-0 shadow-sm" style="background: rgba(34, 197, 94, 0.2); color: #22c55e;">
+                                                            <i class="fas fa-trophy me-1 text-warning"></i> Chính xác! +100 Points
+                                                        </div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <div class="alert alert-secondary m-0 py-2 px-3 rounded-pill fw-bold border-0" style="background: rgba(255, 255, 255, 0.1); color: #aaa;">
+                                                            <i class="fas fa-times-circle me-1 text-danger"></i> Sai rồi. Thực tế: @match.ActualScore
+                                                        </div>
+                                                    }
+                                                }
+                                                else if (isLocked)
+                                                {
+                                                    <button type="button" class="btn btn-locked fw-bold rounded-pill px-4">
+                                                        <i class="fas fa-lock me-1"></i>CHỜ KẾT QUẢ...
+                                                    </button>
+                                                }
+                                                else
+                                                {
+                                                    <button type="button" class="btn fw-bold rounded-pill px-4 @(string.IsNullOrEmpty(myPick) ? "btn-disabled" : "btn-saved")" id="btn_submit_@match.Id" onclick="submitSinglePickEm(@match.Id)">
+                                                        @(string.IsNullOrEmpty(myPick) ? "CHỐT TRẬN NÀY" : "ĐÃ LƯU")
+                                                    </button>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5 text-muted glass-panel" style="background: rgba(0,0,0,0.3);">
+                            <i class="fas fa-calendar-times fa-5x mb-3 opacity-50"></i>
+                            <h3 class="fw-bold">Hiện chưa có trận đấu nào đang mở dự đoán!</h3>
+                            <p class="fs-5">Hãy quay lại sau nhé, Fan T1 ơi.</p>
+                        </div>
+                    }
+                </form>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Khi user bấm chọn một tỉ số mới
+        function selectScore(seriesId, score, type) {
+            const card = document.querySelector(`[data-series-id="${seriesId}"]`);
+            const buttons = card.querySelectorAll('.score-btn');
+
+            // Xóa active các nút khác
+            buttons.forEach(btn => btn.classList.remove('active', 't1-win', 'opp-win'));
+
+            // Bật active nút vừa bấm
+            const clickedBtn = window.event.currentTarget || window.event.srcElement;
+            clickedBtn.classList.add('active', type);
+
+            // Cập nhật giá trị
+            document.getElementById(`match_val_${seriesId}`).value = score;
+
+            // 🎯 Nhìn sang dòng trạng thái bên trái để xem trận này đã có trong Database chưa
+            const statusText = document.getElementById(`status_${seriesId}`).innerText;
+            const isSavedBefore = statusText.includes('Đã dự đoán');
+
+            const submitBtn = document.getElementById(`btn_submit_${seriesId}`);
+            if(submitBtn) {
+                // Giữ vững lập trường: Đã từng dự đoán thì phải là CẬP NHẬT LẠI
+                submitBtn.innerHTML = isSavedBefore ? "CẬP NHẬT LẠI" : "CHỐT TRẬN NÀY";
+
+                // Xóa trạng thái mờ (disabled) hoặc xanh (saved), bật trạng thái nút đỏ chờ chốt
+                submitBtn.classList.remove('btn-saved', 'btn-disabled');
+                submitBtn.classList.add('btn-save-match');
+            }
+        }
+
+        async function submitSinglePickEm(seriesId) {
+            const score = document.getElementById(`match_val_${seriesId}`).value;
+            if (!score) return;
+
+            const predictions = [{ seriesId: parseInt(seriesId), score: score }];
+
+            try {
+                const btn = document.getElementById(`btn_submit_${seriesId}`);
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ĐANG LƯU...';
+
+                const response = await fetch('/Arcade/SubmitPickEm', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ predictions: predictions })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    // 🎯 ĐỔI NÚT VỀ TRẠNG THÁI "ĐÃ LƯU" MÀU XANH
+                    if (btn) {
+                        btn.innerHTML = '<i class="fas fa-check-double me-1"></i>ĐÃ LƯU';
+                        btn.classList.remove('btn-save-match');
+                        btn.classList.add('btn-saved');
+                    }
+
+                    const statusText = document.getElementById(`status_${seriesId}`);
+                    if(statusText) {
+                        statusText.innerHTML = `<span class="text-info"><i class="fas fa-check-circle me-1"></i>Đã dự đoán: ${score}</span>`;
+                    }
+                } else {
+                    btn.innerHTML = originalText;
+                    alert("Có lỗi xảy ra: " + result.message);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert("Không thể gửi dự đoán, vui lòng kiểm tra lại kết nối mạng!");
+            }
+        }
+    </script>
+}

@@ -19,8 +19,8 @@ namespace T1EsportsWeb.Models
         public DbSet<OrderDetail> OrderDetails { get; set; }
         public DbSet<SystemSetting> SystemSettings { get; set; }
         public DbSet<CartItem> CartItems { get; set; }
-
         public DbSet<ChatMessage> ChatMessages { get; set; }
-
+        public DbSet<PickEmPrediction> PickEmPredictions { get; set; }
+        public DbSet<PickEmMatch> PickEmMatches { get; set; }
     }
 }
