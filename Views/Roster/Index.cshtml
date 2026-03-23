@@ -2,8 +2,8 @@
     ViewData["Title"] = "Đội Hình T1 2026";
     Layout = "~/Views/Shared/_Layout.cshtml";
 
-    var currentRoster = ViewBag.CurrentRoster as List<T1EsportsWeb.Controllers.PlayerStatsViewModel>;
-    var formerPlayers = ViewBag.FormerPlayers as List<T1EsportsWeb.Controllers.PlayerStatsViewModel>;
+    var currentRoster = ViewBag.CurrentRoster as List<T1EsportsWeb.Models.T1Stat.DTO.PlayerStats>;
+    var formerPlayers = ViewBag.FormerPlayers as List<T1EsportsWeb.Models.T1Stat.DTO.PlayerStats>;
 }
 
 <style>

@@ -88,10 +88,13 @@
         }
 
     .chart-container {
-        position: relative;
-        height: 350px;
+        overflow-x: auto;
         width: 100%;
     }
+
+        .chart-container canvas {
+            height: 350px;
+        }
 
     .table-t1 th {
         background-color: #2b2b40;
@@ -105,6 +108,8 @@
         border-bottom: 1px solid #2b2b40;
         vertical-align: middle;
     }
+
+    }
 </style>
 
 <div class="container-fluid py-4 dashboard-bg">
@@ -113,12 +118,8 @@
         <h1 class="d-flex justify-content-center align-items-center flex-wrap mb-0" style="font-size: 3.5rem; font-weight: 900; letter-spacing: 4px;">
             <span style="color: #e3002b; text-shadow: 0 0 15px rgba(227, 0, 43, 0.8), 3px 3px 6px rgba(0,0,0,0.9);">T1 PERFORMANCE DASHBOARD</span>
         </h1>
-
-        <p class="mt-3 mb-0" style="font-size: 1.5rem; color: #ddd; font-weight: bold; text-shadow: 2px 2px 4px rgba(0,0,0,0.9);">
-            Hệ thống phân tích và thống kê dữ liệu thi đấu toàn diện
-        </p>
     </div>
-
+    @*Filter *@
     <div class="glass-panel">
         <h6 class="fw-bold text-muted mb-3"><i class="fas fa-filter me-2"></i>BỘ LỌC DỮ LIỆU TỔNG QUAN</h6>
         <div class="row g-3">
@@ -153,6 +154,7 @@
         </div>
     </div>
 
+    @*Card*@
     <div class="row g-4 mb-4">
         <div class="col-xl-3 col-md-6">
             <div class="stat-card">
@@ -186,8 +188,9 @@
         </div>
     </div>
 
+    @*Chart*@
     <div class="row g-4 mb-4">
-        <div class="col-lg-6">
+        <div class="col-lg-12">
             <div class="glass-panel h-100 mb-0">
                 <div class="panel-title"><i class="fas fa-chart-bar text-danger me-2"></i>Tổng Series Theo Giải Đấu</div>
                 <div class="chart-container">
@@ -195,7 +198,9 @@
                 </div>
             </div>
         </div>
-        <div class="col-lg-6">
+    </div>
+    <div>
+        <div class="col-lg-12">
             <div class="glass-panel h-100 mb-0">
                 <div class="panel-title"><i class="fas fa-chart-line text-warning me-2"></i>Tổng Ván Đấu Theo Giải</div>
                 <div class="chart-container">
@@ -238,7 +243,7 @@
         <div class="col-lg-12">
             <div class="glass-panel">
                 <div class="panel-title"><i class="fas fa-code-branch text-primary me-2"></i>Phong Độ Theo Phiên Bản (Patch)</div>
-                <div class="chart-container" style="height: 300px;">
+                <div class="chart-container" style="overflow-x: auto; width: 100%;">
                     <canvas id="winrateByPatchChart"></canvas>
                 </div>
             </div>
@@ -250,7 +255,7 @@
             <div class="glass-panel">
                 <div class="panel-title"><i class="fas fa-fist-raised text-danger me-2"></i>Thành Tích Đối Đầu (Head-to-Head)</div>
                 <div style="overflow-x: auto; width: 100%;">
-                    <div style="min-width: 1000px; height: 350px;">
+                    <div class="chart-container" style="overflow-x: auto; width: 100%;">
                         <canvas id="headToHeadChart"></canvas>
                     </div>
                 </div>
@@ -336,7 +341,6 @@
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        // 🎯 GIỮ NGUYÊN 100% LOGIC CỦA BOSS Ở ĐÂY
         Chart.defaults.color = '#a1a5b7';
         Chart.defaults.scale.grid.color = 'rgba(255, 255, 255, 0.05)';
         Chart.defaults.plugins.legend.labels.color = '#fff';
@@ -419,7 +423,15 @@
             const intLost = data.map(d => d.intLost);
             const winRates = data.map(d => d.winRate);
 
-            const ctx = document.getElementById('seriesChart').getContext('2d');
+            const canvas = document.getElementById('seriesChart');
+            // Đặt kích thước canvas dựa trên số lượng label (mỗi label 80px)
+            const chartWidth = Math.max(800, labels.length * 80);
+            canvas.width = chartWidth;
+            canvas.style.width = `${chartWidth}px`;
+            canvas.height = 500;
+            canvas.style.height = '500px';
+
+            const ctx = canvas.getContext('2d');
             if (seriesChart) seriesChart.destroy();
 
             seriesChart = new Chart(ctx, {
@@ -439,8 +451,16 @@
                     ]
                 },
                 options: {
-                    responsive: true, maintainAspectRatio: false,
+                    responsive: true,
+                    maintainAspectRatio: false,
                     scales: {
+                        x: {
+                            ticks: {
+                                maxRotation: 90,
+                                minRotation: 90,
+                                autoSkip: false
+                            }
+                        },
                         y: { stacked: true, title: { display: true, text: 'Số lượng Series' } },
                         y1: { position: 'right', max: 100, title: { display: true, text: 'Win Rate (%)' }, grid: { drawOnChartArea: false } }
                     }
@@ -465,7 +485,15 @@
                 const intWon = data.map(d => d.gamesINTWon);
                 const intLost = data.map(d => d.gamesINTLost);
 
-                const ctx = document.getElementById('gamesChart').getContext('2d');
+                const canvas = document.getElementById('gamesChart');
+                // Đặt kích thước canvas dựa trên số lượng label
+                const chartWidth = Math.max(800, labels.length * 80);
+                canvas.width = chartWidth;
+                canvas.style.width = `${chartWidth}px`;
+                canvas.height = 500;
+                canvas.style.height = '500px';
+
+                const ctx = canvas.getContext('2d');
                 if (gamesChart) gamesChart.destroy();
 
                 gamesChart = new Chart(ctx, {
@@ -485,8 +513,16 @@
                         ]
                     },
                     options: {
-                        responsive: true, maintainAspectRatio: false,
+                        responsive: true,
+                        maintainAspectRatio: false,
                         scales: {
+                            x: {
+                            ticks: {
+                                maxRotation: 90,
+                                minRotation: 90,
+                                autoSkip: false
+                            }
+                        },
                             y: { stacked: true, title: { display: true, text: 'Số Ván đấu' } },
                             y1: { position: 'right', max: 100, title: { display: true, text: 'Win Rate (%)' }, grid: { drawOnChartArea: false } }
                         }
@@ -501,19 +537,47 @@
             const res = await fetch(`/Dashboard/WinrateByPatch?${query}`);
             const data = await res.json();
 
-            const ctx = document.getElementById('winrateByPatchChart').getContext('2d');
+            const labels = data.map(d => d.patch);
+            // Mỗi patch ước lượng 60px, tối thiểu 800px
+            const chartWidth = Math.max(800, labels.length * 60);
+
+            const canvas = document.getElementById('winrateByPatchChart');
+            canvas.width = chartWidth;
+            canvas.style.width = `${chartWidth}px`;
+            canvas.height = 300;
+            canvas.style.height = '300px';
+
+            const ctx = canvas.getContext('2d');
             if (winrateChart) winrateChart.destroy();
             winrateChart = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: data.map(d => d.patch),
+                    labels: labels,
                     datasets: [{
-                        label: 'Win Rate (%)', data: data.map(d => d.winRate),
-                        borderColor: '#0dcaf0', backgroundColor: 'rgba(13, 202, 240, 0.1)',
-                        fill: true, tension: 0.4, borderWidth: 3, pointRadius: 4
+                        label: 'Win Rate (%)',
+                        data: data.map(d => d.winRate),
+                        borderColor: '#0dcaf0',
+                        backgroundColor: 'rgba(13, 202, 240, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        borderWidth: 3,
+                        pointRadius: 4
                     }]
                 },
-                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, max: 100 } } }
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            ticks: {
+                                maxRotation: 90,
+                                minRotation: 90,
+                                autoSkip: false
+                            }
+                        },
+                        y: { beginAtZero: true, max: 100 }
+                    }
+                }
             });
         }
 
@@ -540,7 +604,8 @@
                             backgroundColor: '#20c997', borderRadius: 4, barPercentage: 0.5
                         }]
                     },
-                    options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, max: 100 } } }
+                    options: { 
+                        responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, max: 100 } } }
                 });
             } catch (error) { console.error('Error loading player winrate:', error); }
         }
@@ -551,21 +616,53 @@
             const res = await fetch(`/Dashboard/HeadToHead?${query}`);
             const data = await res.json();
 
-            const ctx = document.getElementById('headToHeadChart').getContext('2d');
+            const labels = data.map(d => d.opponentName);
+            // Mỗi tên đội ước lượng 80px, tối thiểu 800px
+            const chartWidth = Math.max(800, labels.length * 80);
+
+            const canvas = document.getElementById('headToHeadChart');
+            canvas.width = chartWidth;
+            canvas.style.width = `${chartWidth}px`;
+            canvas.height = 350;
+            canvas.style.height = '350px';
+
+            const ctx = canvas.getContext('2d');
             if (headToHeadChart) headToHeadChart.destroy();
             headToHeadChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: data.map(d => d.opponentName),
+                    labels: labels,
                     datasets: [
-                        { label: 'Domestic WR (%)', data: data.map(d => d.domesticWinRate), backgroundColor: '#0d6efd', borderRadius: 4 },
-                        { label: 'International WR (%)', data: data.map(d => d.internationalWinRate), backgroundColor: '#e3002b', borderRadius: 4 }
+                        {
+                            label: 'Domestic WR (%)',
+                            data: data.map(d => d.domesticWinRate),
+                            backgroundColor: '#0d6efd',
+                            borderRadius: 4
+                        },
+                        {
+                            label: 'International WR (%)',
+                            data: data.map(d => d.internationalWinRate),
+                            backgroundColor: '#e3002b',
+                            borderRadius: 4
+                        }
                     ]
                 },
-                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, max: 100 } } }
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            ticks: {
+                                maxRotation: 90,
+                                minRotation: 90,
+                                autoSkip: false
+                            }
+                        },
+                        y: { beginAtZero: true, max: 100 }
+                    }
+                }
             });
         }
-
         async function loadChampionStats() {
             const tournamentId = document.getElementById('champTournamentFilter')?.value || '';
             const opponentId = document.getElementById('champOpponentFilter')?.value || '';

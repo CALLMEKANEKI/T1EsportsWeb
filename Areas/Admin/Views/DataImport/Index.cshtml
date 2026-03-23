@@ -1,0 +1,152 @@
+﻿@{
+    ViewData["Title"] = "Import Dữ Liệu";
+    Layout = "_AdminLayout";
+}
+
+<style>
+    .import-form {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .preview-table {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+</style>
+
+<div class="container mt-4">
+    <h2 class="text-center">Import Dữ Liệu Lịch Sử Đấu</h2>
+    <div class="import-form glass-panel p-4">
+        <form id="importForm" enctype="multipart/form-data">
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label>Server</label>
+                    <input type="text" id="server" class="form-control" placeholder="localhost" required />
+                </div>
+                <div class="col-md-6">
+                    <label>Database</label>
+                    <input type="text" id="database" class="form-control" placeholder="T1_Stats" required />
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label>Xác thực</label>
+                    <select id="authType" class="form-select">
+                        <option value="windows">Windows Authentication</option>
+                        <option value="sql">SQL Server Authentication</option>
+                    </select>
+                </div>
+                <div class="col-md-6 sql-auth" style="display:none;">
+                    <label>Username</label>
+                    <input type="text" id="username" class="form-control" />
+                </div>
+                <div class="col-md-6 sql-auth" style="display:none;">
+                    <label>Password</label>
+                    <input type="password" id="password" class="form-control" />
+                </div>
+            </div>
+            <div class="mb-3">
+                <label>File Excel</label>
+                <input type="file" id="excelFile" class="form-control" accept=".xlsx" required />
+                <div class="form-text"><a href="/Admin/DataImport/DownloadTemplate">Tải template mẫu</a></div>
+            </div>
+            <div class="d-flex gap-2">
+                <button type="button" id="previewBtn" class="btn btn-primary">Xem trước dữ liệu</button>
+                <button type="button" id="importBtn" class="btn btn-success" disabled>Import</button>
+            </div>
+        </form>
+
+        <div id="previewArea" style="display:none; margin-top: 30px;">
+            <h4>Dữ liệu sẽ được import</h4>
+            <div class="preview-table">
+                <table class="table table-dark table-striped" id="previewTable">
+                    <thead><tr></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <p>Tổng số dòng: <span id="totalRows">0</span></p>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Hiện/ẩn SQL auth fields
+            $('#authType').change(function() {
+                if ($(this).val() === 'sql') {
+                    $('.sql-auth').show();
+                } else {
+                    $('.sql-auth').hide();
+                }
+            }).trigger('change');
+
+            $('#previewBtn').click(async function() {
+                const file = $('#excelFile')[0].files[0];
+                if (!file) {
+                    alert('Vui lòng chọn file Excel.');
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append('file', file);
+
+                try {
+                    const res = await fetch('/Admin/DataImport/Preview', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const data = await res.json();
+                    if (data.error) throw new Error(data.error);
+
+                    // Hiển thị bảng preview
+                    if (data.preview && data.preview.length > 0) {
+                        const headers = Object.keys(data.preview[0]);
+                        $('#previewTable thead tr').html(headers.map(h => `<th>${h}</th>`).join(''));
+                        $('#previewTable tbody').html(data.preview.map(row =>
+                            `<tr>${headers.map(h => `<td>${row[h] ?? ''}</td>`).join('')}</tr>`
+                        ).join(''));
+                        $('#totalRows').text(data.total_rows);
+                        $('#previewArea').show();
+                        $('#importBtn').prop('disabled', false);
+                    } else {
+                        alert('Không có dữ liệu trong file.');
+                    }
+                } catch (err) {
+                    alert('Lỗi: ' + err.message);
+                }
+            });
+
+            $('#importBtn').click(async function() {
+                const file = $('#excelFile')[0].files[0];
+                if (!file) {
+                    alert('Vui lòng chọn file Excel.');
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('server', $('#server').val());
+                formData.append('database', $('#database').val());
+                formData.append('authType', $('#authType').val());
+                formData.append('username', $('#username').val());
+                formData.append('password', $('#password').val());
+
+                try {
+                    const res = await fetch('/Admin/DataImport/Import', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const result = await res.json();
+                    if (result.error) throw new Error(result.error);
+                    alert(`Import thành công! Đã xử lý ${result.total} game, ${result.errors} lỗi.`);
+                    // Có thể reset form hoặc reload trang sau khi import
+                    location.reload();
+                } catch (err) {
+                    alert('Lỗi: ' + err.message);
+                }
+            });
+        });
+    </script>
+}
