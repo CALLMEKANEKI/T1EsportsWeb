@@ -1,41 +1,46 @@
 ﻿@model T1EsportsWeb.Models.T1Stat.Team
 
 @{
-    ViewData["Title"] = "Thêm đội tuyển";
-    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Thêm Đội Tuyển";
+    Layout = "_AdminLayout"; // 🎯 Fix lỗi Layout tại đây
 }
 
-<h1>Thêm đội tuyển</h1>
-
-<hr />
-<div class="row">
-    <div class="col-md-6">
+<div class="card border-0 shadow-sm" style="background-color: #1e1e2d; color: white; max-width: 800px;">
+    <div class="card-header border-bottom border-secondary py-3">
+        <h3 class="card-title fw-bold mb-0 text-white"><i class="fas fa-plus-circle text-danger me-2"></i>Thêm Đội Tuyển Mới</h3>
+    </div>
+    <div class="card-body p-4">
         <form asp-action="Create" enctype="multipart/form-data" method="post">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group mb-3">
-                <label asp-for="Name" class="control-label"></label>
-                <input asp-for="Name" class="form-control" />
-                <span asp-validation-for="Name" class="text-danger"></span>
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label asp-for="Name" class="form-label fw-bold text-muted">Tên Đội Tuyển <span class="text-danger">*</span></label>
+                    <input asp-for="Name" class="form-control bg-dark border-secondary text-white" placeholder="VD: T1, Gen.G..." required />
+                    <span asp-validation-for="Name" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Region" class="form-label fw-bold text-muted">Khu Vực <span class="text-danger">*</span></label>
+                    <select asp-for="Region" class="form-select bg-dark border-secondary text-white" required>
+                        <option value="">-- Chọn khu vực --</option>
+                        <option value="KR">Hàn Quốc (KR)</option>
+                        <option value="INT">Quốc Tế (INT)</option>
+                    </select>
+                    <span asp-validation-for="Region" class="text-danger"></span>
+                </div>
             </div>
-            <div class="form-group mb-3">
-                <label asp-for="Region" class="control-label"></label>
-                <input asp-for="Region" class="form-control" />
-                <span asp-validation-for="Region" class="text-danger"></span>
+
+            <div class="mb-4">
+                <label class="form-label fw-bold text-muted">Logo Đội Tuyển (Tùy chọn)</label>
+                <input type="file" name="logoFile" class="form-control bg-dark border-secondary text-white" accept=".jpg,.jpeg,.png,.webp" />
+                <small class="text-muted">Chỉ hỗ trợ .jpg, .png, .webp</small>
             </div>
-            <div class="form-group">
-                <label>Logo</label>
-                <input type="file" name="logoFile" class="form-control" />
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Thêm" class="btn btn-primary" />
-                <a asp-area="Admin" asp-action="Index" class="btn btn-secondary">Quay lại</a>
+
+            <hr class="border-secondary" />
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-danger px-4 fw-bold"><i class="fas fa-save me-2"></i>Lưu Đội Tuyển</button>
+                <a asp-action="Index" class="btn btn-outline-light px-4">Hủy</a>
             </div>
         </form>
     </div>
 </div>
-
-@section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
-}

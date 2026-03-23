@@ -1,0 +1,271 @@
+﻿@model T1EsportsWeb.Controllers.PlayerDashboardViewModel
+
+@{
+    ViewData["Title"] = "Dashboard Tuyển thủ - " + Model.PlayerInfo.IngameName;
+    var totalSeries = Model.TournamentStats.Sum(s => s.Wins + s.Losses);
+    var overallWinRate = totalSeries > 0 ? Math.Round((double)Model.TournamentStats.Sum(s => s.Wins) / totalSeries * 100, 1) : 0;
+}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+    body {
+        background-color: #05050a;
+        color: white;
+    }
+
+    /* 🎯 COPY STYLE NÚT TỪ TRANG CART CỦA BOSS */
+    .btn-t1-return {
+        background-color: #e3002b;
+        color: white;
+        font-weight: bold;
+        text-transform: uppercase;
+        border: 2px solid #e3002b;
+        border-radius: 8px;
+        padding: 8px 25px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 10px rgba(227, 0, 43, 0.5);
+        display: inline-block;
+        text-decoration: none;
+    }
+
+        .btn-t1-return:hover {
+            background-color: transparent;
+            color: #e3002b;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(227, 0, 43, 0.7);
+        }
+
+    .custom-t1-tabs .nav-link {
+        color: #888;
+        border: none;
+        font-weight: bold;
+        padding: 12px 25px;
+    }
+
+        .custom-t1-tabs .nav-link.active {
+            color: #fff;
+            background: transparent;
+            border-bottom: 3px solid #e3002b;
+        }
+
+    .glass-panel {
+        background: rgba(34, 34, 34, 0.6);
+        border: 1px solid rgba(255,255,255,0.05);
+        border-radius: 12px;
+        padding: 20px;
+    }
+
+    .champ-icon-mini {
+        width: 35px;
+        height: 35px;
+        border-radius: 6px;
+        object-fit: cover;
+    }
+</style>
+
+<div class="container-fluid py-4 px-lg-5">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold mb-0">
+            <i class="fas fa-chart-line text-danger me-2"></i>PLAYER DASHBOARD
+        </h2>
+
+        <a asp-action="Index" class="btn-t1-return">
+            <i class="fas fa-users me-2"></i> Danh sách đội hình
+        </a>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-3">
+            <div class="card mb-4" style="background-color: #1a1a1a; border: 1px solid #e3002b; border-radius: 15px; overflow: hidden;">
+                <img src="@Model.PlayerInfo.PhotoUrl" class="card-img-top" alt="@Model.PlayerInfo.IngameName" style="height: 380px; object-fit: cover;">
+                <div class="card-body text-center">
+                    <h2 class="card-title fw-bold text-white mb-0">@Model.PlayerInfo.IngameName</h2>
+                    <h5 class="text-danger fw-bold">@Model.PlayerInfo.Position</h5>
+                    <hr style="border-color: #444;" />
+                    <div class="text-start px-2" style="color: #ccc; font-size: 0.85rem;">
+                        <p class="mb-2"><strong>Tên thật:</strong> @Model.PlayerInfo.FullName</p>
+                        <p class="mb-2"><strong>Quốc tịch:</strong> Hàn Quốc</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-9">
+            <ul class="nav nav-tabs custom-t1-tabs" id="playerTab" role="tablist">
+                <li class="nav-item">
+                    <button class="nav-link active" id="dashboard-tab" data-bs-toggle="tab" data-bs-target="#dashboard" type="button">DASHBOARD</button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" id="pro-tab" data-bs-toggle="tab" data-bs-target="#pro" type="button">THỐNG KÊ GIẢI ĐẤU</button>
+                </li>
+            </ul>
+
+            <div class="tab-content mt-4" id="playerTabContent">
+                <div class="tab-pane fade show active" id="dashboard">
+                    <div class="row g-3 text-center mb-4">
+                        <div class="col-md-4">
+                            <div class="p-3" style="background-color: #222; border-radius: 8px; border-left: 4px solid #e3002b;">
+                                <h6 class="text-muted">Series Winrate</h6>
+                                <h3 style="color: #e5b344;" class="fw-bold">@overallWinRate%</h3>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="p-3" style="background-color: #222; border-radius: 8px; border-left: 4px solid #00a8ff;">
+                                <h6 class="text-muted">Tổng Series</h6>
+                                <h3 style="color: #00a8ff;" class="fw-bold">@totalSeries</h3>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="p-3" style="background-color: #222; border-radius: 8px; border-left: 4px solid #4cd137;">
+                                <h6 class="text-muted">Số Tướng Đã Chơi</h6>
+                                <h3 style="color: #4cd137;" class="fw-bold">@Model.ChampionStats.Count</h3>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel mb-4">
+                        <div style="height: 300px;">
+                            <canvas id="tournamentChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="fw-bold mb-0">Thống kê Champion</h5>
+                            <select class="form-select bg-dark text-white border-secondary w-auto" id="opponentFilter">
+                                <option value="ALL">Tất cả đối thủ</option>
+                                @foreach (var team in Model.OpponentTeams)
+                                {
+                                    <option value="@team">Chống lại @team</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-dark table-hover align-middle" id="champTable">
+                                <thead>
+                                    <tr class="text-muted small text-uppercase">
+                                        <th>Champion</th>
+                                        <th class="text-center">Số Trận</th>
+                                        <th class="text-center text-success">Thắng</th>
+                                        <th class="text-center text-danger">WR%</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var c in Model.ChampionStats)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <img src="@c.ImageUrl" class="champ-icon-mini me-2 border border-secondary">
+                                                <span class="fw-bold">@c.ChampionName</span>
+                                            </td>
+                                            <td class="text-center">@c.Picks</td>
+                                            <td class="text-center text-success">@c.Wins</td>
+                                            <td class="text-center text-danger fw-bold">@c.WinRate%</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="pro">
+                    <div class="glass-panel">
+                        <table class="table table-dark table-hover text-center align-middle">
+                            <thead class="table-danger text-dark">
+                                <tr>
+                                    <th>Giải đấu</th>
+                                    <th>Số Series</th>
+                                    <th>Thắng</th>
+                                    <th>Thua</th>
+                                    <th>Winrate</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var ts in Model.TournamentStats)
+                                {
+                                    <tr>
+                                        <td class="fw-bold">@ts.TournamentName</td>
+                                        <td>@(ts.Wins + ts.Losses)</td>
+                                        <td class="text-success">@ts.Wins</td>
+                                        <td class="text-secondary">@ts.Losses</td>
+                                        <td class="text-danger fw-bold">@ts.WinRate%</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Chart.js initialization
+        const labels = @Html.Raw(Json.Serialize(Model.TournamentStats.Select(t => t.TournamentName)));
+        const wins = @Html.Raw(Json.Serialize(Model.TournamentStats.Select(t => t.Wins)));
+        const winrates = @Html.Raw(Json.Serialize(Model.TournamentStats.Select(t => t.WinRate)));
+
+        const ctx = document.getElementById('tournamentChart').getContext('2d');
+        new Chart(ctx, {
+            data: {
+                labels: labels,
+                datasets: [{
+                    type: 'line',
+                    label: 'Winrate %',
+                    data: winrates,
+                    borderColor: '#e3002b',
+                    yAxisID: 'y1',
+                    tension: 0.3,
+                    fill: false
+                }, {
+                    type: 'bar',
+                    label: 'Series Thắng',
+                    data: wins,
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    yAxisID: 'y'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { type: 'linear', position: 'left', grid: { display: false } },
+                    y1: { type: 'linear', position: 'right', min: 0, max: 100 }
+                },
+                plugins: { legend: { labels: { color: '#fff' } } }
+            }
+        });
+
+        // AJAX Filter Logic
+        const playerId = @Model.PlayerInfo.IdPlayer;
+        document.getElementById('opponentFilter').addEventListener('change', function() {
+            const team = this.value;
+            const tbody = document.querySelector('#champTable tbody');
+            tbody.style.opacity = '0.5';
+
+            fetch(`/Roster/FilterChampionStats?playerId=${playerId}&opponentTeamName=${encodeURIComponent(team)}`)
+                .then(res => res.json())
+                .then(data => {
+                    tbody.innerHTML = '';
+                    data.forEach(c => {
+                        tbody.innerHTML += `
+                            <tr>
+                                <td>
+                                    <img src="${c.imageUrl}" class="champ-icon-mini me-2 border border-secondary">
+                                    <span class="fw-bold">${c.championName}</span>
+                                </td>
+                                <td class="text-center">${c.picks}</td>
+                                <td class="text-center text-success">${c.wins}</td>
+                                <td class="text-center text-danger fw-bold">${c.winRate}%</td>
+                            </tr>`;
+                    });
+                    tbody.style.opacity = '1';
+                });
+        });
+    </script>
+}

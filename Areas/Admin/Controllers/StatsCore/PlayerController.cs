@@ -41,6 +41,17 @@ namespace T1EsportsWeb.Areas.Admin.Controllers.StatsCore
         public async Task<IActionResult> Index(int? page, string searchIngame, bool? hasImage, string position, string country, int? teamId)
         {
             int pageNumber = page ?? 1;
+
+            // 🎯 MẸO: Nếu là lần đầu tiên truy cập (không có tham số), tự động lọc đội T1
+            if (Request.Query.Count == 0)
+            {
+                var t1Team = await _context.Teams.FirstOrDefaultAsync(t => t.Name.Contains("T1"));
+                if (t1Team != null)
+                {
+                    teamId = t1Team.IdTeam;
+                }
+            }
+
             var query = _context.Players.AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(searchIngame))

@@ -91,10 +91,10 @@ namespace T1EsportsWeb.Controllers
 
         [HttpGet]
         public async Task<IActionResult> SeriesByTournament(
-    int? tournamentId,
-    int? opponentId,
-    DateTime? startDate,
-    DateTime? endDate)
+            int? tournamentId,
+            int? opponentId,
+            DateTime? startDate,
+            DateTime? endDate)
         {
             var t1Id = await GetT1TeamId();
             if (t1Id == 0) return NotFound();
@@ -111,58 +111,47 @@ namespace T1EsportsWeb.Controllers
             if (endDate.HasValue)
                 seriesQuery = seriesQuery.Where(s => s.MatchDate <= DateOnly.FromDateTime(endDate.Value));
 
-            seriesQuery = seriesQuery.Include(s => s.Tournament);
-            var seriesList = await seriesQuery.ToListAsync();
+            // 🚀 TỐI ƯU HÓA: Dùng Select để đếm Wins/Losses ngay dưới Database
+            // Thay vì tải về RAM rồi mới đếm, ta ép Entity Framework tạo ra đúng 1 câu SQL.
+            var seriesStats = await seriesQuery
+                .Select(s => new
+                {
+                    TournamentId = s.Tournament.IdTournament,
+                    TournamentName = s.Tournament.Name,
+                    Year = s.Tournament.Year,
+                    Region = s.Tournament.Region,
+                    IsT1Winner = s.Tournament.IsT1winner,
 
-            var result = seriesList
-         .GroupBy(s => new { s.Tournament.IdTournament, s.Tournament.Name, s.Tournament.Year, s.Tournament.Region, s.Tournament.IsT1winner })
-         .Select(g => new SeriesByTournamentDto
-         {
-             TournamentName = g.Key.Name,
-             Year = g.Key.Year.Value,
-             Region = g.Key.Region,
-             IsT1Winner = g.Key.IsT1winner == "YES",
-             SeriesWon = g.Count(s =>
-             {
-                 var wins = _context.GameTeams.Count(gt => gt.TeamId == t1Id && gt.Result == "Win" && gt.Game.SeriesId == s.IdSeries);
-                 var losses = _context.GameTeams.Count(gt => gt.TeamId == t1Id && gt.Result == "Loss" && gt.Game.SeriesId == s.IdSeries);
-                 return wins > losses;
-             }),
-             SeriesLost = g.Count(s =>
-             {
-                 var wins = _context.GameTeams.Count(gt => gt.TeamId == t1Id && gt.Result == "Win" && gt.Game.SeriesId == s.IdSeries);
-                 var losses = _context.GameTeams.Count(gt => gt.TeamId == t1Id && gt.Result == "Loss" && gt.Game.SeriesId == s.IdSeries);
-                 return wins < losses;
-             }),
-             // Tính riêng cho KR/INT
-             KRWon = g.Key.Region == "KR" ? g.Count(s =>
-             {
-                 var wins = _context.GameTeams.Count(gt => gt.TeamId == t1Id && gt.Result == "Win" && gt.Game.SeriesId == s.IdSeries);
-                 var losses = _context.GameTeams.Count(gt => gt.TeamId == t1Id && gt.Result == "Loss" && gt.Game.SeriesId == s.IdSeries);
-                 return wins > losses;
-             }) : 0,
-             KRLost = g.Key.Region == "KR" ? g.Count(s =>
-             {
-                 var wins = _context.GameTeams.Count(gt => gt.TeamId == t1Id && gt.Result == "Win" && gt.Game.SeriesId == s.IdSeries);
-                 var losses = _context.GameTeams.Count(gt => gt.TeamId == t1Id && gt.Result == "Loss" && gt.Game.SeriesId == s.IdSeries);
-                 return wins < losses;
-             }) : 0,
-             INTWon = g.Key.Region == "INT" ? g.Count(s =>
-             {
-                 var wins = _context.GameTeams.Count(gt => gt.TeamId == t1Id && gt.Result == "Win" && gt.Game.SeriesId == s.IdSeries);
-                 var losses = _context.GameTeams.Count(gt => gt.TeamId == t1Id && gt.Result == "Loss" && gt.Game.SeriesId == s.IdSeries);
-                 return wins > losses;
-             }) : 0,
-             INTLost = g.Key.Region == "INT" ? g.Count(s =>
-             {
-                 var wins = _context.GameTeams.Count(gt => gt.TeamId == t1Id && gt.Result == "Win" && gt.Game.SeriesId == s.IdSeries);
-                 var losses = _context.GameTeams.Count(gt => gt.TeamId == t1Id && gt.Result == "Loss" && gt.Game.SeriesId == s.IdSeries);
-                 return wins < losses;
-             }) : 0
-         })
-         .ToList();
+                    // Database sẽ tự chạy Subquery để đếm số trận thắng/thua của T1 trong Series này
+                    T1Wins = _context.GameTeams.Count(gt => gt.TeamId == t1Id && gt.Result == "Win" && gt.Game.SeriesId == s.IdSeries),
+                    T1Losses = _context.GameTeams.Count(gt => gt.TeamId == t1Id && gt.Result == "Loss" && gt.Game.SeriesId == s.IdSeries)
+                })
+                .ToListAsync();
 
-            // Tính winrate cho từng tournament
+            // ⚡ Nhóm và xử lý trên RAM (Lúc này dữ liệu đã cực kỳ nhẹ)
+            var result = seriesStats
+                .GroupBy(s => new { s.TournamentId, s.TournamentName, s.Year, s.Region, s.IsT1Winner })
+                .Select(g => new SeriesByTournamentDto
+                {
+                    TournamentName = g.Key.TournamentName,
+                    Year = g.Key.Year.Value,
+                    Region = g.Key.Region,
+                    IsT1Winner = g.Key.IsT1Winner == "YES",
+
+                    SeriesWon = g.Count(s => s.T1Wins > s.T1Losses),
+                    SeriesLost = g.Count(s => s.T1Wins < s.T1Losses),
+
+                    // Tính riêng cho khu vực KR
+                    KRWon = g.Key.Region == "KR" ? g.Count(s => s.T1Wins > s.T1Losses) : 0,
+                    KRLost = g.Key.Region == "KR" ? g.Count(s => s.T1Wins < s.T1Losses) : 0,
+
+                    // Tính riêng cho giải Quốc tế INT
+                    INTWon = g.Key.Region == "INT" ? g.Count(s => s.T1Wins > s.T1Losses) : 0,
+                    INTLost = g.Key.Region == "INT" ? g.Count(s => s.T1Wins < s.T1Losses) : 0
+                })
+                .ToList();
+
+            // Tính tỷ lệ Winrate
             foreach (var item in result)
             {
                 int total = item.SeriesWon + item.SeriesLost;

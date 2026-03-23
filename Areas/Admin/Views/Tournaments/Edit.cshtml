@@ -1,50 +1,61 @@
 ﻿@model T1EsportsWeb.Models.T1Stat.Tournament
 
 @{
-    ViewData["Title"] = "Sửa giải đấu";
-    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Sửa Giải Đấu";
+    Layout = "_AdminLayout";
 }
 
-<h1>Sửa giải đấu</h1>
-
-<hr />
-<div class="row">
-    <div class="col-md-6">
+<div class="card border-0 shadow-sm" style="background-color: #1e1e2d; color: white; max-width: 800px;">
+    <div class="card-header border-bottom border-secondary py-3">
+        <h3 class="card-title fw-bold mb-0 text-white"><i class="fas fa-edit text-info me-2"></i>Sửa Thông Tin: @Model.Name @Model.Year</h3>
+    </div>
+    <div class="card-body p-4">
         <form asp-action="Edit" method="post">
             <input type="hidden" asp-for="IdTournament" />
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group mb-3">
-                <label asp-for="Name" class="control-label"></label>
-                <input asp-for="Name" class="form-control" />
-                <span asp-validation-for="Name" class="text-danger"></span>
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <div class="row mb-3">
+                <div class="col-md-8">
+                    <label asp-for="Name" class="form-label fw-bold text-muted">Tên Giải Đấu</label>
+                    <input asp-for="Name" class="form-control bg-dark border-secondary text-white" required />
+                    <span asp-validation-for="Name" class="text-danger"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Year" class="form-label fw-bold text-muted">Năm</label>
+                    <input asp-for="Year" type="number" class="form-control bg-dark border-secondary text-white" required />
+                    <span asp-validation-for="Year" class="text-danger"></span>
+                </div>
             </div>
-            <div class="form-group mb-3">
-                <label asp-for="Year" class="control-label"></label>
-                <input asp-for="Year" class="form-control" />
-                <span asp-validation-for="Year" class="text-danger"></span>
+
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <label asp-for="Region" class="form-label fw-bold text-muted">Khu Vực</label>
+                    <select asp-for="Region" class="form-select bg-dark border-secondary text-white">
+                        <option value="KR">Hàn Quốc (KR)</option>
+                        <option value="INT">Quốc Tế (INT)</option>
+                    </select>
+                    <span asp-validation-for="Region" class="text-danger"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="IsT1winner" class="form-label fw-bold text-muted">T1 Vô Địch?</label>
+                    <select asp-for="IsT1winner" class="form-select bg-dark border-secondary text-white">
+                        <option value="">-- Chưa rõ --</option>
+                        <option value="YES">Vô Địch (Win)</option>
+                        <option value="NO">Thất Bại (Loss)</option>
+                    </select>
+                    <span asp-validation-for="IsT1winner" class="text-danger"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Winner" class="form-label fw-bold text-muted">Đội Vô Địch</label>
+                    <input asp-for="Winner" class="form-control bg-dark border-secondary text-white" />
+                    <span asp-validation-for="Winner" class="text-danger"></span>
+                </div>
             </div>
-            <div class="form-group mb-3">
-                <label asp-for="Region" class="control-label"></label>
-                <input asp-for="Region" class="form-control" />
-                <span asp-validation-for="Region" class="text-danger"></span>
-            </div>
-            <div class="form-group mb-3">
-                <label asp-for="IsT1winner" class="control-label">T1 vô địch?</label>
-                <select asp-for="IsT1winner" class="form-control">
-                    <option value="">-- Chọn --</option>
-                    <option value="Win">Win</option>
-                    <option value="Loss">Loss</option>
-                </select>
-                <span asp-validation-for="IsT1winner" class="text-danger"></span>
-            </div>
-            <div class="form-group mb-3">
-                <label asp-for="Winner" class="control-label">Đội vô địch</label>
-                <input asp-for="Winner" class="form-control" />
-                <span asp-validation-for="Winner" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Lưu" class="btn btn-primary" />
-                <a asp-area="Admin" asp-action="Index" class="btn btn-secondary">Quay lại</a>
+
+            <hr class="border-secondary" />
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-info px-4 fw-bold text-white"><i class="fas fa-save me-2"></i>Cập Nhật</button>
+                <a asp-action="Index" class="btn btn-outline-light px-4">Quay lại</a>
             </div>
         </form>
     </div>

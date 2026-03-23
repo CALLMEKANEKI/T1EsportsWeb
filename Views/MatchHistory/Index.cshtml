@@ -2,38 +2,118 @@
 
 @{
     ViewData["Title"] = "Lịch sử đấu";
-    Layout = "~/Views/Shared/_Layout.cshtml";
+    Layout = "~/Views/Shared/_Layout.cshtml"; // Hoặc _AdminLayout tùy cấu hình của Boss
 }
 
-<style>   
+@functions {
+    // Hàm siêu ngầu để cấp màu sắc đặc trưng cho từng Đội tuyển LCK/Quốc tế
+    public string GetTeamColor(string teamName)
+    {
+        if (string.IsNullOrEmpty(teamName)) return "#ffffff";
+        var name = teamName.ToLower();
+        if (name.Contains("t1")) return "#e3002b"; // Đỏ T1
+        if (name.Contains("hanwha") || name.Contains("hle")) return "#ff6b00"; // Cam HLE
+        if (name.Contains("gen") || name.Contains("geng")) return "#aa8a00"; // Vàng Gen.G
+        if (name.Contains("dplus") || name.Contains("dk")) return "#00b2a9"; // Xanh ngọc DK
+        if (name.Contains("kt")) return "#ff0000"; // Đỏ KT
+        if (name.Contains("drx")) return "#5a8dff"; // Xanh dương DRX
+        if (name.Contains("kdf")) return "#e05c20"; // Cam Kwangdong
+        if (name.Contains("jdg")) return "#e03e3e"; // Đỏ JDG
+        if (name.Contains("blg")) return "#00a1d6"; // Xanh Bilibili
+        if (name.Contains("tes")) return "#e60012"; // Đỏ TES
+        if (name.Contains("fly")) return "#004f2f"; // Xanh lá FlyQuest
+        return "#a1a5b7"; // Màu xám mặc định cho các đội khác
+    }
+}
+
+<style>
+    /* 💎 ĐỒNG BỘ GIAO DIỆN GLASSMORPHISM VÀ DARK THEME */
+    body {
+        background-color: #05050a;
+        color: #fff;
+    }
+
+    .glass-panel {
+        background: #1e1e2d;
+        border-radius: 16px;
+        border: 1px solid #2b2b40;
+        padding: 24px;
+        margin-bottom: 24px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    }
+
+    .custom-select, .custom-input {
+        background-color: #151521;
+        border: 1px solid #2b2b40;
+        color: #fff;
+        border-radius: 8px;
+    }
+
+        .custom-select:focus, .custom-input:focus {
+            background-color: #151521;
+            border-color: #22c55e;
+            color: #fff;
+            box-shadow: none;
+        }
+
+    /* CARD TRẬN ĐẤU NGẦU HƠN */
+    .series-card {
+        background: linear-gradient(145deg, #1a1a24, #111119);
+        border: 1px solid rgba(255,255,255,0.05);
+        border-radius: 12px;
+        overflow: hidden;
+        transition: 0.3s;
+        margin-bottom: 20px;
+    }
+
+        .series-card:hover {
+            border-color: #22c55e;
+            box-shadow: 0 8px 25px rgba(34, 197, 94, 0.15);
+        }
+
+    .series-header {
+        background: rgba(0,0,0,0.2);
+        padding: 15px 20px;
+        border-bottom: 1px solid #2b2b40;
+        transition: 0.3s;
+    }
+
+        .series-header:hover {
+            background: rgba(34, 197, 94, 0.05);
+        }
+
+    /* ======================================= */
+    /* LOGIC CSS CŨ CỦA BOSS (GIỮ NGUYÊN 100%) */
+    /* ======================================= */
+
     /* Tooltip cho tướng */
     .champion-tooltip {
         position: relative;
         display: inline-block;
     }
 
-    .champion-tooltip .tooltiptext {
-        visibility: hidden;
-        width: 100px;
-        background-color: rgba(0,0,0,0.9);
-        color: #fff;
-        text-align: center;
-        border-radius: 4px;
-        padding: 5px;
-        position: absolute;
-        z-index: 10;
-        bottom: 110%;
-        left: 50%;
-        margin-left: -50px;
-        opacity: 0;
-        transition: opacity 0.2s;
-        font-size: 0.75rem;
-    }
+        .champion-tooltip .tooltiptext {
+            visibility: hidden;
+            width: 100px;
+            background-color: rgba(0,0,0,0.9);
+            color: #fff;
+            text-align: center;
+            border-radius: 4px;
+            padding: 5px;
+            position: absolute;
+            z-index: 10;
+            bottom: 110%;
+            left: 50%;
+            margin-left: -50px;
+            opacity: 0;
+            transition: opacity 0.2s;
+            font-size: 0.75rem;
+        }
 
-    .champion-tooltip:hover .tooltiptext {
-        visibility: visible;
-        opacity: 1;
-    }
+        .champion-tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
 
     /* Định dạng Side */
     .side-blue-text {
@@ -96,17 +176,20 @@
     }
 
     .champion-img {
-        width: 42px;
-        height: 42px;
-        border-radius: 4px;
-        border: 1px solid #333;
+        width: 50px;
+        height: 50px;
+        border-radius: 8px; /* Bo góc nhẹ cho hiện đại */
+        border: 2px solid #2b2b40;
+        object-fit: cover; /* 🎯 FIX: Chống méo ảnh */
+        background-color: #000;
     }
 
     .ban-img {
-        width: 28px;
-        height: 28px;
-        border-radius: 2px;
-        filter: grayscale(0.4);
+        width: 32px;
+        height: 32px;
+        border-radius: 4px;
+        object-fit: cover; /* 🎯 FIX: Chống méo ảnh Ban */
+        filter: grayscale(0.6);
         border: 1px solid #444;
     }
 
@@ -115,114 +198,174 @@
     }
 </style>
 
-<h1 class="text-center text-danger mb-4">Lịch sử đấu</h1>
+<div class="container-fluid py-4">
 
-<!-- Filter form -->
-<form method="get" class="row g-3 mb-4" id="filterForm">
-    <div class="col-md-3">
-        <label for="startDate" class="form-label">Từ ngày</label>
-        <input type="date" class="form-control" id="startDate" name="startDate" value="@ViewBag.StartDate" />
+    <div class="text-center mb-5 pb-4 pt-3 border-bottom" style="border-color: rgba(34, 197, 94, 0.4) !important;">
+        <h1 class="d-flex justify-content-center align-items-center flex-wrap mb-0" style="font-size: 3.5rem; font-weight: 900; letter-spacing: 4px;">
+           <span style="color: #22c55e; text-shadow: 0 0 15px rgba(34, 197, 94, 0.8), 3px 3px 6px rgba(0,0,0,0.9);">LỊCH SỬ ĐẤU</span>
+        </h1>
+
+        <p class="mt-3 mb-0" style="font-size: 1.5rem; color: #ddd; font-weight: bold; text-shadow: 2px 2px 4px rgba(0,0,0,0.9);">
+            Tra cứu chi tiết kết quả, cấm/chọn và thông số các trận đấu
+        </p>
     </div>
-    <div class="col-md-3">
-        <label for="endDate" class="form-label">Đến ngày</label>
-        <input type="date" class="form-control" id="endDate" name="endDate" value="@ViewBag.EndDate" />
+
+    <div class="glass-panel">
+        <form method="get" class="row g-3 align-items-end" id="filterForm">
+            <div class="col-md-3">
+                <label for="startDate" class="form-label small fw-bold text-muted"><i class="far fa-calendar-alt me-1"></i>TỪ NGÀY</label>
+                <input type="date" class="form-control custom-input" id="startDate" name="startDate" value="@ViewBag.StartDate" />
+            </div>
+            <div class="col-md-3">
+                <label for="endDate" class="form-label small fw-bold text-muted"><i class="far fa-calendar-check me-1"></i>ĐẾN NGÀY</label>
+                <input type="date" class="form-control custom-input" id="endDate" name="endDate" value="@ViewBag.EndDate" />
+            </div>
+            <div class="col-md-4">
+                <label for="tournamentId" class="form-label small fw-bold text-muted"><i class="fas fa-trophy me-1"></i>GIẢI ĐẤU</label>
+                <select class="form-select custom-select" id="tournamentId" name="tournamentId">
+                    <option value="">-- Tất cả giải đấu --</option>
+                    @foreach (var t in ViewBag.Tournaments)
+                    {
+                        <option value="@t.IdTournament" selected="@(ViewBag.SelectedTournament == t.IdTournament ? "selected" : null)">
+                            @t.Name (@t.Year)
+                        </option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-success w-100 fw-bold py-2" style="box-shadow: 0 4px 15px rgba(34, 197, 94, 0.4);">
+                    <i class="fas fa-search me-1"></i> LỌC
+                </button>
+            </div>
+        </form>
     </div>
-    <div class="col-md-3">
-        <label for="tournamentId" class="form-label">Giải đấu</label>
-        <select class="form-select" id="tournamentId" name="tournamentId">
-            <option value="">-- Tất cả --</option>
-            @foreach (var t in ViewBag.Tournaments)
+
+    <div id="seriesList">
+        @if (Model != null && Model.Any())
+        {
+            foreach (var series in Model)
             {
-                <option value="@t.IdTournament" selected="@(ViewBag.SelectedTournament == t.IdTournament ? "selected" : null)">
-                    @t.Name (@t.Year)
-                </option>
-            }
-        </select>
-    </div>
-    <div class="col-md-3 d-flex align-items-end">
-        <button type="submit" class="btn btn-primary w-100"><i class="fas fa-search"></i> Lọc</button>
-    </div>
-</form>
+                <div class="series-card">
+                    <div class="series-header d-flex justify-content-between align-items-center cursor-pointer" onclick="$('#series-@series.SeriesId').collapse('toggle')">
+                        <div class="d-flex align-items-center">
+                            <span class="badge bg-dark border border-secondary text-light px-3 py-2 me-3 fs-6">
+                                <i class="far fa-clock me-1"></i> @series.MatchDate.ToString("dd/MM/yyyy")
+                            </span>
+                            <span class="fw-bold fs-4 me-3 text-white">
+                                <span style="color: #e3002b; text-shadow: 0 0 10px currentColor;">T1</span>
+                                <span class="text-muted mx-2 fs-5">vs</span>
+                                <span style="color: @GetTeamColor(series.OpponentName); text-shadow: 0 0 10px currentColor;">@series.OpponentName</span>
+                            </span>
+                            <span class="badge @(series.Result == "Win" ? "bg-success" : "bg-danger") px-3 py-2 fs-6 shadow-sm me-3">@series.Result</span>
+                            <span class="text-info fw-semibold"><i class="fas fa-trophy me-1"></i>@series.TournamentName</span>
+                        </div>
+                        <i class="fas fa-chevron-down text-muted fs-4"></i>
+                    </div>
 
-<!-- Series list -->
-<div id="seriesList">
-    @foreach (var series in Model)
-    {
-        <div class="card mb-4 bg-dark text-white border-secondary">
-            <div class="card-header d-flex justify-content-between align-items-center cursor-pointer" onclick="$('#series-@series.SeriesId').collapse('toggle')">
-                <div>
-                    <span class="text-muted small">@series.MatchDate.ToString("dd/MM/yyyy")</span>
-                    <strong class="ms-2">T1 vs @series.OpponentName</strong>
-                    <span class="badge @(series.Result == "Win" ? "bg-success" : "bg-danger") ms-2">@series.Result</span>
-                    <span class="text-muted small">@series.TournamentName</span>
-                </div>
-                <i class="fas fa-chevron-down"></i>
-            </div>
+                    <div id="series-@series.SeriesId" class="collapse show">
+                        <div class="p-0">
+                            <table class="table table-dark table-hover mb-0" style="background: transparent;">
+                                <thead style="background-color: #2b2b40;">
+                                    <tr class="text-muted small text-uppercase">
+                                        <th class="ps-4">Ván Đấu</th>
+                                        <th>Phiên Bản</th>
+                                        <th>Đội Hình</th>
+                                        <th>Kết Quả</th>
+                                        <th>Xem Lại (VOD)</th>
+                                        <th class="text-end pe-4">Thao Tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var game in series.Games)
+                                    {
+                                        <tr style="border-bottom: 1px solid #2b2b40;">
+                                            <td class="ps-4 fw-bold">Game @game.GameNumber</td>
+                                            <td class="text-muted">@game.Patch</td>
+                                            <td class="@(game.Side == "Blue" ? "side-blue-text" : "side-red-text")"><i class="fas fa-flag me-1"></i>@game.Side</td>
+                                            <td>
+                                                @if (game.Result == "Win")
+                                                {
+                                                    <span class="badge bg-soft-success text-success border border-success"><i class="fas fa-check-circle me-1"></i>Win</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-soft-danger text-danger border border-danger"><i class="fas fa-times-circle me-1"></i>Loss</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (!string.IsNullOrEmpty(game.Link))
+                                                {
+                                                    <a href="@game.Link" target="_blank" class="btn btn-sm btn-outline-danger px-3 rounded-pill shadow-sm">
+                                                        <i class="fab fa-youtube me-1"></i>YouTube
+                                                    </a>
+                                                }
+                                                else
+                                                {
+                                                    <button class="btn btn-sm btn-outline-secondary px-3 rounded-pill opacity-50" disabled>
+                                                        <i class="fas fa-video-slash me-1"></i>No VOD
+                                                    </button>
+                                                }
+                                            </td>
+                                            <td class="text-end pe-4">
+                                                <button class="btn btn-sm btn-info text-white fw-bold px-3 rounded-pill shadow-sm" onclick="loadGameDetails(@game.GameId, '@game.Side', this)">
+                                                    <i class="fas fa-info-circle me-1"></i>Chi tiết
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <tr style="border: none;">
+                                            <td colspan="6" class="p-0 border-0">
 
-            <div id="series-@series.SeriesId" class="collapse show">
-                <div class="card-body p-0">
-                    <table class="table table-dark table-hover mb-0">
-                        <thead>
-                            <tr class="text-muted small">
-                                <th>GAME</th>
-                                <th>PATCH</th>
-                                <th>SIDE</th>
-                                <th>RESULT</th>
-                                <th>VOD</th>
-                                <th>ACTION</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var game in series.Games)
-                            {
-                                <tr>
-                                    <td>Game @game.GameNumber</td>
-                                    <td>@game.Patch</td>
-                                    <td class="@(game.Side == "Blue" ? "side-blue-text" : "side-red-text")">@game.Side</td>
-                                    <td><span class="badge @(game.Result == "Win" ? "bg-success" : "bg-danger")">@game.Result</span></td>
-                                    <td><a href="@game.Link" target="_blank" class="text-danger"><i class="fab fa-youtube"></i></a></td>
-                                    <td>
-                                        <button class="btn btn-sm btn-outline-info" onclick="loadGameDetails(@game.GameId, '@game.Side', this)">Chi tiết</button>
-                                    </td>
-                                </tr>
-                                <tr id="game-detail-@game.GameId" style="display: none;">
-                                    <td colspan="6" class="p-3" style="background: #121212;">
-                                        <div class="row mb-4 align-items-center">
-                                            <div class="col-5">
-                                                <div id="left-bans-@game.GameId" class="d-flex gap-1"></div>
-                                            </div>
-                                            <div class="col-2 text-center text-muted small fw-bold">BANS</div>
-                                            <div class="col-5">
-                                                <div id="right-bans-@game.GameId" class="d-flex gap-1 justify-content-end"></div>
-                                            </div>
-                                        </div>
+                                                <div id="game-detail-@game.GameId" style="display: none;">
 
-                                        <div class="row">
-                                            <div class="col-5">
-                                                <div id="left-team-label-@game.GameId" class="mb-3"></div>
-                                                <div id="left-lineup-@game.GameId" class="d-flex flex-column gap-2"></div>
-                                            </div>
-                                            <div class="col-2">
-                                                <div class="vs-divider">
-                                                    <div class="vs-line"></div>
-                                                    <div class="vs-circle">VS</div>
-                                                    <div class="vs-line"></div>
+                                                    <div class="p-4" style="background: #111119; box-shadow: inset 0 5px 15px rgba(0,0,0,0.5);">
+                                                        <div class="row mb-4 align-items-center">
+                                                            <div class="col-5">
+                                                                <div id="left-bans-@game.GameId" class="d-flex gap-2"></div>
+                                                            </div>
+                                                            <div class="col-2 text-center text-muted small fw-bold text-uppercase" style="letter-spacing: 2px;">CẤM (BANS)</div>
+                                                            <div class="col-5">
+                                                                <div id="right-bans-@game.GameId" class="d-flex gap-2 justify-content-end"></div>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="row">
+                                                            <div class="col-5">
+                                                                <div id="left-team-label-@game.GameId" class="mb-3"></div>
+                                                                <div id="left-lineup-@game.GameId" class="d-flex flex-column gap-2"></div>
+                                                            </div>
+                                                            <div class="col-2">
+                                                                <div class="vs-divider">
+                                                                    <div class="vs-line"></div>
+                                                                    <div class="vs-circle text-danger fw-bold shadow" style="border-color: #e3002b;">VS</div>
+                                                                    <div class="vs-line"></div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-5 text-end">
+                                                                <div id="right-team-label-@game.GameId" class="mb-3"></div>
+                                                                <div id="right-lineup-@game.GameId" class="d-flex flex-column gap-2 align-items-end"></div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
                                                 </div>
-                                            </div>
-                                            <div class="col-5 text-end">
-                                                <div id="right-team-label-@game.GameId" class="mb-3"></div>
-                                                <div id="right-lineup-@game.GameId" class="d-flex flex-column gap-2 align-items-end"></div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
+            }
+        }
+        else
+        {
+            <div class="glass-panel text-center py-5">
+                <i class="fas fa-folder-open fa-4x text-muted mb-3 opacity-50"></i>
+                <h4 class="text-muted">Không tìm thấy trận đấu nào khớp với bộ lọc.</h4>
             </div>
-        </div>
-    }
+        }
+    </div>
 </div>
 
 @section Scripts {
@@ -235,19 +378,32 @@
             "SUPPORT": "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-clash/global/default/assets/images/position-selector/positions/icon-position-utility.png"
         };
 
+        // Ảnh dự phòng khi bị null (chống lỗi sập server)
+        const fallbackChampImg = 'https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-icons/-1.png';
+        const fallbackPlayerImg = 'https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/profile-icons/0.jpg';
+
         async function loadGameDetails(gameId, t1Side, button) {
-            const detailRow = document.getElementById('game-detail-' + gameId);
-            if (detailRow.style.display === 'table-row') {
-                detailRow.style.display = 'none';
-                button.innerText = 'Chi tiết';
+            const detailContainer = document.getElementById('game-detail-' + gameId);
+            const $container = $(detailContainer); // Dùng jQuery để tạo hiệu ứng trượt
+
+            // Nếu đang mở thì ĐÓNG LẠI bằng hiệu ứng trượt lên (250ms)
+            if ($container.is(':visible')) {
+                $container.slideUp(250);
+                button.innerHTML = '<i class="fas fa-info-circle me-1"></i>Chi tiết';
                 return;
             }
 
-            detailRow.style.display = 'table-row';
-            if (detailRow.getAttribute('data-loaded') === 'true') return;
+            // Đổi nút thành trạng thái Loading
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
 
-            button.innerText = '...';
+            // Nếu đã từng tải dữ liệu rồi, thì chỉ việc MỞ RA bằng hiệu ứng trượt xuống
+            if (detailContainer.getAttribute('data-loaded') === 'true') {
+                $container.slideDown(250);
+                button.innerHTML = '<i class="fas fa-eye-slash me-1"></i>Đóng';
+                return;
+            }
 
+            // Nếu chưa tải dữ liệu, tiến hành gọi API
             try {
                 const res = await fetch(`/MatchHistory/GetGameDetails?gameId=${gameId}`);
                 const data = await res.json();
@@ -256,70 +412,81 @@
                 const roles = ["TOP", "JUNGLE", "MID", "ADC", "SUPPORT"];
 
                 // 1. Setup Labels
-                const leftLabel = document.getElementById(`left-team-label-${gameId}`);
-                const rightLabel = document.getElementById(`right-team-label-${gameId}`);
+                document.getElementById(`left-team-label-${gameId}`).className = `team-header-left side-blue-text`;
+                document.getElementById(`left-team-label-${gameId}`).innerHTML = `<small>BLUE SIDE</small><br><span class="fs-5">${isT1Left ? 'T1' : 'OPPONENT'}</span>`;
 
-                leftLabel.className = `team-header-left ${isT1Left ? 'side-blue-text' : 'side-blue-text'}`;
-                leftLabel.innerHTML = `<small>BLUE SIDE</small><br>${isT1Left ? 'T1' : 'OPPONENT'}`;
-
-                rightLabel.className = `team-header-right ${!isT1Left ? 'side-red-text' : 'side-red-text'}`;
-                rightLabel.innerHTML = `<small>RED SIDE</small><br>${!isT1Left ? 'T1' : 'OPPONENT'}`;
+                document.getElementById(`right-team-label-${gameId}`).className = `team-header-right side-red-text`;
+                document.getElementById(`right-team-label-${gameId}`).innerHTML = `<small>RED SIDE</small><br><span class="fs-5">${!isT1Left ? 'T1' : 'OPPONENT'}</span>`;
 
                 // 2. Render Lineups
-                const leftCont = document.getElementById(`left-lineup-${gameId}`);
-                const rightCont = document.getElementById(`right-lineup-${gameId}`);
-                leftCont.innerHTML = ''; rightCont.innerHTML = '';
-
+                let leftLineupHtml = '';
+                let rightLineupHtml = '';
                 const leftPlayers = isT1Left ? data.t1Lineup : data.opponentLineup;
                 const rightPlayers = isT1Left ? data.opponentLineup : data.t1Lineup;
 
-                leftPlayers.forEach((p, i) => leftCont.appendChild(renderPlayer(p, 'left', roles[i])));
-                rightPlayers.forEach((p, i) => rightCont.appendChild(renderPlayer(p, 'right', roles[i])));
+                leftPlayers.forEach((p, i) => leftLineupHtml += renderPlayerStr(p, 'left', roles[i]));
+                rightPlayers.forEach((p, i) => rightLineupHtml += renderPlayerStr(p, 'right', roles[i]));
+
+                document.getElementById(`left-lineup-${gameId}`).innerHTML = leftLineupHtml;
+                document.getElementById(`right-lineup-${gameId}`).innerHTML = rightLineupHtml;
 
                 // 3. Render Bans
-                const leftBans = document.getElementById(`left-bans-${gameId}`);
-                const rightBans = document.getElementById(`right-bans-${gameId}`);
-                leftBans.innerHTML = ''; rightBans.innerHTML = '';
-
+                let leftBansHtml = '';
+                let rightBansHtml = '';
                 data.bans.forEach(ban => {
-                    const img = `<div class="champion-tooltip">
-                                    <img src="${ban.championImageUrl}" class="ban-img">
-                                    <span class="tooltiptext">${ban.championName}</span>
-                                 </div>`;
+                    const banImgSrc = ban.championImageUrl || fallbackChampImg;
+                    const imgHtml = `<div class="champion-tooltip shadow-sm">
+                                        <img src="${banImgSrc}" class="ban-img" onerror="this.onerror=null; this.src='${fallbackChampImg}'">
+                                        <span class="tooltiptext">${ban.championName || 'Unknown'}</span>
+                                     </div>`;
                     const isT1Ban = (ban.teamName === "T1");
                     if (isT1Left) {
-                        isT1Ban ? leftBans.insertAdjacentHTML('beforeend', img) : rightBans.insertAdjacentHTML('beforeend', img);
+                        isT1Ban ? leftBansHtml += imgHtml : rightBansHtml += imgHtml;
                     } else {
-                        isT1Ban ? rightBans.insertAdjacentHTML('beforeend', img) : leftBans.insertAdjacentHTML('beforeend', img);
+                        isT1Ban ? rightBansHtml += imgHtml : leftBansHtml += imgHtml;
                     }
                 });
+                document.getElementById(`left-bans-${gameId}`).innerHTML = leftBansHtml;
+                document.getElementById(`right-bans-${gameId}`).innerHTML = rightBansHtml;
 
-                detailRow.setAttribute('data-loaded', 'true');
-                button.innerText = 'Ẩn';
+                // Đánh dấu đã tải xong và MỞ RA mượt mà
+                detailContainer.setAttribute('data-loaded', 'true');
+                $container.slideDown(250);
+                button.innerHTML = '<i class="fas fa-eye-slash me-1"></i>Đóng';
             } catch (e) {
-                button.innerText = 'Lỗi';
+                button.innerHTML = '<i class="fas fa-exclamation-triangle me-1"></i>Lỗi';
             }
         }
 
-        function renderPlayer(p, align, role) {
+        // Đổi từ tạo Element sang tạo String HTML cho nhẹ máy (THÊM this.onerror=null;)
+        function renderPlayerStr(p, align, role) {
             const isRight = align === 'right';
-            const div = document.createElement('div');
-            div.className = `d-flex align-items-center gap-2 ${isRight ? 'flex-row-reverse' : ''}`;
-            div.innerHTML = `
-                <div class="champion-tooltip">
-                    <img src="${p.championImageUrl}" class="champion-img">
-                    <span class="tooltiptext">${p.championName}</span>
-                </div>
-                <div>
-                    <div class="d-flex align-items-center gap-1 ${isRight ? 'justify-content-end' : ''}">
-                        ${!isRight ? `<img src="${laneIcons[role]}" class="lane-icon">` : ''}
-                        <span class="small fw-bold">${p.playerName}</span>
-                        ${isRight ? `<img src="${laneIcons[role]}" class="lane-icon">` : ''}
+            const safeRole = role || "UNKNOWN";
+            const champImgUrl = p.championImageUrl || fallbackChampImg;
+            const playerImgUrl = p.playerPhotoUrl || fallbackPlayerImg;
+            const laneIconStr = laneIcons[safeRole] ? `<img src="${laneIcons[safeRole]}" class="lane-icon">` : '';
+
+            return `
+            <div class="d-flex align-items-center gap-2 py-1 ${isRight ? 'flex-row-reverse text-end' : 'text-start'}" style="width: 100%;">
+                <div class="d-flex align-items-center position-relative ${isRight ? 'flex-row-reverse' : ''}" style="width: 60px;">
+                    <div class="champion-tooltip shadow">
+                        <img src="${champImgUrl}" class="champion-img" onerror="this.onerror=null; this.src='${fallbackChampImg}'">
+                        <span class="tooltiptext">${p.championName || 'Unknown'}</span>
                     </div>
-                    <div class="text-muted" style="font-size: 0.65rem;">${p.championName}</div>
+                    <img src="${playerImgUrl}" class="rounded-circle shadow-sm"
+                         style="width: 32px; height: 32px; object-fit: cover; border: 2px solid #111119; position: absolute; ${isRight ? 'left: -8px;' : 'right: -8px;'} bottom: -5px; z-index: 2;"
+                         onerror="this.onerror=null; this.src='${fallbackPlayerImg}'">
                 </div>
-            `;
-            return div;
+
+                <div style="min-width: 120px;" class="${isRight ? 'me-2' : 'ms-2'}">
+                    <div class="d-flex align-items-center gap-2 ${isRight ? 'justify-content-end' : ''}">
+                        ${!isRight ? laneIconStr : ''}
+                        <span class="fw-bold text-white" style="font-size: 0.95rem;">${p.playerName || 'Unknown'}</span>
+                        ${isRight ? laneIconStr : ''}
+                    </div>
+                    <div class="text-muted" style="font-size: 0.75rem; font-weight: 500;">${p.championName || 'Unknown'}</div>
+                </div>
+            </div>`;
         }
     </script>
 }

@@ -194,6 +194,9 @@
         backdrop-filter: blur(5px);
         z-index: 10;
         box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        /* 🎯 KHÓA MÀU TRẮNG TẠI ĐÂY */
+        color: white !important;
+        text-decoration: none !important;
     }
 
     @@keyframes fadeInScale {
@@ -235,34 +238,36 @@
                     string photo = (p == null || string.IsNullOrEmpty(p.PhotoUrl)) ? "/images/default-player.png" : p.PhotoUrl;
 
                     <div class="roster-col-5 player-filter-item" data-position="@pos">
-                        <div class="player-card">
-                            <div class="pos-badge">@pos</div>
-                            <div class="player-photo-wrapper">
-                                <img src="@photo" alt="@p?.IngameName" class="player-photo">
-                                <div class="photo-overlay"></div>
-                            </div>
-
-                            <div class="card-body-custom">
-                                <div class="player-ingame">@p?.IngameName</div>
-                                <span class="player-fullname">@p?.FullName</span>
-
-                                <div class="stat-container">
-                                    <div class="stat-item"><span class="stat-value">@stat.TotalGames</span><span class="stat-label">Played</span></div>
-                                    <div class="stat-item"><span class="stat-value text-success">@stat.Wins</span><span class="stat-label">Wins</span></div>
-                                    <div class="stat-item"><span class="stat-value text-secondary">@stat.Losses</span><span class="stat-label">Loss</span></div>
+                        <a href="@Url.Action("Detail", "Roster", new { id = p.IdPlayer })" class="text-decoration-none text-white">
+                            <div class="player-card">
+                                <div class="pos-badge">@pos</div>
+                                <div class="player-photo-wrapper">
+                                    <img src="@photo" alt="@p?.IngameName" class="player-photo">
+                                    <div class="photo-overlay"></div>
                                 </div>
 
-                                <div class="winrate-row">
-                                    <div class="wr-label">WR @stat.WinRate%</div>
-                                    <div class="champ-mini-list">
-                                        @foreach (var champ in stat.TopChampions)
-                                        {
-                                            <img src="@champ.Image" class="champ-mini shadow-sm" title="@champ.Name (@champ.Count T)" data-bs-toggle="tooltip">
-                                        }
+                                <div class="card-body-custom">
+                                    <div class="player-ingame">@p?.IngameName</div>
+                                    <span class="player-fullname">@p?.FullName</span>
+
+                                    <div class="stat-container">
+                                        <div class="stat-item"><span class="stat-value">@stat.TotalGames</span><span class="stat-label">Played</span></div>
+                                        <div class="stat-item"><span class="stat-value text-success">@stat.Wins</span><span class="stat-label">Wins</span></div>
+                                        <div class="stat-item"><span class="stat-value text-secondary">@stat.Losses</span><span class="stat-label">Loss</span></div>
                                     </div>
-                                </div>
+
+                                    <div class="winrate-row">
+                                        <div class="wr-label">WR @stat.WinRate%</div>
+                                        <div class="champ-mini-list">
+                                            @foreach (var champ in stat.TopChampions)
+                                            {
+                                                <img src="@champ.Image" class="champ-mini shadow-sm" title="@champ.Name (@champ.Count T)" data-bs-toggle="tooltip">
+                                            }
+                                        </div>
+                                    </div>
+                                </div>                        
                             </div>
-                        </div>
+                        </a>
                     </div>
                 }
             }
@@ -271,7 +276,7 @@
         @if (formerPlayers != null && formerPlayers.Count > 0)
         {
             <div class="text-center mb-5 mt-5">
-                <h2 class="fw-bold text-uppercase text-secondary" style="letter-spacing: 2px; opacity: 0.7;">CỰU TUYỂN THỦ T1</h2>
+                <h2 class="fw-bold text-uppercase text-secondary" style="letter-spacing: 2px; opacity: 0.7;">CỰU THÀNH VIÊN T1</h2>
             </div>
 
             <div class="roster-grid">

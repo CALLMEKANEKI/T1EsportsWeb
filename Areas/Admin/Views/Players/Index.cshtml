@@ -6,10 +6,13 @@
 
     int currentPage = ViewBag.CurrentPage ?? 1;
     int totalPages = ViewBag.TotalPages ?? 1;
-    string searchName = ViewBag.SearchName ?? "";
-    string selectedPosition = ViewBag.Position ?? "";
-    string selectedCountry = ViewBag.Country ?? "";
-    int? selectedTeamId = ViewBag.TeamId;
+
+    string searchIngame = ViewBag.SearchIngame as string ?? "";
+    bool? hasImage = ViewBag.HasImage as bool?;
+
+    string selectedPosition = ViewBag.Position as string ?? "";
+    string selectedCountry = ViewBag.Country as string ?? "";
+    int? selectedTeamId = ViewBag.TeamId as int?;
     var teams = ViewBag.Teams as List<T1EsportsWeb.Models.T1Stat.Team> ?? new List<T1EsportsWeb.Models.T1Stat.Team>();
 }
 
@@ -20,35 +23,38 @@
     }
 
         .chart-container canvas {
-            min-width: 800px; /* đủ rộng để hiển thị nhiều cột */
+            min-width: 800px;
             height: 400px;
         }
 </style>
 
-<h1>Quản lý tuyển thủ</h1>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold mb-1 text-white"><i class="fas fa-users text-danger me-2"></i>Quản Lý Tuyển Thủ</h2>
+        <p class="text-muted small mb-0">Quản lý danh sách, thông tin cá nhân và vị trí thi đấu của các tuyển thủ.</p>
+    </div>
+    <a asp-area="Admin" asp-action="Create" class="btn btn-danger rounded-pill px-4 shadow-sm fw-bold">
+        <i class="fas fa-plus me-2"></i>Thêm tuyển thủ mới
+    </a>
+</div>
 
-<p>
-    <a asp-area="Admin" asp-action="Create" class="btn btn-primary"><i class="fas fa-plus"></i> Thêm mới</a>
-</p>
-
-<!-- Form lọc -->
-<form asp-area="Admin" asp-action="Index" method="get" id="filterForm" class="mb-3">
+<form asp-area="Admin" asp-action="Index" method="get" id="filterForm" class="mb-4">
     <div class="row g-2 align-items-end">
-        <div class="col-md-3">
-            <label class="form-label">Tên ingame</label>
-            <input type="text" name="searchIngame" class="form-control" placeholder="Nhập tên..." value="@searchIngame" />
+        <div class="col-md-2">
+            <label class="form-label text-muted small fw-bold">TÊN INGAME</label>
+            <input type="text" name="searchIngame" class="form-control bg-dark border-secondary text-white" placeholder="Nhập tên..." value="@searchIngame" />
         </div>
         <div class="col-md-2">
-            <label class="form-label">Ảnh</label>
-            <select name="hasImage" class="form-control" onchange="submitFilter()">
-                <option value="">-- Lọc theo ảnh --</option>
-                <option value="true" selected="@(hasImage == true)">Có ảnh</option>
-                <option value="false" selected="@(hasImage == false)">Không ảnh</option>
+            <label class="form-label text-muted small fw-bold">ẢNH ĐẠI DIỆN</label>
+            <select name="hasImage" class="form-select bg-dark border-secondary text-white" onchange="submitFilter()">
+                <option value="">-- Tất cả --</option>
+                <option value="true" selected="@(hasImage == true)">Đã có ảnh</option>
+                <option value="false" selected="@(hasImage == false)">Chưa có ảnh</option>
             </select>
         </div>
         <div class="col-md-2">
-            <label class="form-label">Vị trí</label>
-            <select name="position" class="form-control" onchange="submitFilter()">
+            <label class="form-label text-muted small fw-bold">VỊ TRÍ</label>
+            <select name="position" class="form-select bg-dark border-secondary text-white" onchange="submitFilter()">
                 <option value="">-- Tất cả --</option>
                 <option value="Top" selected="@(selectedPosition == "Top")">Top</option>
                 <option value="Jungle" selected="@(selectedPosition == "Jungle")">Jungle</option>
@@ -58,12 +64,12 @@
             </select>
         </div>
         <div class="col-md-2">
-            <label class="form-label">Quốc gia</label>
-            <input type="text" name="country" class="form-control" placeholder="VD: KR, CN..." value="@selectedCountry" />
+            <label class="form-label text-muted small fw-bold">QUỐC GIA</label>
+            <input type="text" name="country" class="form-control bg-dark border-secondary text-white" placeholder="VD: KR, VN..." value="@selectedCountry" />
         </div>
         <div class="col-md-2">
-            <label class="form-label">Đội tuyển</label>
-            <select name="teamId" class="form-control" onchange="submitFilter()">
+            <label class="form-label text-muted small fw-bold">ĐỘI TUYỂN</label>
+            <select name="teamId" class="form-select bg-dark border-secondary text-white" onchange="submitFilter()">
                 <option value="">-- Tất cả đội --</option>
                 @foreach (var team in teams)
                 {
@@ -71,46 +77,22 @@
                 }
             </select>
         </div>
-        <div class="col-md-1">
-            <label class="form-label">&nbsp;</label>
-            <div>
-                <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i> Tìm</button>
-                <a asp-area="Admin" asp-action="Index" class="btn btn-secondary">Xóa lọc</a>
-            </div>
-
-            <div class="col-md-2">
-                <label class="form-label text-muted small fw-bold">QUỐC GIA</label>
-                <input type="text" name="country" class="form-control border-0 bg-dark text-white"
-                       placeholder="VD: KR, VN..." value="@selectedCountry" onchange="submitFilter()" />
-            </div>
-
-            <div class="col-md-2">
-                <label class="form-label text-muted small fw-bold">ĐỘI TUYỂN</label>
-                <select name="teamId" class="form-select border-0 bg-dark text-white" onchange="submitFilter()">
-                    <option value="">-- Tất cả đội --</option>
-                    @foreach (var team in teams)
-                    {
-                        <option value="@team.IdTeam" selected="@(selectedTeamId == team.IdTeam)">@team.Name</option>
-                    }
-                </select>
-            </div>
-
-            <div class="col-md-3 d-flex gap-2">
-                <button type="submit" class="btn btn-primary flex-grow-1 fw-bold">Tìm kiếm</button>
-                <a asp-area="Admin" asp-action="Index" class="btn btn-outline-secondary px-3" title="Xóa lọc">
-                    <i class="fas fa-redo"></i>
-                </a>
-            </div>
-        </form>
+        <div class="col-md-2 d-flex gap-2">
+            <button type="submit" class="btn btn-success flex-grow-1 fw-bold"><i class="fas fa-search me-1"></i> Tìm</button>
+            <a asp-area="Admin" asp-action="Index" class="btn btn-outline-secondary px-3" title="Xóa bộ lọc (Xem tất cả)">
+                <i class="fas fa-redo"></i>
+            </a>
+        </div>
     </div>
-</div>
+</form>
 
 <div class="card border-0 shadow-sm" style="background-color: #1e1e2d;">
     <div class="table-responsive">
         <table class="table table-hover align-middle mb-0" style="color: #e4e6ef;">
             <thead style="background-color: #2b2b40; color: #a1a5b7;">
                 <tr>
-                    <th class="ps-4 py-3 border-0">ID</th>
+                    <th class="ps-4 py-3 border-0" style="width: 70px;">ID</th>
+                    <th class="py-3 border-0">TUYỂN THỦ</th>
                     <th class="py-3 border-0">VỊ TRÍ</th>
                     <th class="py-3 border-0">QUỐC GIA</th>
                     <th class="py-3 border-0">ĐỘI TUYỂN</th>
@@ -124,6 +106,26 @@
                     {
                         <tr style="border-bottom: 1px solid #2b2b40;">
                             <td class="ps-4 text-muted">#@item.IdPlayer</td>
+
+                            <td class="py-3">
+                                <div class="d-flex align-items-center">
+                                    @if (!string.IsNullOrEmpty(item.PhotoUrl))
+                                    {
+                                        <img src="@item.PhotoUrl" alt="@item.IngameName" class="rounded-circle border @(item.Team?.Name != null && item.Team.Name.Contains("T1") ? "border-danger" : "border-secondary") p-1 me-3 shadow-sm" style="width: 50px; height: 50px; object-fit: cover; background: #05050a;" />
+                                    }
+                                    else
+                                    {
+                                        <div class="rounded-circle bg-dark d-flex align-items-center justify-content-center border border-2 border-dashed border-secondary me-3" style="width: 50px; height: 50px;">
+                                            <i class="fas fa-user text-muted"></i>
+                                        </div>
+                                    }
+                                    <div>
+                                        <span class="fw-bold text-white fs-6 d-block mb-1">@item.IngameName</span>
+                                        <small class="text-muted"><i class="fas fa-id-badge me-1"></i>@item.FullName</small>
+                                    </div>
+                                </div>
+                            </td>
+
                             <td class="py-3">
                                 @if (item.Position == "Top")
                                 {
@@ -167,20 +169,19 @@
                                     <span class="text-muted">Chưa rõ</span>
                                 }
                             </td>
-                            <td class="py-3 fw-bold" style="color: #e3002b;">@(item.Team?.Name ?? "Tuyển thủ tự do")</td>
+                            <td class="py-3 fw-bold" style="color: @(item.Team?.Name != null && item.Team.Name.Contains("T1") ? "#e3002b" : "#fff");">
+                                @(item.Team?.Name ?? "Tuyển thủ tự do")
+                            </td>
                             <td class="text-end pe-4 py-3">
                                 <div class="btn-group gap-2">
-                                    <a asp-area="Admin" asp-action="Edit" asp-route-id="@item.IdPlayer"
-                                       class="btn btn-sm btn-outline-info rounded-pill px-3 fw-bold">
-                                        <i class="fas fa-edit me-1"></i>Sửa
+                                    <a asp-area="Admin" asp-action="Edit" asp-route-id="@item.IdPlayer" class="btn btn-sm btn-outline-info rounded-pill px-3 fw-bold">
+                                        <i class="fas fa-edit"></i>
                                     </a>
-                                    <a asp-area="Admin" asp-action="Details" asp-route-id="@item.IdPlayer"
-                                       class="btn btn-sm btn-outline-light rounded-pill px-3 fw-bold">
-                                        <i class="fas fa-eye me-1"></i>Xem
+                                    <a asp-area="Admin" asp-action="Details" asp-route-id="@item.IdPlayer" class="btn btn-sm btn-outline-light rounded-pill px-3 fw-bold">
+                                        <i class="fas fa-eye"></i>
                                     </a>
-                                    <a asp-area="Admin" asp-action="Delete" asp-route-id="@item.IdPlayer"
-                                       class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-bold">
-                                        <i class="fas fa-trash me-1"></i>Xóa
+                                    <a asp-area="Admin" asp-action="Delete" asp-route-id="@item.IdPlayer" class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-bold">
+                                        <i class="fas fa-trash"></i>
                                     </a>
                                 </div>
                             </td>
@@ -190,9 +191,10 @@
                 else
                 {
                     <tr>
-                        <td colspan="5" class="text-center py-5">
+                        <td colspan="6" class="text-center py-5">
                             <i class="fas fa-users-slash fs-1 mb-3 opacity-25"></i>
-                            <p class="text-muted">Không tìm thấy tuyển thủ nào!</p>
+                            <p class="text-muted fs-5">Không tìm thấy tuyển thủ nào!</p>
+                            <a asp-action="Index" class="btn btn-outline-light mt-2">Xem lại tất cả</a>
                         </td>
                     </tr>
                 }
@@ -207,7 +209,7 @@
         <ul class="pagination justify-content-center">
             <li class="page-item @(currentPage == 1 ? "disabled" : "")">
                 <a class="page-link bg-dark border-secondary text-white" asp-area="Admin" asp-action="Index"
-                   asp-route-page="@(currentPage - 1)" asp-route-searchName="@searchName"
+                   asp-route-page="@(currentPage - 1)" asp-route-searchIngame="@searchIngame" asp-route-hasImage="@hasImage"
                    asp-route-position="@selectedPosition" asp-route-country="@selectedCountry"
                    asp-route-teamId="@selectedTeamId">«</a>
             </li>
@@ -216,13 +218,14 @@
                 <li class="page-item @(i == currentPage ? "active" : "")">
                     <a class="page-link @(i == currentPage ? "bg-danger border-danger" : "bg-dark border-secondary text-white")"
                        asp-area="Admin" asp-action="Index" asp-route-page="@i"
-                       asp-route-searchName="@searchName" asp-route-position="@selectedPosition"
-                       asp-route-country="@selectedCountry" asp-route-teamId="@selectedTeamId">@i</a>
+                       asp-route-searchIngame="@searchIngame" asp-route-hasImage="@hasImage"
+                       asp-route-position="@selectedPosition" asp-route-country="@selectedCountry"
+                       asp-route-teamId="@selectedTeamId">@i</a>
                 </li>
             }
             <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
                 <a class="page-link bg-dark border-secondary text-white" asp-area="Admin" asp-action="Index"
-                   asp-route-page="@(currentPage + 1)" asp-route-searchName="@searchName"
+                   asp-route-page="@(currentPage + 1)" asp-route-searchIngame="@searchIngame" asp-route-hasImage="@hasImage"
                    asp-route-position="@selectedPosition" asp-route-country="@selectedCountry"
                    asp-route-teamId="@selectedTeamId">»</a>
             </li>

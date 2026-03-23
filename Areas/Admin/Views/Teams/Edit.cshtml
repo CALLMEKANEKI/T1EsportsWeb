@@ -1,44 +1,54 @@
 ﻿@model T1EsportsWeb.Models.T1Stat.Team
 
 @{
-    ViewData["Title"] = "Sửa";
-    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Sửa Đội Tuyển";
+    Layout = "_AdminLayout";
 }
 
-<h1>Update</h1>
-
-<h4>Product</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
+<div class="card border-0 shadow-sm" style="background-color: #1e1e2d; color: white; max-width: 800px;">
+    <div class="card-header border-bottom border-secondary py-3">
+        <h3 class="card-title fw-bold mb-0 text-white"><i class="fas fa-edit text-info me-2"></i>Sửa Thông Tin: @Model.Name</h3>
+    </div>
+    <div class="card-body p-4">
         <form asp-action="Edit" method="post" enctype="multipart/form-data">
             <input type="hidden" asp-for="IdTeam" />
-            <input type="hidden" asp-for="LogoUrl" /> <div class="form-group">
-                <label>Tên đội</label>
-                <input asp-for="Name" class="form-control" />
+            <input type="hidden" asp-for="LogoUrl" />
+
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label asp-for="Name" class="form-label fw-bold text-muted">Tên Đội Tuyển</label>
+                    <input asp-for="Name" class="form-control bg-dark border-secondary text-white" required />
+                    <span asp-validation-for="Name" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Region" class="form-label fw-bold text-muted">Khu Vực</label>
+                    <select asp-for="Region" class="form-select bg-dark border-secondary text-white" required>
+                        <option value="KR">Hàn Quốc (KR)</option>
+                        <option value="INT">Quốc Tế (INT)</option>
+                    </select>
+                    <span asp-validation-for="Region" class="text-danger"></span>
+                </div>
             </div>
 
-            <div class="form-group">
-                <label>Khu vực</label>
-                <input asp-for="Region" class="form-control" />
+            <div class="mb-4">
+                <label class="form-label fw-bold text-muted">Thay Đổi Logo</label>
+                @if (!string.IsNullOrEmpty(Model.LogoUrl))
+                {
+                    <div class="mb-2">
+                        <img src="@Model.LogoUrl" alt="Current Logo" class="rounded bg-white p-1" style="width: 60px; height: 60px; object-fit: contain;" />
+                    </div>
+                }
+                <input type="file" name="logoFile" class="form-control bg-dark border-secondary text-white" accept=".jpg,.jpeg,.png,.webp" />
+                <small class="text-muted">Để trống nếu không muốn thay đổi ảnh hiện tại.</small>
             </div>
 
-            <div class="form-group">
-                <label>Logo</label>
-                <input type="file" name="logoFile"  class="form-control" />
+            <hr class="border-secondary" />
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-info px-4 fw-bold text-white"><i class="fas fa-save me-2"></i>Cập Nhật</button>
+                <a asp-action="Index" class="btn btn-outline-light px-4">Quay lại</a>
             </div>
-
-            <button type="submit">Lưu lại</button>
         </form>
     </div>
 </div>
-
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
-
-@section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
-}

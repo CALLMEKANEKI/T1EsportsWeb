@@ -1,28 +1,34 @@
 ﻿@model T1EsportsWeb.Models.T1Stat.Champion
 
 @{
-    ViewData["Title"] = "Thêm tướng";
+    ViewData["Title"] = "Thêm Tướng Mới";
+    Layout = "_AdminLayout";
 }
 
-<h1>Thêm tướng</h1>
-
-<hr />
-<div class="row">
-    <div class="col-md-6">
+<div class="card border-0 shadow-sm" style="background-color: #1e1e2d; color: white; max-width: 800px;">
+    <div class="card-header border-bottom border-secondary py-3">
+        <h3 class="card-title fw-bold mb-0 text-white"><i class="fas fa-user-ninja text-danger me-2"></i>Thêm Tướng Mới</h3>
+    </div>
+    <div class="card-body p-4">
         <form asp-action="Create" enctype="multipart/form-data" method="post">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group mb-3">
-                <label asp-for="Name" class="control-label"></label>
-                <input asp-for="Name" class="form-control" />
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <div class="mb-4">
+                <label asp-for="Name" class="form-label fw-bold text-muted">Tên Tướng <span class="text-danger">*</span></label>
+                <input asp-for="Name" class="form-control bg-dark border-secondary text-white" placeholder="VD: Lee Sin, Azir..." required />
                 <span asp-validation-for="Name" class="text-danger"></span>
             </div>
-            <div class="form-group mb-3">
-                <label>Ảnh</label>
-                <input type="file" name="imageFile" class="form-control" accept="image/*" />
+
+            <div class="mb-4">
+                <label class="form-label fw-bold text-muted">Ảnh Tướng (Tùy chọn)</label>
+                <input type="file" name="imageFile" class="form-control bg-dark border-secondary text-white" accept="image/*" />
+                <small class="text-muted">Nên dùng ảnh vuông (PNG/JPG) để hiển thị đẹp nhất.</small>
             </div>
-            <div class="form-group">
-                <input type="submit" value="Thêm" class="btn btn-primary" />
-                <a asp-area="Admin" asp-action="Index" class="btn btn-secondary">Quay lại</a>
+
+            <hr class="border-secondary" />
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-danger px-4 fw-bold"><i class="fas fa-save me-2"></i>Lưu Tướng</button>
+                <a asp-action="Index" class="btn btn-outline-light px-4">Hủy</a>
             </div>
         </form>
     </div>

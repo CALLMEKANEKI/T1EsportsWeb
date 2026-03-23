@@ -8,13 +8,13 @@
 
   <ItemGroup>
     <Compile Remove="wwwroot\admin_theme\**" />
-    <Compile Remove="wwwroot\images\**" />
+    <Compile Remove="wwwroot\images\champions\**" />
     <Content Remove="wwwroot\admin_theme\**" />
-    <Content Remove="wwwroot\images\**" />
+    <Content Remove="wwwroot\images\champions\**" />
     <EmbeddedResource Remove="wwwroot\admin_theme\**" />
-    <EmbeddedResource Remove="wwwroot\images\**" />
+    <EmbeddedResource Remove="wwwroot\images\champions\**" />
     <None Remove="wwwroot\admin_theme\**" />
-    <None Remove="wwwroot\images\**" />
+    <None Remove="wwwroot\images\champions\**" />
   </ItemGroup>
 
   <ItemGroup>
@@ -33,6 +33,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include=".github\workflows\" />
     <Folder Include="Database\" />
   </ItemGroup>
 

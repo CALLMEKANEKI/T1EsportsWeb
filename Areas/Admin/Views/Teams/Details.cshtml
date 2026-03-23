@@ -1,34 +1,42 @@
 ﻿@model T1EsportsWeb.Models.T1Stat.Team
 
 @{
-    ViewData["Title"] = "Chi tiết đội tuyển";
-    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Chi Tiết Đội Tuyển";
+    Layout = "_AdminLayout";
 }
 
-<h1>Chi tiết đội tuyển</h1>
-
-<div class="card" style="max-width: 500px;">
-    <div class="card-body">
-        <h4 class="card-title">@Model.Name</h4>
-        <dl class="row">
-            <dt class="col-sm-4">Khu vực</dt>
-            <dd class="col-sm-8">@Model.Region</dd>
-
-            <dt class="col-sm-4">Logo</dt>
-            <dd class="col-sm-8">
-                @if (!string.IsNullOrEmpty(Model.LogoUrl))
-                {
-                    <img src="@Model.LogoUrl" alt="logo" style="max-height: 100px;" />
-                }
-                else
-                {
-                    <span class="text-muted">Chưa có</span>
-                }
-            </dd>
-        </dl>
+<div class="card border-0 shadow-sm" style="background-color: #1e1e2d; color: white; max-width: 500px;">
+    <div class="card-header border-bottom border-secondary py-3 d-flex justify-content-between align-items-center">
+        <h3 class="card-title fw-bold mb-0 text-white"><i class="fas fa-eye text-primary me-2"></i>Chi Tiết Đội Tuyển</h3>
+        <span class="badge bg-secondary fs-6">ID: #@Model.IdTeam</span>
     </div>
-    <div class="card-footer">
-        <a asp-action="Edit" asp-route-id="@Model.IdTeam" class="btn btn-warning">Sửa</a>
-        <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
+    <div class="card-body p-4 text-center">
+        @if (!string.IsNullOrEmpty(Model.LogoUrl))
+        {
+            <img src="@Model.LogoUrl" alt="Logo" class="rounded bg-white p-2 mb-3 shadow" style="width: 120px; height: 120px; object-fit: contain;" />
+        }
+        else
+        {
+            <div class="rounded bg-dark d-inline-flex align-items-center justify-content-center border border-2 border-dashed border-secondary mb-3" style="width: 120px; height: 120px;">
+                <i class="fas fa-shield-alt text-muted fa-3x"></i>
+            </div>
+        }
+        <h2 class="fw-bold text-white mb-1">@Model.Name</h2>
+        <div class="mb-4">
+            @if (Model.Region == "KR")
+            {
+                <span class="badge bg-soft-info text-info rounded-pill px-3 py-2 fs-6" style="background: rgba(13, 202, 240, 0.1);"><i class="fas fa-map-marker-alt me-2"></i>Hàn Quốc (KR)</span>
+            }
+            else
+            {
+                <span class="badge bg-soft-primary text-primary rounded-pill px-3 py-2 fs-6" style="background: rgba(13, 110, 253, 0.1);"><i class="fas fa-globe-asia me-2"></i>Quốc Tế (INT)</span>
+            }
+        </div>
+
+        <hr class="border-secondary" />
+        <div class="d-flex justify-content-center gap-2 mt-4">
+            <a asp-action="Edit" asp-route-id="@Model.IdTeam" class="btn btn-info px-4 fw-bold text-white"><i class="fas fa-edit me-2"></i>Sửa</a>
+            <a asp-action="Index" class="btn btn-outline-light px-4"><i class="fas fa-arrow-left me-2"></i>Quay lại</a>
+        </div>
     </div>
 </div>

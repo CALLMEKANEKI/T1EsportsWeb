@@ -1,29 +1,32 @@
 ﻿@model T1EsportsWeb.Models.T1Stat.Team
 
 @{
-    ViewData["Title"] = "Xóa đội tuyển";
-    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Xóa Đội Tuyển";
+    Layout = "_AdminLayout";
 }
 
-<h1>Xóa đội tuyển</h1>
-
-<div class="alert alert-danger">
-    <h3>Bạn có chắc chắn muốn xóa đội tuyển này?</h3>
+<div class="alert alert-danger border-danger mb-4 d-flex align-items-center" role="alert" style="background: rgba(227, 0, 43, 0.1); color: #ff6b6b; max-width: 600px;">
+    <i class="fas fa-exclamation-triangle fa-2x me-3"></i>
+    <div>
+        <h5 class="alert-heading fw-bold mb-1">Cảnh báo nguy hiểm!</h5>
+        <p class="mb-0">Bạn có chắc chắn muốn xóa vĩnh viễn đội tuyển <strong>@Model.Name</strong>? Hành động này không thể hoàn tác.</p>
+    </div>
 </div>
 
-<div class="card" style="max-width: 500px;">
-    <div class="card-body">
-        <h4 class="card-title">@Model.Name</h4>
-        <dl class="row">
-            <dt class="col-sm-4">Khu vực</dt>
-            <dd class="col-sm-8">@Model.Region</dd>
-        </dl>
-    </div>
-    <div class="card-footer">
-        <form asp-action="Delete">
-            <input type="hidden" asp-for="IdTeam" />
-            <input type="submit" value="Xóa" class="btn btn-danger" />
-            <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
+<div class="card border-0 shadow-sm" style="background-color: #1e1e2d; color: white; max-width: 600px;">
+    <div class="card-body p-4 text-center">
+        @if (!string.IsNullOrEmpty(Model.LogoUrl))
+        {
+            <img src="@Model.LogoUrl" alt="Logo" class="rounded bg-white p-2 mb-3 opacity-75" style="width: 100px; height: 100px; object-fit: contain; filter: grayscale(100%);" />
+        }
+        <h3 class="fw-bold text-white mb-1">@Model.Name</h3>
+        <p class="text-muted">Khu vực: @(Model.Region == "KR" ? "Hàn Quốc" : "Quốc Tế")</p>
+
+        <hr class="border-secondary my-4" />
+        <form asp-action="Delete" method="post" class="d-flex justify-content-center gap-2">
+            <input type="hidden" name="id" value="@Model.IdTeam" />
+            <button type="submit" class="btn btn-danger px-4 fw-bold"><i class="fas fa-trash-alt me-2"></i>Xác nhận Xóa</button>
+            <a asp-action="Index" class="btn btn-outline-light px-4">Hủy bỏ</a>
         </form>
     </div>
 </div>

@@ -1,24 +1,37 @@
 ﻿@model T1EsportsWeb.Models.T1Stat.Champion
 
 @{
-    ViewData["Title"] = "Xóa tướng";
+    ViewData["Title"] = "Xóa Tướng";
+    Layout = "_AdminLayout";
 }
 
-<h1>Xóa tướng</h1>
-
-<div class="alert alert-danger">
-    <h3>Bạn có chắc chắn muốn xóa tướng này?</h3>
+<div class="alert alert-danger border-danger mb-4 d-flex align-items-center" role="alert" style="background: rgba(227, 0, 43, 0.1); color: #ff6b6b; max-width: 600px;">
+    <i class="fas fa-exclamation-triangle fa-2x me-3"></i>
+    <div>
+        <h5 class="alert-heading fw-bold mb-1">Cảnh báo nguy hiểm!</h5>
+        <p class="mb-0">Bạn có chắc chắn muốn xóa vĩnh viễn tướng <strong>@Model.Name</strong>? Thao tác này có thể làm lỗi dữ liệu các trận đấu đã sử dụng tướng này.</p>
+    </div>
 </div>
 
-<div class="card" style="max-width: 500px;">
-    <div class="card-body">
-        <h4 class="card-title">@Model.Name</h4>
-    </div>
-    <div class="card-footer">
-        <form asp-action="Delete">
+<div class="card border-0 shadow-sm" style="background-color: #1e1e2d; color: white; max-width: 600px;">
+    <div class="card-body p-4 text-center">
+        @if (!string.IsNullOrEmpty(Model.ImageUrl))
+        {
+            <img src="@Model.ImageUrl" alt="@Model.Name" class="rounded-circle border border-secondary p-1 mb-3 opacity-50" style="width: 120px; height: 120px; object-fit: cover; filter: grayscale(100%);" />
+        }
+        else
+        {
+            <i class="fas fa-user-times text-secondary fa-4x mb-3 opacity-50"></i>
+        }
+
+        <h3 class="fw-bold text-white mb-1">@Model.Name</h3>
+        <p class="text-muted">ID Hệ thống: #@Model.IdChampion</p>
+
+        <hr class="border-secondary my-4" />
+        <form asp-action="Delete" method="post" class="d-flex justify-content-center gap-2">
             <input type="hidden" asp-for="IdChampion" />
-            <input type="submit" value="Xóa" class="btn btn-danger" />
-            <a asp-action="Index" class="btn btn-secondary">Quay lại</a>
+            <button type="submit" class="btn btn-danger px-4 fw-bold"><i class="fas fa-trash-alt me-2"></i>Xác nhận Xóa</button>
+            <a asp-action="Index" class="btn btn-outline-light px-4">Hủy bỏ</a>
         </form>
     </div>
 </div>

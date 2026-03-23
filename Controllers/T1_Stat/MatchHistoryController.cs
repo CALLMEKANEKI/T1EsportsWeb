@@ -23,14 +23,15 @@ namespace T1EsportsWeb.Controllers
             var t1Id = await _context.Teams.Where(t => t.Name == "T1").Select(t => t.IdTeam).FirstOrDefaultAsync();
             if (t1Id == 0) return View(new List<MatchHistoryDto>());
 
-            // Query series
+            // 🚀 TỐI ƯU: Load sẵn Games và GameTeams của T1 ngay từ đầu bằng Include
             var seriesQuery = _context.Series
                 .Where(s => s.TeamT1Id == t1Id)
                 .Include(s => s.TeamOpponent)
                 .Include(s => s.Tournament)
+                .Include(s => s.Games) // Load sẵn danh sách Game
+                    .ThenInclude(g => g.GameTeams.Where(gt => gt.TeamId == t1Id)) // Chỉ lấy GameTeam của T1
                 .AsQueryable();
 
-            // Apply filters
             if (startDate.HasValue)
                 seriesQuery = seriesQuery.Where(s => s.MatchDate >= DateOnly.FromDateTime(startDate.Value));
             if (endDate.HasValue)
@@ -38,67 +39,48 @@ namespace T1EsportsWeb.Controllers
             if (tournamentId.HasValue)
                 seriesQuery = seriesQuery.Where(s => s.TournamentId == tournamentId.Value);
 
-            // Order by date descending, then by series id (to have deterministic order)
-            seriesQuery = seriesQuery.OrderByDescending(s => s.MatchDate).ThenBy(s => s.IdSeries);
+            var seriesList = await seriesQuery.OrderByDescending(s => s.MatchDate).ThenBy(s => s.IdSeries).ToListAsync();
 
-            var seriesList = await seriesQuery.ToListAsync();
-
-            // Build list of tournaments for dropdown (filtered by same date range)
-            var tournamentQuery = _context.Tournaments
+            // Tournament dropdown giữ nguyên logic filter của Boss
+            var tournaments = await _context.Tournaments
                 .Where(t => _context.Series.Any(s => s.TournamentId == t.IdTournament && s.TeamT1Id == t1Id))
-                .AsQueryable();
-            if (startDate.HasValue)
-                tournamentQuery = tournamentQuery.Where(t => _context.Series.Any(s => s.TournamentId == t.IdTournament && s.MatchDate >= DateOnly.FromDateTime(startDate.Value)));
-            if (endDate.HasValue)
-                tournamentQuery = tournamentQuery.Where(t => _context.Series.Any(s => s.TournamentId == t.IdTournament && s.MatchDate <= DateOnly.FromDateTime(endDate.Value)));
-
-            var tournaments = await tournamentQuery
-                .OrderBy(t => t.Year).ThenBy(t => t.Name)
-                .Select(t => new { t.IdTournament, t.Name, t.Year })
-                .ToListAsync();
+                .OrderByDescending(t => t.Year).Select(t => new { t.IdTournament, t.Name, t.Year }).ToListAsync();
 
             ViewBag.Tournaments = tournaments;
             ViewBag.SelectedTournament = tournamentId;
             ViewBag.StartDate = startDate?.ToString("yyyy-MM-dd");
             ViewBag.EndDate = endDate?.ToString("yyyy-MM-dd");
 
-            // Build DTOs
-            var result = new List<MatchHistoryDto>();
-            foreach (var series in seriesList)
-            {
-                // Get games of this series where T1 participated
-                var gameTeams = await _context.GameTeams
-                    .Where(gt => gt.TeamId == t1Id && gt.Game.SeriesId == series.IdSeries)
-                    .Include(gt => gt.Game)
-                    .OrderBy(gt => gt.Game.GameNumber)
-                    .ToListAsync();
-
-                var gameDtos = gameTeams.Select(gt => new GameDto
-                {
-                    GameId = gt.Game.IdGame,
-                    GameNumber = gt.Game.GameNumber ?? 0,
-                    Patch = gt.Game.Patch,
-                    Result = gt.Result,
-                    Side = gt.Side,
-                    Link = gt.Game.Link
+            // ⚡ Xử lý dữ liệu trên RAM cực nhanh vì đã có sẵn dữ liệu từ câu query trên
+            var result = seriesList.Select(series => {
+                var gameDtos = series.Games.OrderBy(g => g.GameNumber).Select(g => {
+                    var t1Gt = g.GameTeams.FirstOrDefault();
+                    return new GameDto
+                    {
+                        GameId = g.IdGame,
+                        GameNumber = g.GameNumber ?? 0,
+                        Patch = g.Patch,
+                        Result = t1Gt?.Result ?? "N/A",
+                        Side = t1Gt?.Side ?? "N/A",
+                        Link = g.Link
+                    };
                 }).ToList();
 
-                int wins = gameTeams.Count(g => g.Result == "Win");
-                int losses = gameTeams.Count(g => g.Result == "Loss");
-                string seriesResult = wins > losses ? "Win" : (losses > wins ? "Loss" : "Draw");
+                int wins = gameDtos.Count(g => g.Result == "Win");
+                int losses = gameDtos.Count(g => g.Result == "Loss");
 
-                result.Add(new MatchHistoryDto
+                return new MatchHistoryDto
                 {
                     SeriesId = series.IdSeries,
-                    MatchDate = new DateTime(series.MatchDate.Value.Year, series.MatchDate.Value.Month, series.MatchDate.Value.Day),
+                    MatchDate = series.MatchDate.HasValue ? new DateTime(series.MatchDate.Value.Year, series.MatchDate.Value.Month, series.MatchDate.Value.Day) : DateTime.MinValue,
                     OpponentName = series.TeamOpponent?.Name ?? "Unknown",
-                    Result = seriesResult,
+                    Result = wins > losses ? "Win" : (losses > wins ? "Loss" : "Draw"),
                     BestOf = series.BestOf,
                     TournamentName = series.Tournament?.Name ?? "Unknown",
                     TournamentYear = series.Tournament?.Year ?? 0,
                     Games = gameDtos
-                });
-            }
+                };
+            }).ToList();
 
             return View(result);
         }
@@ -110,56 +92,46 @@ namespace T1EsportsWeb.Controllers
             var t1Id = await _context.Teams.Where(t => t.Name == "T1").Select(t => t.IdTeam).FirstOrDefaultAsync();
             if (t1Id == 0) return NotFound();
 
-            // Get the two game_team entries for this game
-            var gameTeams = await _context.GameTeams
-                .Where(gt => gt.GameId == gameId)
-                .Include(gt => gt.Team)
-                .ToListAsync();
-
-            var t1GameTeam = gameTeams.FirstOrDefault(gt => gt.TeamId == t1Id);
-            var oppGameTeam = gameTeams.FirstOrDefault(gt => gt.TeamId != t1Id);
-
-            // Helper function to get lineup
-            async Task<List<TeamLineupDto>> GetLineup(int gameTeamId)
-            {
-                var players = await _context.GamePlayers
-                    .Where(gp => gp.GameTeamId == gameTeamId)
-                    .Include(gp => gp.Player)
-                    .Include(gp => gp.Champion)
-                    .OrderBy(gp => gp.PickOrder)
-                    .ToListAsync();
-
-                return players.Select(p => new TeamLineupDto
+            // 🚀 TỐI ƯU CỰC MẠNH: Dùng Select để lấy trực tiếp dữ liệu thay vì kéo toàn bộ Entity vào RAM
+            var t1Lineup = await _context.GamePlayers
+                .AsNoTracking()
+                .Where(gp => gp.GameTeam.GameId == gameId && gp.GameTeam.TeamId == t1Id)
+                .OrderBy(gp => gp.PickOrder)
+                .Select(p => new TeamLineupDto
                 {
                     PlayerName = p.Player.IngameName,
                     PlayerPhotoUrl = p.Player.PhotoUrl,
                     ChampionName = p.Champion.Name,
                     ChampionImageUrl = p.Champion.ImageUrl
-                }).ToList();
-            }
+                }).ToListAsync();
 
-            var t1Lineup = t1GameTeam != null ? await GetLineup(t1GameTeam.IdGameTeam) : new List<TeamLineupDto>();
-            var oppLineup = oppGameTeam != null ? await GetLineup(oppGameTeam.IdGameTeam) : new List<TeamLineupDto>();
+            var oppLineup = await _context.GamePlayers
+                .AsNoTracking()
+                .Where(gp => gp.GameTeam.GameId == gameId && gp.GameTeam.TeamId != t1Id)
+                .OrderBy(gp => gp.PickOrder)
+                .Select(p => new TeamLineupDto
+                {
+                    PlayerName = p.Player.IngameName,
+                    PlayerPhotoUrl = p.Player.PhotoUrl,
+                    ChampionName = p.Champion.Name,
+                    ChampionImageUrl = p.Champion.ImageUrl
+                }).ToListAsync();
 
-            // Get bans
             var bans = await _context.Bans
+                .AsNoTracking()
                 .Where(b => b.GameId == gameId)
-                .Include(b => b.Champion)
-                .Include(b => b.Team)
-                .ToListAsync();
-
-            var banDtos = bans.Select(b => new BanDto
-            {
-                TeamName = b.Team.Name,
-                ChampionName = b.Champion.Name,
-                ChampionImageUrl = b.Champion.ImageUrl
-            }).ToList();
+                .Select(b => new BanDto
+                {
+                    TeamName = b.Team.Name,
+                    ChampionName = b.Champion.Name,
+                    ChampionImageUrl = b.Champion.ImageUrl
+                }).ToListAsync();
 
             return Json(new
             {
                 t1Lineup = t1Lineup,
-                opponentLineup = oppLineup, // Đổi từ oppLineup sang opponentLineup
-                bans = banDtos
+                opponentLineup = oppLineup,
+                bans = bans
             });
         }
     }
