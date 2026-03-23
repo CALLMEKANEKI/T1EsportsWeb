@@ -2,32 +2,30 @@
 
 @{
     ViewData["Title"] = "Lịch sử đấu";
-    Layout = "~/Views/Shared/_Layout.cshtml"; // Hoặc _AdminLayout tùy cấu hình của Boss
+    Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
 @functions {
-    // Hàm siêu ngầu để cấp màu sắc đặc trưng cho từng Đội tuyển LCK/Quốc tế
     public string GetTeamColor(string teamName)
     {
         if (string.IsNullOrEmpty(teamName)) return "#ffffff";
         var name = teamName.ToLower();
-        if (name.Contains("t1")) return "#e3002b"; // Đỏ T1
-        if (name.Contains("hanwha") || name.Contains("hle")) return "#ff6b00"; // Cam HLE
-        if (name.Contains("gen") || name.Contains("geng")) return "#aa8a00"; // Vàng Gen.G
-        if (name.Contains("dplus") || name.Contains("dk")) return "#00b2a9"; // Xanh ngọc DK
-        if (name.Contains("kt")) return "#ff0000"; // Đỏ KT
-        if (name.Contains("drx")) return "#5a8dff"; // Xanh dương DRX
-        if (name.Contains("kdf")) return "#e05c20"; // Cam Kwangdong
-        if (name.Contains("jdg")) return "#e03e3e"; // Đỏ JDG
-        if (name.Contains("blg")) return "#00a1d6"; // Xanh Bilibili
-        if (name.Contains("tes")) return "#e60012"; // Đỏ TES
-        if (name.Contains("fly")) return "#004f2f"; // Xanh lá FlyQuest
-        return "#a1a5b7"; // Màu xám mặc định cho các đội khác
+        if (name.Contains("t1")) return "#e3002b";
+        if (name.Contains("hanwha") || name.Contains("hle")) return "#ff6b00";
+        if (name.Contains("gen") || name.Contains("geng")) return "#aa8a00";
+        if (name.Contains("dplus") || name.Contains("dk")) return "#00b2a9";
+        if (name.Contains("kt")) return "#ff0000";
+        if (name.Contains("drx")) return "#5a8dff";
+        if (name.Contains("kdf")) return "#e05c20";
+        if (name.Contains("jdg")) return "#e03e3e";
+        if (name.Contains("blg")) return "#00a1d6";
+        if (name.Contains("tes")) return "#e60012";
+        if (name.Contains("fly")) return "#004f2f";
+        return "#a1a5b7";
     }
 }
 
 <style>
-    /* 💎 ĐỒNG BỘ GIAO DIỆN GLASSMORPHISM VÀ DARK THEME */
     body {
         background-color: #05050a;
         color: #fff;
@@ -56,7 +54,17 @@
             box-shadow: none;
         }
 
-    /* CARD TRẬN ĐẤU NGẦU HƠN */
+        .custom-input::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            cursor: pointer;
+            opacity: 0.8;
+            transition: 0.2s;
+        }
+
+            .custom-input::-webkit-calendar-picker-indicator:hover {
+                opacity: 1;
+            }
+
     .series-card {
         background: linear-gradient(145deg, #1a1a24, #111119);
         border: 1px solid rgba(255,255,255,0.05);
@@ -82,11 +90,6 @@
             background: rgba(34, 197, 94, 0.05);
         }
 
-    /* ======================================= */
-    /* LOGIC CSS CŨ CỦA BOSS (GIỮ NGUYÊN 100%) */
-    /* ======================================= */
-
-    /* Tooltip cho tướng */
     .champion-tooltip {
         position: relative;
         display: inline-block;
@@ -115,7 +118,6 @@
             opacity: 1;
         }
 
-    /* Định dạng Side */
     .side-blue-text {
         color: #3b82f6 !important;
         font-weight: bold;
@@ -137,7 +139,6 @@
         text-align: right;
     }
 
-    /* Divider ở giữa */
     .vs-divider {
         display: flex;
         flex-direction: column;
@@ -167,7 +168,6 @@
         margin: 10px 0;
     }
 
-    /* Icon và Image */
     .lane-icon {
         width: 18px;
         height: 18px;
@@ -178,9 +178,9 @@
     .champion-img {
         width: 50px;
         height: 50px;
-        border-radius: 8px; /* Bo góc nhẹ cho hiện đại */
+        border-radius: 8px;
         border: 2px solid #2b2b40;
-        object-fit: cover; /* 🎯 FIX: Chống méo ảnh */
+        object-fit: cover;
         background-color: #000;
     }
 
@@ -188,7 +188,7 @@
         width: 32px;
         height: 32px;
         border-radius: 4px;
-        object-fit: cover; /* 🎯 FIX: Chống méo ảnh Ban */
+        object-fit: cover;
         filter: grayscale(0.6);
         border: 1px solid #444;
     }
@@ -202,7 +202,7 @@
 
     <div class="text-center mb-5 pb-4 pt-3 border-bottom" style="border-color: rgba(34, 197, 94, 0.4) !important;">
         <h1 class="d-flex justify-content-center align-items-center flex-wrap mb-0" style="font-size: 3.5rem; font-weight: 900; letter-spacing: 4px;">
-           <span style="color: #22c55e; text-shadow: 0 0 15px rgba(34, 197, 94, 0.8), 3px 3px 6px rgba(0,0,0,0.9);">LỊCH SỬ ĐẤU</span>
+            <span style="color: #22c55e; text-shadow: 0 0 15px rgba(34, 197, 94, 0.8), 3px 3px 6px rgba(0,0,0,0.9);">LỊCH SỬ ĐẤU</span>
         </h1>
 
         <p class="mt-3 mb-0" style="font-size: 1.5rem; color: #ddd; font-weight: bold; text-shadow: 2px 2px 4px rgba(0,0,0,0.9);">
@@ -224,11 +224,14 @@
                 <label for="tournamentId" class="form-label small fw-bold text-muted"><i class="fas fa-trophy me-1"></i>GIẢI ĐẤU</label>
                 <select class="form-select custom-select" id="tournamentId" name="tournamentId">
                     <option value="">-- Tất cả giải đấu --</option>
-                    @foreach (var t in ViewBag.Tournaments)
+                    @if (ViewBag.Tournaments != null)
                     {
-                        <option value="@t.IdTournament" selected="@(ViewBag.SelectedTournament == t.IdTournament ? "selected" : null)">
-                            @t.Name (@t.Year)
-                        </option>
+                        foreach (var t in ViewBag.Tournaments)
+                        {
+                            <option value="@t.IdTournament" selected="@(ViewBag.SelectedTournament == t.IdTournament ? "selected" : null)">
+                                @t.Name (@t.Year)
+                            </option>
+                        }
                     }
                 </select>
             </div>
@@ -243,9 +246,13 @@
     <div id="seriesList">
         @if (Model != null && Model.Any())
         {
+            int matchCount = 0; // Biến đếm số lượng trận đấu
             foreach (var series in Model)
             {
-                <div class="series-card">
+                // Vượt quá 5 trận (series) sẽ ẩn đi
+                var displayClass = matchCount >= 5 ? "d-none hidden-series" : "visible-series";
+
+                <div class="series-card @displayClass" id="card-series-@series.SeriesId">
                     <div class="series-header d-flex justify-content-between align-items-center cursor-pointer" onclick="$('#series-@series.SeriesId').collapse('toggle')">
                         <div class="d-flex align-items-center">
                             <span class="badge bg-dark border border-secondary text-light px-3 py-2 me-3 fs-6">
@@ -314,9 +321,7 @@
                                         </tr>
                                         <tr style="border: none;">
                                             <td colspan="6" class="p-0 border-0">
-
                                                 <div id="game-detail-@game.GameId" style="display: none;">
-
                                                     <div class="p-4" style="background: #111119; box-shadow: inset 0 5px 15px rgba(0,0,0,0.5);">
                                                         <div class="row mb-4 align-items-center">
                                                             <div class="col-5">
@@ -327,7 +332,6 @@
                                                                 <div id="right-bans-@game.GameId" class="d-flex gap-2 justify-content-end"></div>
                                                             </div>
                                                         </div>
-
                                                         <div class="row">
                                                             <div class="col-5">
                                                                 <div id="left-team-label-@game.GameId" class="mb-3"></div>
@@ -346,7 +350,6 @@
                                                             </div>
                                                         </div>
                                                     </div>
-
                                                 </div>
                                             </td>
                                         </tr>
@@ -355,6 +358,17 @@
                             </table>
                         </div>
                     </div>
+                </div>
+                matchCount++;
+            }
+
+            // Hiển thị nút Tải Thêm nếu có nhiều hơn 5 trận
+            @if (Model.Count() > 5)
+            {
+                <div class="text-center mt-4 mb-5" id="loadMoreContainer">
+                    <button id="btnLoadMore" class="btn btn-outline-success fw-bold rounded-pill px-5 py-2 shadow-sm" style="transition: 0.3s;">
+                        <i class="fas fa-chevron-down me-2"></i> TẢI THÊM 5 TRẬN
+                    </button>
                 </div>
             }
         }
@@ -378,32 +392,27 @@
             "SUPPORT": "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-clash/global/default/assets/images/position-selector/positions/icon-position-utility.png"
         };
 
-        // Ảnh dự phòng khi bị null (chống lỗi sập server)
         const fallbackChampImg = 'https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-icons/-1.png';
         const fallbackPlayerImg = 'https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/profile-icons/0.jpg';
 
         async function loadGameDetails(gameId, t1Side, button) {
             const detailContainer = document.getElementById('game-detail-' + gameId);
-            const $container = $(detailContainer); // Dùng jQuery để tạo hiệu ứng trượt
+            const $container = $(detailContainer);
 
-            // Nếu đang mở thì ĐÓNG LẠI bằng hiệu ứng trượt lên (250ms)
             if ($container.is(':visible')) {
                 $container.slideUp(250);
                 button.innerHTML = '<i class="fas fa-info-circle me-1"></i>Chi tiết';
                 return;
             }
 
-            // Đổi nút thành trạng thái Loading
             button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
 
-            // Nếu đã từng tải dữ liệu rồi, thì chỉ việc MỞ RA bằng hiệu ứng trượt xuống
             if (detailContainer.getAttribute('data-loaded') === 'true') {
                 $container.slideDown(250);
                 button.innerHTML = '<i class="fas fa-eye-slash me-1"></i>Đóng';
                 return;
             }
 
-            // Nếu chưa tải dữ liệu, tiến hành gọi API
             try {
                 const res = await fetch(`/MatchHistory/GetGameDetails?gameId=${gameId}`);
                 const data = await res.json();
@@ -411,14 +420,12 @@
                 const isT1Left = (t1Side === 'Blue');
                 const roles = ["TOP", "JUNGLE", "MID", "ADC", "SUPPORT"];
 
-                // 1. Setup Labels
                 document.getElementById(`left-team-label-${gameId}`).className = `team-header-left side-blue-text`;
                 document.getElementById(`left-team-label-${gameId}`).innerHTML = `<small>BLUE SIDE</small><br><span class="fs-5">${isT1Left ? 'T1' : 'OPPONENT'}</span>`;
 
                 document.getElementById(`right-team-label-${gameId}`).className = `team-header-right side-red-text`;
                 document.getElementById(`right-team-label-${gameId}`).innerHTML = `<small>RED SIDE</small><br><span class="fs-5">${!isT1Left ? 'T1' : 'OPPONENT'}</span>`;
 
-                // 2. Render Lineups
                 let leftLineupHtml = '';
                 let rightLineupHtml = '';
                 const leftPlayers = isT1Left ? data.t1Lineup : data.opponentLineup;
@@ -430,7 +437,6 @@
                 document.getElementById(`left-lineup-${gameId}`).innerHTML = leftLineupHtml;
                 document.getElementById(`right-lineup-${gameId}`).innerHTML = rightLineupHtml;
 
-                // 3. Render Bans
                 let leftBansHtml = '';
                 let rightBansHtml = '';
                 data.bans.forEach(ban => {
@@ -449,7 +455,6 @@
                 document.getElementById(`left-bans-${gameId}`).innerHTML = leftBansHtml;
                 document.getElementById(`right-bans-${gameId}`).innerHTML = rightBansHtml;
 
-                // Đánh dấu đã tải xong và MỞ RA mượt mà
                 detailContainer.setAttribute('data-loaded', 'true');
                 $container.slideDown(250);
                 button.innerHTML = '<i class="fas fa-eye-slash me-1"></i>Đóng';
@@ -458,7 +463,6 @@
             }
         }
 
-        // Đổi từ tạo Element sang tạo String HTML cho nhẹ máy (THÊM this.onerror=null;)
         function renderPlayerStr(p, align, role) {
             const isRight = align === 'right';
             const safeRole = role || "UNKNOWN";
@@ -488,5 +492,33 @@
                 </div>
             </div>`;
         }
+
+        // =====================================
+        // XỬ LÝ NÚT XEM THÊM (LOAD MORE)
+        // =====================================
+        $(document).ready(function() {
+            let currentVisible = 5;
+            const step = 5;
+
+            $('#btnLoadMore').click(function() {
+                const $btn = $(this);
+                const originalText = $btn.html();
+
+                $btn.html('<i class="fas fa-spinner fa-spin me-2"></i> ĐANG TẢI...');
+                $btn.prop('disabled', true);
+
+                setTimeout(() => {
+                    $('.hidden-series').slice(0, step).removeClass('d-none hidden-series').hide().fadeIn(500);
+                    currentVisible += step;
+
+                    if ($('.hidden-series').length === 0) {
+                        $('#loadMoreContainer').fadeOut();
+                    }
+                    
+                    $btn.html(originalText);
+                    $btn.prop('disabled', false);
+                }, 400);
+            });
+        });
     </script>
 }

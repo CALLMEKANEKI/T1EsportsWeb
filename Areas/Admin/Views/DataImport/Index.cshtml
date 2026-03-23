@@ -4,68 +4,216 @@
 }
 
 <style>
-    .import-form {
-        max-width: 800px;
-        margin: 0 auto;
+    /* 💎 ĐỒNG BỘ GIAO DIỆN GLASSMORPHISM VÀ DARK THEME */
+    .glass-panel {
+        background: #1e1e2d;
+        border-radius: 16px;
+        border: 1px solid #2b2b40;
+        padding: 24px;
+        margin-bottom: 24px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    }
+
+    .custom-select, .custom-input {
+        background-color: #151521;
+        border: 1px solid #2b2b40;
+        color: #fff;
+        border-radius: 8px;
+        padding: 10px 15px;
+    }
+
+        .custom-select:focus, .custom-input:focus {
+            background-color: #151521;
+            border-color: #ff2a9d;
+            color: #fff;
+            box-shadow: 0 0 0 0.25rem rgba(255, 42, 157, 0.15);
+        }
+
+        .custom-input::file-selector-button {
+            background-color: #2b2b40;
+            color: #a1a5b7;
+            border: none;
+            border-radius: 4px;
+            padding: 5px 10px;
+            margin-right: 15px;
+            cursor: pointer;
+            transition: 0.3s;
+            font-weight: bold;
+        }
+
+            .custom-input::file-selector-button:hover {
+                background-color: #3b3b54;
+                color: #fff;
+            }
+
+    /* 💎 NÚT BẤM MÀU HỒNG NEON */
+    .btn-pink {
+        background: linear-gradient(135deg, #ff2a9d 0%, #ff007f 100%);
+        color: white;
+        border: none;
+        transition: 0.3s;
+    }
+
+        .btn-pink:hover:not(:disabled) {
+            background: linear-gradient(135deg, #ff007f 0%, #ff2a9d 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 42, 157, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .btn-pink:disabled {
+            background: #3b3b54;
+            color: #888;
+        }
+
+    .preview-container {
+        border-radius: 12px;
+        border: 1px solid #2b2b40;
+        overflow: hidden;
     }
 
     .preview-table {
         max-height: 400px;
         overflow-y: auto;
     }
+
+        .preview-table::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        .preview-table::-webkit-scrollbar-track {
+            background: #151521;
+        }
+
+        .preview-table::-webkit-scrollbar-thumb {
+            background: #3b3b54;
+            border-radius: 4px;
+        }
+
+            .preview-table::-webkit-scrollbar-thumb:hover {
+                background: #565674;
+            }
+
+    .table-t1 th {
+        background-color: #2b2b40;
+        color: #a1a5b7;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        border: none;
+        position: sticky;
+        top: 0;
+        z-index: 1;
+    }
+
+    .table-t1 td {
+        border-bottom: 1px solid #2b2b40;
+        vertical-align: middle;
+        white-space: nowrap;
+    }
 </style>
 
-<div class="container mt-4">
-    <h2 class="text-center">Import Dữ Liệu Lịch Sử Đấu</h2>
-    <div class="import-form glass-panel p-4">
-        <form id="importForm" enctype="multipart/form-data">
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    <label>Server</label>
-                    <input type="text" id="server" class="form-control" placeholder="localhost" required />
-                </div>
-                <div class="col-md-6">
-                    <label>Database</label>
-                    <input type="text" id="database" class="form-control" placeholder="T1_Stats" required />
-                </div>
-            </div>
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    <label>Xác thực</label>
-                    <select id="authType" class="form-select">
-                        <option value="windows">Windows Authentication</option>
-                        <option value="sql">SQL Server Authentication</option>
-                    </select>
-                </div>
-                <div class="col-md-6 sql-auth" style="display:none;">
-                    <label>Username</label>
-                    <input type="text" id="username" class="form-control" />
-                </div>
-                <div class="col-md-6 sql-auth" style="display:none;">
-                    <label>Password</label>
-                    <input type="password" id="password" class="form-control" />
-                </div>
-            </div>
-            <div class="mb-3">
-                <label>File Excel</label>
-                <input type="file" id="excelFile" class="form-control" accept=".xlsx" required />
-                <div class="form-text"><a href="/Admin/DataImport/DownloadTemplate">Tải template mẫu</a></div>
-            </div>
-            <div class="d-flex gap-2">
-                <button type="button" id="previewBtn" class="btn btn-primary">Xem trước dữ liệu</button>
-                <button type="button" id="importBtn" class="btn btn-success" disabled>Import</button>
-            </div>
-        </form>
+<div class="container-fluid py-4">
+    <div class="mb-4">
+        <h2 class="fw-bold mb-1 text-white">
+            <i class="fas fa-history me-2" style="color: #ff2a9d;"></i>Import Dữ Liệu Lịch Sử Đấu
+        </h2>
+        <p class="text-muted">Tải lên file Excel để cập nhật hàng loạt lịch sử thi đấu vào hệ thống Database.</p>
+    </div>
 
-        <div id="previewArea" style="display:none; margin-top: 30px;">
-            <h4>Dữ liệu sẽ được import</h4>
-            <div class="preview-table">
-                <table class="table table-dark table-striped" id="previewTable">
-                    <thead><tr></tr></thead>
-                    <tbody></tbody>
-                </table>
+    <div class="row">
+
+        <div class="col-xl-5 col-lg-6 d-flex flex-column mb-4">
+            <div class="glass-panel flex-grow-1 mb-0">
+                <h5 class="fw-bold text-white mb-4"><i class="fas fa-server text-info me-2"></i>Cấu Hình Máy Chủ</h5>
+
+                <form id="importForm" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted"><i class="fas fa-network-wired me-1"></i> SERVER</label>
+                        <input type="text" id="server" class="form-control custom-input" placeholder="VD: localhost hoặc 127.0.0.1" required value="localhost" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted"><i class="fas fa-database me-1"></i> DATABASE</label>
+                        <input type="text" id="database" class="form-control custom-input" placeholder="Tên cơ sở dữ liệu" required value="T1EsportsDB" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted"><i class="fas fa-shield-alt me-1"></i> XÁC THỰC</label>
+                        <select id="authType" class="form-select custom-select fw-bold">
+                            <option value="windows">Windows Authentication (Mặc định)</option>
+                            <option value="sql">SQL Server Authentication (SA)</option>
+                        </select>
+                    </div>
+
+                    <div class="sql-auth p-3 mb-3" style="display:none; background: #151521; border-radius: 8px; border: 1px solid #2b2b40;">
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-muted"><i class="fas fa-user me-1"></i> USERNAME</label>
+                            <input type="text" id="username" class="form-control custom-input" placeholder="VD: sa" />
+                        </div>
+                        <div class="mb-0">
+                            <label class="form-label small fw-bold text-muted"><i class="fas fa-key me-1"></i> PASSWORD</label>
+                            <input type="password" id="password" class="form-control custom-input" placeholder="••••••••" />
+                        </div>
+                    </div>
+
+                    <hr class="border-secondary opacity-25 my-4" />
+
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-end mb-2">
+                            <label class="form-label small fw-bold text-white mb-0"><i class="fas fa-upload me-1" style="color: #ff2a9d;"></i> CHỌN FILE EXCEL (.xlsx)</label>
+                            <a href="/Admin/DataImport/DownloadTemplate" class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 text-decoration-none px-2 py-1">
+                                <i class="fas fa-download me-1"></i>Tải Template Mẫu
+                            </a>
+                        </div>
+                        <input type="file" id="excelFile" class="form-control custom-input" accept=".xlsx" required />
+                    </div>
+
+                    <div class="d-flex gap-3 mt-4">
+                        <button type="button" id="previewBtn" class="btn btn-info text-white fw-bold py-2 px-4 shadow-sm w-50">
+                            <i class="fas fa-eye me-1"></i> Kiểm Tra
+                        </button>
+                        <button type="button" id="importBtn" class="btn btn-pink fw-bold py-2 px-4 shadow-sm w-50" disabled>
+                            <i class="fas fa-cloud-upload-alt me-1"></i> Đẩy Data
+                        </button>
+                    </div>
+                </form>
             </div>
-            <p>Tổng số dòng: <span id="totalRows">0</span></p>
+        </div>
+
+        <div class="col-xl-7 col-lg-6 d-flex flex-column mb-4">
+
+            <div id="previewArea" class="glass-panel flex-grow-1 mb-0" style="display:none;">
+                <div class="d-flex justify-content-between align-items-center border-bottom border-secondary border-opacity-25 pb-3 mb-3">
+                    <h5 class="fw-bold text-white mb-0"><i class="fas fa-table text-warning me-2"></i>Bản Xem Trước Dữ Liệu</h5>
+                    <span class="badge px-3 py-2 fs-6 rounded-pill" style="background-color: #ff2a9d;">
+                        Hợp lệ: <span id="totalRows" class="fw-bold">0</span> dòng
+                    </span>
+                </div>
+
+                <div class="preview-container">
+                    <div class="preview-table">
+                        <table class="table table-dark table-hover table-t1 mb-0" id="previewTable">
+                            <thead>
+                                <tr></tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="alert alert-warning mt-3 mb-0 py-2 border-0 small d-flex align-items-center" style="background: rgba(255, 193, 7, 0.1); color: #ffc107;">
+                    <i class="fas fa-exclamation-triangle me-2 fa-lg"></i>
+                    Vui lòng kiểm tra kỹ các cột dữ liệu trước khi bấm nút "Đẩy Data" nhé. Dữ liệu ghi đè có thể không khôi phục được!
+                </div>
+            </div>
+
+            <div id="emptyState" class="glass-panel flex-grow-1 mb-0 d-flex flex-column justify-content-center align-items-center text-muted" style="min-height: 400px;">
+                <i class="fas fa-file-excel fa-5x mb-3 opacity-25"></i>
+                <h5>Chưa có dữ liệu nào được đọc</h5>
+                <p class="small">Hãy chọn file và bấm "Kiểm Tra" để xem trước</p>
+            </div>
+
         </div>
     </div>
 </div>
@@ -76,21 +224,27 @@
             // Hiện/ẩn SQL auth fields
             $('#authType').change(function() {
                 if ($(this).val() === 'sql') {
-                    $('.sql-auth').show();
+                    $('.sql-auth').slideDown(300);
                 } else {
-                    $('.sql-auth').hide();
+                    $('.sql-auth').slideUp(300);
                 }
-            }).trigger('change');
+            });
 
+            // XỬ LÝ NÚT XEM TRƯỚC
             $('#previewBtn').click(async function() {
                 const file = $('#excelFile')[0].files[0];
                 if (!file) {
-                    alert('Vui lòng chọn file Excel.');
+                    alert('Vui lòng chọn file excel!');
                     return;
                 }
 
                 const formData = new FormData();
                 formData.append('file', file);
+
+                const btn = $(this);
+                const originalContent = btn.html();
+                btn.html('<i class="fas fa-spinner fa-spin me-1"></i> Đang Đọc...');
+                btn.prop('disabled', true);
 
                 try {
                     const res = await fetch('/Admin/DataImport/Preview', {
@@ -98,6 +252,7 @@
                         body: formData
                     });
                     const data = await res.json();
+
                     if (data.error) throw new Error(data.error);
 
                     // Hiển thị bảng preview
@@ -105,25 +260,31 @@
                         const headers = Object.keys(data.preview[0]);
                         $('#previewTable thead tr').html(headers.map(h => `<th>${h}</th>`).join(''));
                         $('#previewTable tbody').html(data.preview.map(row =>
-                            `<tr>${headers.map(h => `<td>${row[h] ?? ''}</td>`).join('')}</tr>`
+                            `<tr>${headers.map(h => `<td>${row[h] ?? '-'}</td>`).join('')}</tr>`
                         ).join(''));
+
                         $('#totalRows').text(data.total_rows);
-                        $('#previewArea').show();
+
+                        $('#emptyState').hide();
+                        $('#previewArea').fadeIn(400);
                         $('#importBtn').prop('disabled', false);
                     } else {
-                        alert('Không có dữ liệu trong file.');
+                        alert('File Excel này đang rỗng');
                     }
                 } catch (err) {
-                    alert('Lỗi: ' + err.message);
+                    alert('Lỗi đọc file: ' + err.message);
+                } finally {
+                    btn.html(originalContent);
+                    btn.prop('disabled', false);
                 }
             });
 
+            // XỬ LÝ NÚT IMPORT
             $('#importBtn').click(async function() {
                 const file = $('#excelFile')[0].files[0];
-                if (!file) {
-                    alert('Vui lòng chọn file Excel.');
-                    return;
-                }
+                if (!file) return;
+
+                if (!confirm("Bạn chắc chắn muốn đẩy dữ liệu này vào Hệ thống?")) return;
 
                 const formData = new FormData();
                 formData.append('file', file);
@@ -133,18 +294,28 @@
                 formData.append('username', $('#username').val());
                 formData.append('password', $('#password').val());
 
+                const btn = $(this);
+                const originalContent = btn.html();
+                btn.html('<i class="fas fa-spinner fa-spin me-1"></i> Đang Xử Lý...');
+                btn.prop('disabled', true);
+                $('#previewBtn').prop('disabled', true);
+
                 try {
                     const res = await fetch('/Admin/DataImport/Import', {
                         method: 'POST',
                         body: formData
                     });
                     const result = await res.json();
+
                     if (result.error) throw new Error(result.error);
-                    alert(`Import thành công! Đã xử lý ${result.total} game, ${result.errors} lỗi.`);
-                    // Có thể reset form hoặc reload trang sau khi import
+
+                    alert(`✅ THÀNH CÔNG!\n\nĐã đẩy ${result.total} dòng vào Database.\nCó ${result.errors} lỗi bỏ qua.`);
                     location.reload();
                 } catch (err) {
-                    alert('Lỗi: ' + err.message);
+                    alert('❌ Lỗi Import: ' + err.message);
+                    btn.html(originalContent);
+                    btn.prop('disabled', false);
+                    $('#previewBtn').prop('disabled', false);
                 }
             });
         });

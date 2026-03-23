@@ -87,6 +87,17 @@
             box-shadow: none;
         }
 
+        .custom-input::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            cursor: pointer;
+            opacity: 0.8;
+            transition: 0.2s;
+        }
+
+        .custom-input::-webkit-calendar-picker-indicator:hover {
+                opacity: 1;
+        }
+
     .chart-container {
         overflow-x: auto;
         width: 100%;
@@ -144,11 +155,11 @@
                 </select>
             </div>
             <div class="col-md-3">
-                <label class="form-label small fw-bold text-muted">TỪ NGÀY</label>
+                <label class="form-label small fw-bold text-white">TỪ NGÀY</label>
                 <input type="date" id="startDate" class="form-control custom-input" />
             </div>
             <div class="col-md-3">
-                <label class="form-label small fw-bold text-muted">ĐẾN NGÀY</label>
+                <label class="form-label small fw-bold text-white">ĐẾN NGÀY</label>
                 <input type="date" id="endDate" class="form-control custom-input" />
             </div>
         </div>
