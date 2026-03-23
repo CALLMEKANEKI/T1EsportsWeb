@@ -8,6 +8,7 @@ using T1EsportsWeb.Repositories.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddHttpClient();
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
@@ -42,7 +43,20 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.ClientSecret = "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";
     });
 
+// 1. Thêm dịch vụ CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
 var app = builder.Build();
+
+// 2. Kích hoạt Middleware (Phải đặt TRƯỚC app.UseAuthorization)
+
 
 // Configure the HTTP request pipeline.
 //if (!app.Environment.IsDevelopment())
@@ -56,7 +70,7 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
-
+app.UseCors("AllowAll");
 app.UseSession();
 
 // Chú ý: Phải Authentication (Xác thực) trước rồi mới Authorization (Phân quyền)

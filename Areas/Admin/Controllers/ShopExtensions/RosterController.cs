@@ -4,63 +4,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using T1EsportsWeb.Models;
+using T1EsportsWeb.Models.T1Stat.DTO;
 using T1EsportsWeb.Models.T1Stat;
 
 namespace T1EsportsWeb.Controllers
 {
-    // ==========================================
-    // CÁC VIEWMODEL CHO TRANG INDEX
-    // ==========================================
-    public class PlayerStatsViewModel
-    {
-        public T1EsportsWeb.Models.T1Stat.Player? PlayerInfo { get; set; }
-        public int TotalGames { get; set; }
-        public int Wins { get; set; }
-        public int Losses { get; set; }
-        public double WinRate { get; set; }
-        public List<TopChampionViewModel> TopChampions { get; set; } = new List<TopChampionViewModel>();
-    }
-
-    public class TopChampionViewModel
-    {
-        public string? Name { get; set; }
-        public string? Image { get; set; }
-        public int Count { get; set; }
-    }
-
-    // ==========================================
-    // CÁC VIEWMODEL MỚI CHO TRANG DASHBOARD (DETAIL)
-    // ==========================================
-    public class PlayerDashboardViewModel
-    {
-        public T1EsportsWeb.Models.T1Stat.Player? PlayerInfo { get; set; }
-        public List<TournamentStat> TournamentStats { get; set; } = new List<TournamentStat>();
-        public List<ChampionStat> ChampionStats { get; set; } = new List<ChampionStat>();
-        public List<string> OpponentTeams { get; set; } = new List<string>();
-    }
-
-    public class TournamentStat
-    {
-        public string? TournamentName { get; set; }
-        public int Wins { get; set; }
-        public int Losses { get; set; }
-        public double WinRate { get; set; }
-    }
-
-    public class ChampionStat
-    {
-        public string? ChampionName { get; set; }
-        public string? ImageUrl { get; set; }
-        public int Picks { get; set; }
-        public int Wins { get; set; }
-        public int Losses { get; set; }
-        public double WinRate { get; set; }
-        public int TotalBans { get; set; }
-    }
-
-    // ==========================================
-    // CONTROLLER CHÍNH
-    // ==========================================
     public class RosterController : Controller
     {
         private readonly T1StatDbContext _statsContext;
@@ -77,31 +25,28 @@ namespace T1EsportsWeb.Controllers
         {
             const string cacheKey = "T1RosterStatsData_Top18";
 
-            // Nếu Boss đang test, tạm thời tắt Cache bằng cách đổi tên key để nó luôn load mới:
-            // const string cacheKey = "T1RosterStatsData_Test_01"; 
-
-            if (!_cache.TryGetValue(cacheKey, out List<PlayerStatsViewModel>? allPlayerStats) || allPlayerStats == null)
+            if (!_cache.TryGetValue(cacheKey, out List<PlayerStats>? allPlayerStats) || allPlayerStats == null)
             {
-                allPlayerStats = new List<PlayerStatsViewModel>();
+                allPlayerStats = new List<PlayerStats>();
 
                 var t1Team = _statsContext.Teams.FirstOrDefault(t => t.Name == "T1");
                 int t1TeamId = t1Team != null ? t1Team.IdTeam : 1;
 
-                var t1Players = _statsContext.Players
-                                             .Where(p => p.TeamId == t1TeamId)
-                                             .OrderBy(p => p.IdPlayer)
-                                             .Take(18)
-                                             .ToList();
+                // Lấy 18 tuyển thủ đầu tiên (dựa trên IdPlayer)
+                var top18Players = _statsContext.Players
+                    .OrderBy(p => p.IdPlayer)
+                    .Take(18)
+                    .ToList();
 
                 var allChampions = _statsContext.Champions.ToList();
 
-                foreach (var player in t1Players)
+                foreach (var player in top18Players)
                 {
-                    // 1. RÚT DỮ LIỆU THÔ VỀ RAM (Lấy thêm SeriesId từ bảng Games)
+                    // Lấy các game của player khi họ chơi cho T1 (thông qua GameTeams)
                     var playerGames = (from gp in _statsContext.GamePlayers
                                        join gt in _statsContext.GameTeams on gp.GameTeamId equals gt.IdGameTeam
                                        join g in _statsContext.Games on gt.GameId equals g.IdGame
-                                       where gp.PlayerId == player.IdPlayer
+                                       where gp.PlayerId == player.IdPlayer && gt.TeamId == t1TeamId
                                        select new
                                        {
                                            SeriesId = g.SeriesId,
@@ -109,31 +54,32 @@ namespace T1EsportsWeb.Controllers
                                            Result = gt.Result
                                        }).ToList();
 
-                    // 2. TÍNH TOÁN THEO SERIES (BO3/BO5)
+                    // Nếu không có game nào cho T1, có thể bỏ qua hoặc vẫn hiển thị với 0
+                    // Tính toán series (BO3/BO5) như cũ
                     var seriesStats = playerGames.GroupBy(x => x.SeriesId)
-                                                 .Select(g => new {
-                                                     // Nếu số ván thắng > ván thua -> Thắng cả Series
-                                                     IsWin = g.Count(x => x.Result != null && x.Result.Trim() == "Win") >
-                                                             g.Count(x => x.Result != null && x.Result.Trim() == "Loss")
-                                                 }).ToList();
+                        .Select(g => new
+                        {
+                            IsWin = g.Count(x => x.Result != null && x.Result.Trim() == "Win") >
+                                    g.Count(x => x.Result != null && x.Result.Trim() == "Loss")
+                        }).ToList();
 
                     int totalSeries = seriesStats.Count;
                     int totalWins = seriesStats.Count(s => s.IsWin);
 
-                    // 3. TÍNH TƯỚNG TỦ (Tướng thì vẫn phải đếm theo Game vì mỗi ván chọn 1 tướng)
+                    // Tính top 3 tướng
                     var championCounts = playerGames.GroupBy(g => g.ChampionId)
-                                                    .OrderByDescending(g => g.Count())
-                                                    .Take(3)
-                                                    .Select(g => new { ChampId = g.Key, PlayCount = g.Count() })
-                                                    .ToList();
+                        .OrderByDescending(g => g.Count())
+                        .Take(3)
+                        .Select(g => new { ChampId = g.Key, PlayCount = g.Count() })
+                        .ToList();
 
-                    var topChampions = new List<TopChampionViewModel>();
+                    var topChampions = new List<TopChampion>();
                     foreach (var top in championCounts)
                     {
                         var champInfo = allChampions.FirstOrDefault(c => c.IdChampion == top.ChampId);
                         if (champInfo != null)
                         {
-                            topChampions.Add(new TopChampionViewModel
+                            topChampions.Add(new TopChampion
                             {
                                 Name = champInfo.Name,
                                 Image = champInfo.ImageUrl,
@@ -142,12 +88,11 @@ namespace T1EsportsWeb.Controllers
                         }
                     }
 
-                    // 4. GÁN DỮ LIỆU SERIES VÀO THẺ BÀI
-                    allPlayerStats.Add(new PlayerStatsViewModel
+                    allPlayerStats.Add(new PlayerStats
                     {
                         PlayerInfo = player,
-                        TotalGames = totalSeries, // HIỂN THỊ SỐ SERIES
-                        Wins = totalWins,         // HIỂN THỊ SỐ SERIES THẮNG
+                        TotalGames = totalSeries,
+                        Wins = totalWins,
                         Losses = totalSeries - totalWins,
                         WinRate = totalSeries > 0 ? Math.Round((double)totalWins / totalSeries * 100, 1) : 0,
                         TopChampions = topChampions
@@ -158,31 +103,34 @@ namespace T1EsportsWeb.Controllers
                 _cache.Set(cacheKey, allPlayerStats, cacheEntryOptions);
             }
 
-            var currentRosterNames = new List<string> { "Doran", "Oner", "Faker", "Peyz", "Keria" };
+            // Sắp xếp theo vị trí như cũ
             var positionOrder = new List<string> { "Top", "Jungle", "Mid", "ADC", "Support" };
-
             allPlayerStats = allPlayerStats.OrderBy(p => {
                 string pos = p.PlayerInfo?.Position ?? "";
                 int index = positionOrder.IndexOf(pos);
                 return index == -1 ? 99 : index;
             }).ToList();
 
+            // Nếu bạn muốn phân biệt đội hình hiện tại và cựu thành viên, bạn vẫn có thể dùng danh sách tên hiện tại
+            var currentRosterNames = new List<string> { "Doran", "Oner", "Faker", "Peyz", "Keria" };
             ViewBag.CurrentRoster = allPlayerStats.Where(p => currentRosterNames.Contains(p.PlayerInfo?.IngameName, StringComparer.OrdinalIgnoreCase)).ToList();
             ViewBag.FormerPlayers = allPlayerStats.Where(p => !currentRosterNames.Contains(p.PlayerInfo?.IngameName, StringComparer.OrdinalIgnoreCase)).ToList();
 
             return View();
         }
-
         // ---------- TRANG DASHBOARD TỪNG TUYỂN THỦ ----------
         public IActionResult Detail(int id)
         {
             var player = _statsContext.Players.FirstOrDefault(p => p.IdPlayer == id);
             if (player == null) return NotFound();
 
-            var model = new PlayerDashboardViewModel
+            var t1Team = _statsContext.Teams.FirstOrDefault(t => t.Name == "T1");
+            int t1TeamId = t1Team != null ? t1Team.IdTeam : 1;
+
+            var model = new PlayerDashboard
             {
                 PlayerInfo = player,
-                OpponentTeams = _statsContext.Teams.Where(t => t.IdTeam != 1).Select(t => t.Name).ToList() // Lấy các đội không phải T1 để làm bộ lọc
+                OpponentTeams = _statsContext.Teams.Where(t => t.IdTeam != 1).Select(t => t.Name).ToList()
             };
 
             // 1. TÍNH TOÁN WINRATE THEO SERIES (BO3/BO5)
@@ -192,11 +140,12 @@ namespace T1EsportsWeb.Controllers
                                   join g in _statsContext.Games on gt.GameId equals g.IdGame
                                   join s in _statsContext.Series on g.SeriesId equals s.IdSeries
                                   join t in _statsContext.Tournaments on s.TournamentId equals t.IdTournament
+                                  where gt.TeamId == t1TeamId   // ← thêm điều kiện
                                   select new
                                   {
                                       TournamentName = t.Name,
                                       SeriesId = s.IdSeries,
-                                      GameResult = gt.Result // Giả sử là "Win" hoặc "Loss"
+                                      GameResult = gt.Result
                                   }).ToList();
 
             // Gom nhóm theo Series trước, rồi gom theo Tournament
@@ -228,12 +177,13 @@ namespace T1EsportsWeb.Controllers
                                 where gp.PlayerId == id
                                 join gt in _statsContext.GameTeams on gp.GameTeamId equals gt.IdGameTeam
                                 join c in _statsContext.Champions on gp.ChampionId equals c.IdChampion
+                                where gt.TeamId == t1TeamId   // ← thêm điều kiện
                                 select new
                                 {
                                     ChampName = c.Name,
                                     ChampImage = c.ImageUrl,
                                     Result = gt.Result
-                                }).ToList(); // <-- CHÌA KHÓA NẰM Ở ĐÂY
+                                }).ToList();
 
             // BƯỚC 2: Dùng ngoặc nhọn { } để tính toán dữ liệu đã nằm trên RAM
             model.ChampionStats = rawChampData
@@ -262,6 +212,9 @@ namespace T1EsportsWeb.Controllers
         public IActionResult FilterChampionStats(int playerId, string opponentTeamName)
         {
             // 1. Kết nối qua bảng Series để lấy thông tin Đội đối thủ (TeamOpponentId)
+            var t1Team = _statsContext.Teams.FirstOrDefault(t => t.Name == "T1");
+            int t1TeamId = t1Team != null ? t1Team.IdTeam : 1;
+
             var query = from gp in _statsContext.GamePlayers
                         where gp.PlayerId == playerId
                         join gt in _statsContext.GameTeams on gp.GameTeamId equals gt.IdGameTeam
@@ -269,6 +222,7 @@ namespace T1EsportsWeb.Controllers
                         join s in _statsContext.Series on g.SeriesId equals s.IdSeries
                         join tOpp in _statsContext.Teams on s.TeamOpponentId equals tOpp.IdTeam
                         join c in _statsContext.Champions on gp.ChampionId equals c.IdChampion
+                        where gt.TeamId == t1TeamId   // ← thêm điều kiện
                         select new
                         {
                             ChampName = c.Name,
