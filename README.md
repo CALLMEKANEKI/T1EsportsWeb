@@ -1,43 +1,67 @@
-﻿# 🎮 Dự án Website T1 Shop (T1 Esports)
+# T1EsportsWeb - Website thống kê hiệu suất thi đấu của đội tuyển T1 (Liên Minh Huyền Thoại)
 
-Chào mừng các bạn đến với dự án quản lý cửa hàng T1 Esports! Trang web được xây dựng bằng ASP.NET Core MVC, tích hợp đầy đủ chức năng từ cửa hàng, giỏ hàng, đến hệ thống quản trị (Dashboard) và Chatbox hỗ trợ khách hàng Real-time.
+## 📌 Giới thiệu
+Đây là đồ án môn học Lập trình Web của sinh viên Trường Giang, xây dựng một website thống kê toàn diện về đội tuyển T1 – một trong những đội tuyển Liên Minh Huyền Thoại (LMHT) thành công nhất lịch sử. Website cung cấp các số liệu chi tiết về các trận đấu, thành tích theo giải đấu, thống kê về tướng và tuyển thủ, lịch sử đối đầu, cùng với hệ thống quản trị (Admin) để cập nhật dữ liệu.
 
-Dự án được khởi tạo và phát triển bởi: **Nguyễn Phi Anh**
+## 🛠 Công nghệ sử dụng
+- **Backend**: ASP.NET Core MVC (.NET 8.0), C#
+- **Frontend**: HTML/CSS/JS, Bootstrap 5, Chart.js, Font Awesome
+- **Database**: SQL Server, Entity Framework Core (Code-first / Database-first)
+- **Authentication**: Cookie Authentication, phân quyền Admin/Staff/User
+- **Python Integration**: Flask API (riêng biệt) để import dữ liệu từ file Excel
+- **Khác**: Repository Pattern, Dependency Injection, Session, AJAX
 
----
+## 🚀 Chức năng chính
+Website được chia làm 4 phần chính dành cho người dùng thông thường và một khu vực quản trị riêng.
 
-## 🛠️ Yêu cầu môi trường
-Để chạy được project này, máy tính của bạn cần cài đặt sẵn:
-- **Visual Studio 2022** (Có workload ASP.NET and web development).
-- **SQL Server** & **SQL Server Management Studio (SSMS)**.
+### 1. Trang chủ
+- Giới thiệu về đội tuyển T1, các thành tích nổi bật.
+- Điều hướng đến các chức năng chính (đội hình, dashboard, lịch sử đấu).
 
----
+### 2. Tuyển thủ (Roster)
+- Hiển thị danh sách tuyển thủ của T1 (phân biệt đội hình hiện tại và cựu thành viên).
+- Mỗi tuyển thủ có một trang dashboard riêng với các thống kê:
+  - Tổng số series đã đấu, số trận thắng/thua, tỷ lệ thắng.
+  - Danh sách các tướng đã sử dụng (kèm số lần pick, số trận thắng, tỷ lệ thắng).
+  - Thống kê theo giải đấu, theo đối thủ (có bộ lọc).
 
-## 🚀 Hướng dẫn Cài đặt & Chạy Project cho Team
+### 3. Dashboard đội tuyển T1
+Tổng hợp các thống kê chuyên sâu dưới dạng biểu đồ và bảng:
+- **Thành tích**: Số series quốc nội/quốc tế, số game, BO3/BO5, tỷ lệ thắng theo side (Blue/Red).
+- **Series và Games theo giải đấu**: Biểu đồ cột chồng, hiển thị số thắng/thua, phân biệt màu theo khu vực (KR/INT).
+- **Winrate theo phiên bản (Patch)**: Biểu đồ đường.
+- **Thống kê tuyển thủ theo vị trí**: Biểu đồ cột với bộ lọc role.
+- **Lịch sử đối đầu**: Thống kê tỷ lệ thắng trước từng đội, phân biệt quốc nội/quốc tế.
+- **Thống kê tướng (Champion)**: Bảng pick/ban của T1 và của đối thủ, có bộ lọc theo giải đấu và đối thủ.
+- **Dự đoán tướng T1 sẽ chọn**: Dựa trên lịch sử đối đầu (có bộ lọc đối thủ và vị trí).
 
-Các thành viên trong nhóm vui lòng làm đúng theo 3 bước sau để đồng bộ Code và Database nhé:
+### 4. Lịch sử đấu (Match History)
+- Danh sách các series (loạt trận) của T1, có thể lọc theo ngày và giải đấu.
+- Mỗi series có thể mở rộng để xem chi tiết các game (ván đấu).
+- Mỗi game hiển thị thông tin: patch, side, kết quả, link YouTube, và nút "Chi tiết" để xem lineup (đội hình) và bans (tướng bị cấm) của cả hai đội (kèm ảnh tướng, ảnh tuyển thủ, tooltip).
 
-### Bước 1: Tải Code về máy (Clone)
-1. Mở Visual Studio 2022 -> Chọn **Clone a repository**.
-2. Dán link GitHub của repo này vào và chọn thư mục lưu trên máy.
-3. Nhấn **Clone** và đợi Visual Studio tải code về.
+### 5. Khu vực quản trị (Admin)
+- Dành cho người dùng có role Admin hoặc Staff.
+- **Quản lý các bảng master**: Đội tuyển (Teams), Giải đấu (Tournaments), Tướng (Champions), Tuyển thủ (Players) – CRUD đầy đủ, có upload ảnh, phân trang, lọc.
+- **Import dữ liệu lịch sử đấu**:
+  - Upload file Excel có cấu trúc giống dữ liệu đã cào từ lol.fandom.com.
+  - Xem trước dữ liệu (preview) trước khi import.
+  - Gọi Python API để xử lý và insert vào SQL Server.
+- **Quản lý sản phẩm (Shop)**: CRUD sản phẩm, quản lý đơn hàng, voucher.
+- **Chăm sóc khách hàng (Chat)**: Phòng chat đơn giản giữa admin và người dùng.
+- **Quản lý người dùng và phân quyền**: Phân vai trò Admin / Staff / User.
 
-### Bước 2: Phục hồi Database (Quan trọng ⚠️)
-Vì database nằm ở máy của Phi Anh, các bạn cần chạy file script để tạo lại toàn bộ dữ liệu (Sản phẩm, User, Chat...) trên máy cá nhân:
-1. Mở **SQL Server Management Studio (SSMS)** và kết nối vào Server của bạn.
-2. Mở file `T1EsportsWeb_DB.sql` (nằm trong thư mục `Database` của project vừa tải về) bằng SSMS.
-3. Nhấn phím **F5** (hoặc nút **Execute**) để chạy lệnh. 
-👉 *Hệ thống báo "Command(s) completed successfully" là bạn đã có trọn bộ Database giống hệt bản gốc!*
+## 📥 Hướng dẫn cài đặt và chạy
 
-### Bước 3: Đổi chuỗi kết nối (Connection String)
-Để code nhận diện được Database vừa tạo trên máy bạn:
-1. Mở file `appsettings.json` trong Visual Studio.
-2. Tìm đến dòng `"DefaultConnection"`.
-3. Thay đổi giá trị `Server=...` thành Tên Server SQL của máy bạn (Ví dụ: `Server=.\SQLEXPRESS` hoặc `Server=TEN-MAY-TINH-CUA-BAN`).
-4. Lưu file lại (**Ctrl + S**).
+### Yêu cầu hệ thống
+- [.NET 8.0 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/8.0)
+- [SQL Server](https://www.microsoft.com/en-us/sql-server/sql-server-downloads) (LocalDB hoặc Express)
+- [Python 3.9+](https://www.python.org/downloads/) (cho API import)
+- Visual Studio 2022 hoặc VS Code
 
-### Bước 4: Chạy Website
-Nhấn **Ctrl + F5** (hoặc nút Run) trên Visual Studio để khởi động trang web và tận hưởng thành quả!
+### Các bước thực hiện
 
----
-*Nếu trong quá trình cài đặt gặp lỗi kết nối Database hoặc lỗi thư viện, hãy nhắn tin ngay cho Phi Anh để được hỗ trợ gỡ lỗi nhé! Chúc cả nhóm code thật mượt! ❤️*
+1. **Clone dự án**
+   ```bash
+   git clone https://github.com/your-repo/T1EsportsWeb.git
+   cd T1EsportsWeb
